@@ -1,0 +1,42 @@
+import type { Metadata } from 'next';
+import { Manrope, Outfit, Instrument_Serif } from 'next/font/google';
+import './globals.css';
+import { Providers } from './providers';
+
+const manrope = Manrope({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-manrope',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+// Outfit — geometric sans for display (closest to brandbook Moderustic)
+const moderustic = Outfit({
+  subsets: ['latin'],
+  variable: '--font-moderustic',
+  weight: ['400', '500', '600', '700', '800', '900'],
+});
+
+// Instrument Serif — editorial accent for headline emphasis & quotes
+const serif = Instrument_Serif({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  weight: ['400'],
+  style: ['normal', 'italic'],
+});
+
+export const metadata: Metadata = {
+  title: 'mimi — minimise marketing agency',
+  description:
+    'Minimise the noise. Maximise the impact. Маркетинговое агентство полного цикла: стратегия, брендинг, таргетинг, дизайн.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru" className={`${manrope.variable} ${moderustic.variable} ${serif.variable}`}>
+      <body className="font-sans antialiased">
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}

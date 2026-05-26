@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum Tariff {
+  NONE
+  START
+  GROWTH
+  PREMIUM
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  SCALING
+  ARCHIVED
+}
+
+enum LeadStatus {
+  NEW
+  WORKING
+  CLOSED
+}
+
+enum ContactStatus {
+  NEW
+  WORKING
+  CLOSED
+}
+
+enum ClientStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      Role     @default(CLIENT)
+  tariff    Tariff   @default(NONE)
+  tariffEnd DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client    Client?
+}
+
+model Client {
+  id           String       @id @default(cuid())
+  ownerId      String       @unique
+  owner        User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  businessName String
+  niche        String
+  status       ClientStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  campaigns    Campaign[]
+  leads        Lead[]
+  metrics      Metric[]
+}
+
+model Campaign {
+  id        String         @id @default(cuid())
+  clientId  String
+  client    Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  platform  String
+  budget    Float
+  spent     Float          @default(0)
+  leads     Int            @default(0)
+  sales     Int            @default(0)
+  romi      Float          @default(0)
+  status    CampaignStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Lead {
+  id        String     @id @default(cuid())
+  clientId  String
+  client    Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  contact   String
+  source    String
+  status    LeadStatus @default(NEW)
+  createdAt DateTime   @default(now())
+}
+
+model Metric {
+  id         String   @id @default(cuid())
+  clientId   String
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  date       DateTime
+  clicks     Int      @default(0)
+  leads      Int      @default(0)
+  qualified  Int      @default(0)
+  sales      Int      @default(0)
+  spent      Float    @default(0)
+  revenue    Float    @default(0)
+  romi       Float    @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([clientId, date])
+}
+
+model ContactRequest {
+  id        String        @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  message   String?
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+}
