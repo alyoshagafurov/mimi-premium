@@ -89,18 +89,18 @@ export default function RegisterPage() {
           <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">создание аккаунта</p>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-white/[0.02] p-1.5">
+        <div className="mb-6 grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-white/[0.02] p-1.5">
           {(['CLIENT', 'ADMIN'] as Role[]).map((r) => (
             <button
               key={r}
               type="button"
               onClick={() => setRole(r)}
               className={cn(
-                'rounded-xl px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] transition',
+                'rounded-xl px-2 py-2.5 text-[10px] font-medium uppercase tracking-[0.08em] transition sm:px-4 sm:text-xs sm:tracking-[0.18em]',
                 role === r ? 'bg-gold-gradient text-ink shadow-gold' : 'text-muted hover:text-light',
               )}
             >
-              {r === 'CLIENT' ? 'Я владелец бизнеса' : 'Я администратор'}
+              {r === 'CLIENT' ? 'Владелец бизнеса' : 'Администратор'}
             </button>
           ))}
         </div>
