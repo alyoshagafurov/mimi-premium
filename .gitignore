@@ -14,3 +14,5 @@ coverage/
 prisma/migrations/
 *.tsbuildinfo
 .claude/
+.vercel
+.env*
