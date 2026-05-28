@@ -73,29 +73,29 @@ export function CampaignsClient({
         subtitle="Управление платными каналами клиентов в одном представлении."
       />
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <select
           value={clientFilter}
           onChange={(e) => setClientFilter(e.target.value)}
-          className="input-glass max-w-xs"
+          className="input-glass sm:max-w-xs"
         >
           <option value="">Все клиенты</option>
           {clients.map((c) => (
-            <option key={c.id} value={c.id} className="bg-surface">{c.name}</option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="input-glass max-w-xs"
+          className="input-glass sm:max-w-xs"
         >
           <option value="">Все статусы</option>
-          <option value="ACTIVE" className="bg-surface">Активна</option>
-          <option value="PAUSED" className="bg-surface">Пауза</option>
-          <option value="SCALING" className="bg-surface">Масштабируем</option>
-          <option value="ARCHIVED" className="bg-surface">Архив</option>
+          <option value="ACTIVE">Активна</option>
+          <option value="PAUSED">Пауза</option>
+          <option value="SCALING">Масштабируем</option>
+          <option value="ARCHIVED">Архив</option>
         </select>
-        <span className="chip-lime ml-auto">{filtered.length} кампаний</span>
+        <span className="chip-lime self-start sm:ml-auto">{filtered.length} кампаний</span>
       </div>
 
       <div className="glass overflow-hidden rounded-2xl">

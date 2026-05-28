@@ -112,7 +112,7 @@ export function MetricsClient({
             <label className="label-soft">Клиент</label>
             <select required value={form.clientId} onChange={onChange('clientId')} className="input-glass">
               {clients.map((c) => (
-                <option key={c.id} value={c.id} className="bg-surface">{c.name}</option>
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>

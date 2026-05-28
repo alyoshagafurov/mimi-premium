@@ -102,7 +102,7 @@ export function MobileTopbar({ name }: { name: string }) {
 
   return (
     <>
-      <div className="glass-luxury sticky top-2 z-30 mx-2 mt-2 flex items-center justify-between rounded-2xl px-4 py-3 lg:hidden">
+      <div className="sticky top-0 z-30 mx-0 flex items-center justify-between border-b border-white/[0.06] bg-ink/80 px-4 py-3 backdrop-blur-2xl lg:hidden">
         <div className="flex items-center gap-3">
           <Logo size="sm" />
           <span className="hidden rounded-full border border-brand-lime/30 bg-brand-lime/[0.06] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime sm:inline">

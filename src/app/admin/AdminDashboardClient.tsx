@@ -52,7 +52,7 @@ export function AdminDashboardClient({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <PageHeader
         eyebrow="Cabin"
         title={
@@ -64,7 +64,7 @@ export function AdminDashboardClient({
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
         <KpiCard label="Всего клиентов" value={formatInt(stats.totalClients)} delay={0} icon={<span className="text-sm">◷</span>} />
         <KpiCard label="Активные кампании" value={formatInt(stats.activeCampaigns)} delay={0.05} icon={<span className="text-sm">◐</span>} />
         <KpiCard label="Общий бюджет" value={formatMoney(stats.totalBudget)} delay={0.1} icon={<span className="text-sm">$</span>} />
@@ -77,16 +77,16 @@ export function AdminDashboardClient({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="glass-luxury rounded-3xl p-7"
+          className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
         >
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between sm:mb-6">
             <div>
               <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Прогноз прибыли</p>
-              <h2 className="mt-2 font-display text-2xl font-extrabold text-light">Forecast 6 недель</h2>
+              <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:mt-2 sm:text-2xl">Forecast 6 недель</h2>
             </div>
             <span className="chip-lime">live</span>
           </div>
-          <div className="h-72">
+          <div className="h-56 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={forecastData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <defs>
@@ -118,13 +118,13 @@ export function AdminDashboardClient({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
-          className="glass-luxury rounded-3xl p-7"
+          className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
         >
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Помогли клиентам</p>
-            <h2 className="mt-2 font-display text-2xl font-extrabold text-light">На сопровождении</h2>
+            <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:mt-2 sm:text-2xl">На сопровождении</h2>
           </div>
-          <div className="h-72">
+          <div className="h-56 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <defs>
@@ -153,12 +153,12 @@ export function AdminDashboardClient({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.4 }}
-        className="glass-luxury rounded-3xl p-7"
+        className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
       >
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between sm:mb-6">
           <div>
             <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Последние</p>
-            <h2 className="mt-2 font-display text-2xl font-extrabold text-light">Свежие заявки</h2>
+            <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:mt-2 sm:text-2xl">Свежие заявки</h2>
           </div>
           <Link href="/admin/leads" className="btn-quiet">Все заявки</Link>
         </div>

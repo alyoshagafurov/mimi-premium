@@ -51,27 +51,27 @@ export function LeadsClient({ leads }: { leads: Row[] }) {
         subtitle="Обращения с лендинга. Меняйте статус сразу — клиенты увидят его в кабинете."
       />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <button
           onClick={() => setFilter(filter === 'NEW' ? '' : 'NEW')}
-          className={`glass-luxury rounded-2xl p-5 text-left transition ${filter === 'NEW' ? 'ring-1 ring-brand-lime/40 shadow-[0_0_30px_-8px_rgba(212,236,76,0.45)]' : ''}`}
+          className={`glass-luxury rounded-xl p-3 text-left transition sm:rounded-2xl sm:p-5 ${filter === 'NEW' ? 'ring-1 ring-brand-lime/40 shadow-[0_0_30px_-8px_rgba(212,236,76,0.45)]' : ''}`}
         >
-          <div className="text-[10px] uppercase tracking-[0.24em] text-light/45">Новые</div>
-          <div className="mt-2 font-display text-3xl font-extrabold text-brand-lime">{counts.NEW}</div>
+          <div className="text-[9px] uppercase tracking-[0.2em] text-light/45 sm:text-[10px] sm:tracking-[0.24em]">Новые</div>
+          <div className="mt-1.5 font-display text-2xl font-extrabold text-brand-lime sm:mt-2 sm:text-3xl">{counts.NEW}</div>
         </button>
         <button
           onClick={() => setFilter(filter === 'WORKING' ? '' : 'WORKING')}
-          className={`glass-luxury rounded-2xl p-5 text-left transition ${filter === 'WORKING' ? 'ring-1 ring-brand-orange/40 shadow-[0_0_30px_-8px_rgba(252,150,3,0.45)]' : ''}`}
+          className={`glass-luxury rounded-xl p-3 text-left transition sm:rounded-2xl sm:p-5 ${filter === 'WORKING' ? 'ring-1 ring-brand-orange/40 shadow-[0_0_30px_-8px_rgba(252,150,3,0.45)]' : ''}`}
         >
-          <div className="text-[10px] uppercase tracking-[0.24em] text-light/45">В работе</div>
-          <div className="mt-2 font-display text-3xl font-extrabold text-brand-orange">{counts.WORKING}</div>
+          <div className="text-[9px] uppercase tracking-[0.2em] text-light/45 sm:text-[10px] sm:tracking-[0.24em]">В работе</div>
+          <div className="mt-1.5 font-display text-2xl font-extrabold text-brand-orange sm:mt-2 sm:text-3xl">{counts.WORKING}</div>
         </button>
         <button
           onClick={() => setFilter(filter === 'CLOSED' ? '' : 'CLOSED')}
-          className={`glass-luxury rounded-2xl p-5 text-left transition ${filter === 'CLOSED' ? 'ring-1 ring-white/15' : ''}`}
+          className={`glass-luxury rounded-xl p-3 text-left transition sm:rounded-2xl sm:p-5 ${filter === 'CLOSED' ? 'ring-1 ring-white/15' : ''}`}
         >
-          <div className="text-[10px] uppercase tracking-[0.24em] text-light/45">Закрыты</div>
-          <div className="mt-2 font-display text-3xl font-extrabold text-light/55">{counts.CLOSED}</div>
+          <div className="text-[9px] uppercase tracking-[0.2em] text-light/45 sm:text-[10px] sm:tracking-[0.24em]">Закрыты</div>
+          <div className="mt-1.5 font-display text-2xl font-extrabold text-light/55 sm:mt-2 sm:text-3xl">{counts.CLOSED}</div>
         </button>
       </div>
 
@@ -102,11 +102,11 @@ export function LeadsClient({ leads }: { leads: Row[] }) {
               <select
                 value={l.status}
                 onChange={(e) => change(l.id, e.target.value)}
-                className="input-glass max-w-[200px]"
+                className="input-glass w-full sm:w-auto sm:max-w-[200px]"
               >
-                <option value="NEW" className="bg-surface">Новая</option>
-                <option value="WORKING" className="bg-surface">В работе</option>
-                <option value="CLOSED" className="bg-surface">Закрыта</option>
+                <option value="NEW">Новая</option>
+                <option value="WORKING">В работе</option>
+                <option value="CLOSED">Закрыта</option>
               </select>
             </div>
           </motion.div>
