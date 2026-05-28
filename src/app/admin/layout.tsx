@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
-import { Sidebar, MobileTopbar, MobileTabs } from '@/components/admin/Sidebar';
+import { Sidebar, MobileTopbar } from '@/components/admin/Sidebar';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -18,9 +18,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <MobileTopbar name={session.user.name ?? 'Admin'} />
       <div className="mx-auto flex max-w-[1600px] gap-6 px-4 py-4 lg:px-6">
         <Sidebar name={session.user.name ?? 'Admin'} />
-        <div className="min-w-0 flex-1 pb-24 lg:pb-6">{children}</div>
+        <div className="min-w-0 flex-1 pb-6">{children}</div>
       </div>
-      <MobileTabs />
     </div>
   );
 }
