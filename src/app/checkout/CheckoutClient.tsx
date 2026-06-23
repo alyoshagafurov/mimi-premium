@@ -7,14 +7,98 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { TopNav } from '@/components/ui/TopNav';
 import { formatMoney, tariffLabel, tariffPrice, tariffRecurring } from '@/lib/utils';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
 
-const PLAN_DESC: Record<string, string> = {
+const PLAN_DESC_RU: Record<string, string> = {
   START: 'Мини-стратегия, таргет + аналитика, 4 Reels, до 8 креативов, отчётность',
   GROWTH: 'Стратегия, таргет + аналитика, 15 креативов, 4 Reels, брендинг, воронка, консультации продаж',
   PREMIUM: 'Полная стратегия, брендинг, глубокая аналитика, 8 Reels, 15 креативов, SMM, сайт, сопровождение',
 };
+const PLAN_DESC_EN: Record<string, string> = {
+  START: 'Mini-strategy, targeting + analytics, 4 Reels, up to 8 creatives, reporting',
+  GROWTH: 'Strategy, targeting + analytics, 15 creatives, 4 Reels, branding, funnel, sales consulting',
+  PREMIUM: 'Full strategy, branding, deep analytics, 8 Reels, 15 creatives, SMM, website, ongoing support',
+};
+const PLAN_DESC_TG: Record<string, string> = {
+  START: 'Мини-стратегия, таргет + аналитика, 4 Reels, то 8 креатив, ҳисобот',
+  GROWTH: 'Стратегия, таргет + аналитика, 15 креатив, 4 Reels, брендинг, воронка, маслиҳати фурӯш',
+  PREMIUM: 'Стратегияи пурра, брендинг, аналитикаи амиқ, 8 Reels, 15 креатив, SMM, сайт, ҳамроҳӣ',
+};
+
+const ru = {
+  chip: 'Оформление',
+  tariff: 'Тариф',
+  firstMonth: 'Первый месяц',
+  fromSecond: 'Со второго месяца',
+  activation: 'Активация',
+  free: 'Бесплатно',
+  totalToday: 'К оплате сегодня',
+  demoNote: 'Это демо-оплата. Реальное списание не происходит — мы просто активируем тариф и пускаем вас в кабинет.',
+  changePlan: '← Сменить тариф',
+  payTitle: 'Платёжные реквизиты',
+  paySubtitle: 'Все поля защищены TLS (демо)',
+  labelCardNumber: 'Номер карты',
+  labelCardHolder: 'Имя владельца',
+  labelExpiry: 'Срок',
+  labelCvc: 'CVC',
+  submitLoading: 'Активируем...',
+  submitPay: 'Оплатить',
+  errFields: 'Заполните все поля карты',
+  successTpl: 'Тариф активирован',
+  errActivate: 'Не удалось активировать тариф',
+  descs: PLAN_DESC_RU,
+};
+const en: typeof ru = {
+  chip: 'Checkout',
+  tariff: 'Plan',
+  firstMonth: 'First month',
+  fromSecond: 'From second month',
+  activation: 'Activation',
+  free: 'Free',
+  totalToday: 'Due today',
+  demoNote: 'This is a demo payment. No real charge — we just activate the plan and give you dashboard access.',
+  changePlan: '← Change plan',
+  payTitle: 'Payment details',
+  paySubtitle: 'All fields are TLS-protected (demo)',
+  labelCardNumber: 'Card number',
+  labelCardHolder: 'Cardholder name',
+  labelExpiry: 'Expiry',
+  labelCvc: 'CVC',
+  submitLoading: 'Activating...',
+  submitPay: 'Pay',
+  errFields: 'Please fill in all card fields',
+  successTpl: 'Plan activated',
+  errActivate: 'Failed to activate plan',
+  descs: PLAN_DESC_EN,
+};
+const tg: typeof ru = {
+  chip: 'Расмиятсозӣ',
+  tariff: 'Тариф',
+  firstMonth: 'Моҳи аввал',
+  fromSecond: 'Аз моҳи дуюм',
+  activation: 'Фаъолсозӣ',
+  free: 'Ройгон',
+  totalToday: 'Барои пардохт имрӯз',
+  demoNote: 'Ин пардохти демо аст. Пул гирифта намешавад — мо танҳо тарифро фаъол мекунем ва шуморо ба кабинет роҳ медиҳем.',
+  changePlan: '← Иваз кардани тариф',
+  payTitle: 'Реквизитҳои пардохт',
+  paySubtitle: 'Ҳамаи майдонҳо бо TLS ҳифз шудаанд (демо)',
+  labelCardNumber: 'Рақами корт',
+  labelCardHolder: 'Номи соҳиб',
+  labelExpiry: 'Мӯҳлат',
+  labelCvc: 'CVC',
+  submitLoading: 'Фаъол мекунем...',
+  submitPay: 'Пардохт кардан',
+  errFields: 'Ҳамаи майдонҳои кортро пур кунед',
+  successTpl: 'Тариф фаъол шуд',
+  errActivate: 'Фаъолсозии тариф нашуд',
+  descs: PLAN_DESC_TG,
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 export function CheckoutClient({ plan }: { plan: string }) {
+  const t = useCopy(COPY);
   const router = useRouter();
   const [card, setCard] = useState({ number: '', name: '', exp: '', cvc: '' });
   const [loading, setLoading] = useState(false);
@@ -26,7 +110,7 @@ export function CheckoutClient({ plan }: { plan: string }) {
   const pay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!card.number || !card.name || !card.exp || !card.cvc) {
-      toast.error('Заполните все поля карты');
+      toast.error(t.errFields);
       return;
     }
     setLoading(true);
@@ -38,11 +122,11 @@ export function CheckoutClient({ plan }: { plan: string }) {
         body: JSON.stringify({ plan }),
       });
       if (!res.ok) throw new Error('failed');
-      toast.success(`Тариф «${label}» активирован`);
+      toast.success(`${t.successTpl} «${label}»`);
       router.push('/dashboard');
       router.refresh();
     } catch {
-      toast.error('Не удалось активировать тариф');
+      toast.error(t.errActivate);
     } finally {
       setLoading(false);
     }
@@ -62,50 +146,48 @@ export function CheckoutClient({ plan }: { plan: string }) {
         <div className="absolute left-1/2 top-0 h-[60vh] w-[80vw] -translate-x-1/2 rounded-full bg-brand-purple/15 blur-3xl" />
       </div>
       <main className="relative z-10 mx-auto grid max-w-5xl gap-8 px-5 pb-16 pt-32 lg:grid-cols-[1.1fr_1fr]">
-        {/* SUMMARY */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7 }}
           className="glass-lime rounded-3xl p-8"
         >
-          <span className="chip text-brand-lime/80">Оформление</span>
+          <span className="chip text-brand-lime/80">{t.chip}</span>
           <h1 className="mt-3 font-display text-3xl font-extrabold md:text-4xl">
-            Тариф «<span className="text-lime-grad">{label}</span>»
+            {t.tariff} «<span className="text-lime-grad">{label}</span>»
           </h1>
-          <p className="mt-3 text-sm text-muted">{PLAN_DESC[plan] ?? '—'}</p>
+          <p className="mt-3 text-sm text-muted">{t.descs[plan] ?? '—'}</p>
 
           <div className="mt-8 space-y-3 border-t border-white/10 pt-6">
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Первый месяц</span>
+              <span className="text-muted">{t.firstMonth}</span>
               <span className="font-medium text-light">{formatMoney(price)}</span>
             </div>
             {recurring !== price && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Со второго месяца</span>
+                <span className="text-muted">{t.fromSecond}</span>
                 <span className="font-medium text-light">{formatMoney(recurring)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Активация</span>
-              <span className="text-brand-lime">Бесплатно</span>
+              <span className="text-muted">{t.activation}</span>
+              <span className="text-brand-lime">{t.free}</span>
             </div>
             <div className="flex items-end justify-between border-t border-white/10 pt-4">
-              <span className="text-xs uppercase tracking-[0.2em] text-muted">К оплате сегодня</span>
+              <span className="text-xs uppercase tracking-[0.2em] text-muted">{t.totalToday}</span>
               <span className="font-display text-3xl font-extrabold text-lime-grad">{formatMoney(price)}</span>
             </div>
           </div>
 
           <div className="mt-8 rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-xs text-muted">
-            Это демо-оплата. Реальное списание не происходит — мы просто активируем тариф и пускаем вас в кабинет.
+            {t.demoNote}
           </div>
 
           <Link href="/pricing" className="mt-6 inline-block text-xs uppercase tracking-[0.2em] text-muted transition hover:text-brand-lime">
-            ← Сменить тариф
+            {t.changePlan}
           </Link>
         </motion.div>
 
-        {/* CARD FORM */}
         <motion.form
           onSubmit={pay}
           initial={{ opacity: 0, x: 20 }}
@@ -113,10 +195,9 @@ export function CheckoutClient({ plan }: { plan: string }) {
           transition={{ duration: 0.7, delay: 0.1 }}
           className="glass rounded-3xl p-8"
         >
-          <h2 className="font-display text-xl font-bold">Платёжные реквизиты</h2>
-          <p className="mt-1 text-xs text-muted">Все поля защищены TLS (демо)</p>
+          <h2 className="font-display text-xl font-bold">{t.payTitle}</h2>
+          <p className="mt-1 text-xs text-muted">{t.paySubtitle}</p>
 
-          {/* Fake card preview */}
           <div className="relative mt-6 overflow-hidden rounded-2xl bg-purple-gradient p-6 shadow-purple">
             <div className="absolute inset-0 bg-brand-lime/5 backdrop-blur-sm" />
             <div className="relative z-10">
@@ -142,7 +223,7 @@ export function CheckoutClient({ plan }: { plan: string }) {
 
           <div className="mt-6 space-y-4">
             <div>
-              <label className="label-soft">Номер карты</label>
+              <label className="label-soft">{t.labelCardNumber}</label>
               <input
                 className="input-glass tracking-[0.18em]"
                 value={card.number}
@@ -152,7 +233,7 @@ export function CheckoutClient({ plan }: { plan: string }) {
               />
             </div>
             <div>
-              <label className="label-soft">Имя владельца</label>
+              <label className="label-soft">{t.labelCardHolder}</label>
               <input
                 className="input-glass uppercase"
                 value={card.name}
@@ -162,7 +243,7 @@ export function CheckoutClient({ plan }: { plan: string }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label-soft">Срок</label>
+                <label className="label-soft">{t.labelExpiry}</label>
                 <input
                   className="input-glass"
                   value={card.exp}
@@ -172,7 +253,7 @@ export function CheckoutClient({ plan }: { plan: string }) {
                 />
               </div>
               <div>
-                <label className="label-soft">CVC</label>
+                <label className="label-soft">{t.labelCvc}</label>
                 <input
                   type="password"
                   className="input-glass"
@@ -184,7 +265,7 @@ export function CheckoutClient({ plan }: { plan: string }) {
               </div>
             </div>
             <button type="submit" disabled={loading} className="btn-lime mt-3 w-full disabled:opacity-60">
-              {loading ? 'Активируем...' : `Оплатить ${formatMoney(price)}`}
+              {loading ? t.submitLoading : `${t.submitPay} ${formatMoney(price)}`}
             </button>
           </div>
         </motion.form>

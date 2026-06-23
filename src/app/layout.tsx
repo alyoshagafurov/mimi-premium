@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { Manrope, Outfit, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import { DEFAULT_LANG, LANG_COOKIE, isLang } from '@/i18n/config';
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],
@@ -32,10 +34,13 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieLang = cookies().get(LANG_COOKIE)?.value;
+  const lang = isLang(cookieLang) ? cookieLang : DEFAULT_LANG;
+
   return (
-    <html lang="ru" className={`${manrope.variable} ${moderustic.variable} ${serif.variable}`}>
+    <html lang={lang} className={`${manrope.variable} ${moderustic.variable} ${serif.variable}`}>
       <body className="font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers initialLang={lang}>{children}</Providers>
       </body>
     </html>
   );

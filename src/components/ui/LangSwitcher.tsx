@@ -1,17 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { LANGS } from '@/i18n/config';
+import { useI18n } from '@/i18n/LanguageProvider';
 
-const LANGS = ['Tj', 'Ru', 'En'] as const;
-type Lang = (typeof LANGS)[number];
-
-/**
- * Language switcher (Tj / Ru / En). Rendered at 50% opacity per brand spec.
- * Visual state only for now — full localization is a separate task.
- */
+/** Language switcher (Tj / Ru / En). Rendered at 50% opacity, full on hover. */
 export function LangSwitcher({ className }: { className?: string }) {
-  const [active, setActive] = useState<Lang>('Ru');
+  const { lang, setLang } = useI18n();
   return (
     <div
       className={cn(
@@ -21,15 +16,16 @@ export function LangSwitcher({ className }: { className?: string }) {
     >
       {LANGS.map((l) => (
         <button
-          key={l}
+          key={l.code}
           type="button"
-          onClick={() => setActive(l)}
+          onClick={() => setLang(l.code)}
+          aria-pressed={lang === l.code}
           className={cn(
             'rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors',
-            active === l ? 'bg-brand-lime text-ink' : 'text-light/70 hover:text-brand-lime',
+            lang === l.code ? 'bg-brand-lime text-ink' : 'text-light/70 hover:text-brand-lime',
           )}
         >
-          {l}
+          {l.label}
         </button>
       ))}
     </div>

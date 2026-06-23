@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { Reveal } from '@/components/ui/Reveal';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
 
 /**
  * Process — interactive sticky card (desktop) + inline accordion (mobile).
@@ -18,67 +20,74 @@ import { Reveal } from '@/components/ui/Reveal';
  *     Single column, each step expands inline on tap.
  */
 
-type Step = {
-  n: string;
-  title: string;
-  desc: string;
-  detail: string;
-  visual: 'analyze' | 'strategy' | 'produce' | 'launch' | 'optimize' | 'systemize' | 'scale';
-};
+type VisualKind = 'analyze' | 'strategy' | 'produce' | 'launch' | 'optimize' | 'systemize' | 'scale';
+type StepCopy = { title: string; desc: string; detail: string };
+type Step = StepCopy & { n: string; visual: VisualKind };
 
-const STEPS: Step[] = [
-  {
-    n: '01',
-    title: 'Анализ',
-    desc: 'Погружение в нишу, продукт, аудиторию и текущие связки.',
-    detail: 'Аудит рекламных кабинетов, посадок и контента. Формируем карту гипотез и приоритеты для запуска.',
-    visual: 'analyze',
-  },
-  {
-    n: '02',
-    title: 'Стратегия',
-    desc: 'План роста на 3–6 месяцев с понятными KPI.',
-    detail: 'Дорожная карта с приоритетами, бюджетами и KPI по каждому каналу. Не презентация — рабочий документ.',
-    visual: 'strategy',
-  },
-  {
-    n: '03',
-    title: 'Продюсирование',
-    desc: 'Превращаем стратегию в готовый к запуску контент и креативы.',
-    detail: 'Сценарии, съёмки, монтаж, продающие креативы и посадочные. Собираем всё, что нужно для старта рекламы.',
-    visual: 'produce',
-  },
-  {
-    n: '04',
-    title: 'Запуск',
-    desc: 'Креативы, посадки, кабинеты, аналитика — за 7–14 дней.',
-    detail: 'Собираем всё в систему: рекламные кампании, UTM-разметку и дашборд аналитики.',
-    visual: 'launch',
-  },
-  {
-    n: '05',
-    title: 'Оптимизация',
-    desc: 'Еженедельный разбор: убираем слабое, усиливаем работающее.',
-    detail: 'A/B тесты креативов и аудиторий. Перераспределение бюджетов на основе данных, а не ощущений.',
-    visual: 'optimize',
-  },
-  {
-    n: '06',
-    title: 'Систематизация маркетинга и продаж',
-    desc: 'Связываем маркетинг с отделом продаж в единую систему.',
-    detail: 'Выстраиваем воронку и контроль продаж, регламенты и отчётность. Маркетинг и продажи работают как один механизм.',
-    visual: 'systemize',
-  },
-  {
-    n: '07',
-    title: 'Масштабирование',
-    desc: 'Увеличиваем бюджет на проверенных связках, без рывков.',
-    detail: 'Подключаем новые каналы и форматы. Растём вместе с клиентом — от тестовых бюджетов до системного роста.',
-    visual: 'scale',
-  },
+const STEP_META: { n: string; visual: VisualKind }[] = [
+  { n: '01', visual: 'analyze' },
+  { n: '02', visual: 'strategy' },
+  { n: '03', visual: 'produce' },
+  { n: '04', visual: 'launch' },
+  { n: '05', visual: 'optimize' },
+  { n: '06', visual: 'systemize' },
+  { n: '07', visual: 'scale' },
 ];
 
-function StepVisual({ kind }: { kind: Step['visual'] }) {
+const ru = {
+  eyebrow: 'Процесс',
+  titlePre: 'Семь шагов',
+  titleEmphasis: 'к системе.',
+  subtitle: 'Каждый этап — самостоятельный результат. Цифры с первой недели.',
+  stepLabel: 'Шаг',
+  stageLabel: 'этап',
+  steps: [
+    { title: 'Анализ', desc: 'Погружение в нишу, продукт, аудиторию и текущие связки.', detail: 'Аудит рекламных кабинетов, посадок и контента. Формируем карту гипотез и приоритеты для запуска.' },
+    { title: 'Стратегия', desc: 'План роста на 3–6 месяцев с понятными KPI.', detail: 'Дорожная карта с приоритетами, бюджетами и KPI по каждому каналу. Не презентация — рабочий документ.' },
+    { title: 'Продюсирование', desc: 'Превращаем стратегию в готовый к запуску контент и креативы.', detail: 'Сценарии, съёмки, монтаж, продающие креативы и посадочные. Собираем всё, что нужно для старта рекламы.' },
+    { title: 'Запуск', desc: 'Креативы, посадки, кабинеты, аналитика — за 7–14 дней.', detail: 'Собираем всё в систему: рекламные кампании, UTM-разметку и дашборд аналитики.' },
+    { title: 'Оптимизация', desc: 'Еженедельный разбор: убираем слабое, усиливаем работающее.', detail: 'A/B тесты креативов и аудиторий. Перераспределение бюджетов на основе данных, а не ощущений.' },
+    { title: 'Систематизация маркетинга и продаж', desc: 'Связываем маркетинг с отделом продаж в единую систему.', detail: 'Выстраиваем воронку и контроль продаж, регламенты и отчётность. Маркетинг и продажи работают как один механизм.' },
+    { title: 'Масштабирование', desc: 'Увеличиваем бюджет на проверенных связках, без рывков.', detail: 'Подключаем новые каналы и форматы. Растём вместе с клиентом — от тестовых бюджетов до системного роста.' },
+  ] as StepCopy[],
+};
+const en: typeof ru = {
+  eyebrow: 'Process',
+  titlePre: 'Seven steps',
+  titleEmphasis: 'to a system.',
+  subtitle: 'Every stage is a standalone result. Numbers from the first week.',
+  stepLabel: 'Step',
+  stageLabel: 'stage',
+  steps: [
+    { title: 'Analysis', desc: 'Diving into your niche, product, audience and current setups.', detail: 'Audit of ad accounts, landing pages and content. We build a hypothesis map and launch priorities.' },
+    { title: 'Strategy', desc: 'A 3–6 month growth plan with clear KPIs.', detail: 'A roadmap with priorities, budgets and KPIs per channel. Not a presentation — a working document.' },
+    { title: 'Production', desc: 'We turn strategy into launch-ready content and creatives.', detail: 'Scripts, shooting, editing, selling creatives and landing pages. Everything needed to start advertising.' },
+    { title: 'Launch', desc: 'Creatives, landings, accounts, analytics — in 7–14 days.', detail: 'We assemble it into a system: ad campaigns, UTM tagging and an analytics dashboard.' },
+    { title: 'Optimisation', desc: 'Weekly review: we cut the weak, scale what works.', detail: 'A/B tests of creatives and audiences. Budget reallocation based on data, not feelings.' },
+    { title: 'Systemising marketing & sales', desc: 'We connect marketing with the sales team into one system.', detail: 'We build the funnel and sales control, playbooks and reporting. Marketing and sales work as one mechanism.' },
+    { title: 'Scaling', desc: 'We grow the budget on proven setups, without jumps.', detail: 'We add new channels and formats. We grow with the client — from test budgets to systematic growth.' },
+  ] as StepCopy[],
+};
+const tg: typeof ru = {
+  eyebrow: 'Раванд',
+  titlePre: 'Ҳафт қадам',
+  titleEmphasis: 'ба система.',
+  subtitle: 'Ҳар марҳила натиҷаи мустақил аст. Рақамҳо аз ҳафтаи аввал.',
+  stepLabel: 'Қадам',
+  stageLabel: 'марҳила',
+  steps: [
+    { title: 'Таҳлил', desc: 'Ғарқшавӣ дар ниша, маҳсулот, аудитория ва пайвастагиҳои ҷорӣ.', detail: 'Аудити кабинетҳои реклама, лендингҳо ва контент. Харитаи гипотезаҳо ва афзалиятҳоро барои оғоз месозем.' },
+    { title: 'Стратегия', desc: 'Нақшаи рушд барои 3–6 моҳ бо KPI-и фаҳмо.', detail: 'Нақшаи роҳ бо афзалиятҳо, буҷетҳо ва KPI барои ҳар канал. На презентатсия — ҳуҷҷати корӣ.' },
+    { title: 'Продюсерӣ', desc: 'Стратегияро ба контент ва креативҳои омода ба оғоз табдил медиҳем.', detail: 'Сенарияҳо, наворбардорӣ, монтаж, креативҳои фурӯшгар ва лендингҳо. Ҳама чизи барои оғози реклама лозимро ҷамъ мекунем.' },
+    { title: 'Оғоз', desc: 'Креативҳо, лендингҳо, кабинетҳо, аналитика — дар 7–14 рӯз.', detail: 'Ҳамаро ба система ҷамъ мекунем: маъракаҳои реклама, разметкаи UTM ва дашборди аналитика.' },
+    { title: 'Оптимизатсия', desc: 'Таҳлили ҳарҳафтаина: сустро мебардорем, кориро тақвият медиҳем.', detail: 'Тестҳои A/B-и креативҳо ва аудиторияҳо. Азнавтақсимкунии буҷет дар асоси маълумот, на эҳсосот.' },
+    { title: 'Системакунонии маркетинг ва фурӯш', desc: 'Маркетингро бо шуъбаи фурӯш ба як система пайваст мекунем.', detail: 'Воронка ва назорати фурӯш, регламентҳо ва ҳисоботро месозем. Маркетинг ва фурӯш ҳамчун як механизм кор мекунанд.' },
+    { title: 'Миқёскунонӣ', desc: 'Буҷетро дар пайвастагиҳои санҷидашуда зиёд мекунем, бе ҷаҳишҳо.', detail: 'Каналҳо ва форматҳои навро пайваст мекунем. Бо муштарӣ якҷоя рушд мекунем — аз буҷетҳои санҷишӣ то рушди системавӣ.' },
+  ] as StepCopy[],
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
+
+function StepVisual({ kind }: { kind: VisualKind }) {
   switch (kind) {
     case 'analyze':
       return (
@@ -148,8 +157,8 @@ function StepVisual({ kind }: { kind: Step['visual'] }) {
           <circle cx="138" cy="64" r="20" fill="none" stroke="#FC9603" strokeWidth="1.2" />
           <circle cx="138" cy="64" r="4" fill="#FC9603" />
           <line x1="82" y1="64" x2="118" y2="64" stroke="rgba(212,236,76,0.6)" strokeWidth="1" strokeDasharray="3 4" />
-          <text x="62" y="100" fill="rgba(245,241,250,0.5)" fontSize="7" letterSpacing="1.5" fontFamily="monospace" textAnchor="middle">МАРКЕТИНГ</text>
-          <text x="138" y="100" fill="rgba(245,241,250,0.5)" fontSize="7" letterSpacing="1.5" fontFamily="monospace" textAnchor="middle">ПРОДАЖИ</text>
+          <text x="62" y="100" fill="rgba(245,241,250,0.5)" fontSize="7" letterSpacing="1.5" fontFamily="monospace" textAnchor="middle">MARKETING</text>
+          <text x="138" y="100" fill="rgba(245,241,250,0.5)" fontSize="7" letterSpacing="1.5" fontFamily="monospace" textAnchor="middle">SALES</text>
         </svg>
       );
     case 'scale':
@@ -171,6 +180,8 @@ function StepVisual({ kind }: { kind: Step['visual'] }) {
 }
 
 export function ProcessSection() {
+  const t = useCopy(COPY);
+  const STEPS: Step[] = STEP_META.map((m, i) => ({ ...m, ...t.steps[i] }));
   const [active, setActive] = useState(0);
   const [mobileOpen, setMobileOpen] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -229,20 +240,20 @@ export function ProcessSection() {
         <div className="mb-16 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_2fr] lg:items-end lg:mb-20">
           <div>
             <Reveal>
-              <p className="text-eyebrow uppercase text-brand-orange">Процесс</p>
+              <p className="text-eyebrow uppercase text-brand-orange">{t.eyebrow}</p>
             </Reveal>
             <Reveal delay={0.06}>
               <h2 className="mt-6 max-w-[14ch] font-display text-hero-sm font-extrabold">
-                Семь шагов{' '}
+                {t.titlePre}{' '}
                 <span className="font-serif italic font-normal text-lime-grad">
-                  к&nbsp;системе.
+                  {t.titleEmphasis}
                 </span>
               </h2>
             </Reveal>
           </div>
           <Reveal delay={0.12}>
             <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              Каждый этап — самостоятельный результат. Цифры с первой недели.
+              {t.subtitle}
             </p>
           </Reveal>
         </div>
@@ -265,10 +276,10 @@ export function ProcessSection() {
                     transition={{ duration: 0.3 }}
                     className="font-mono text-[11px] uppercase tracking-[0.32em] text-brand-orange"
                   >
-                    Шаг {current.n} / 07
+                    {t.stepLabel} {current.n} / 07
                   </motion.span>
                 </AnimatePresence>
-                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">этап</span>
+                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">{t.stageLabel}</span>
               </div>
 
               {/* Visual */}

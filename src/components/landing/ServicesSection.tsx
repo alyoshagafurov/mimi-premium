@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Reveal } from '@/components/ui/Reveal';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
 
 /**
  * Services — responsive interactive section.
@@ -16,80 +18,90 @@ import { Reveal } from '@/components/ui/Reveal';
  *     and benefits inside the accordion. No sticky card.
  */
 
-type Service = {
-  n: string;
-  title: string;
-  sub: string;
-  description: string;
-  benefits: string[];
-  visual: 'target' | 'camera' | 'strategy' | 'brand' | 'funnel' | 'web' | 'sales';
-};
+type VisualKind = 'target' | 'camera' | 'strategy' | 'brand' | 'funnel' | 'web' | 'sales';
+type ServiceCopy = { title: string; sub: string; description: string; benefits: string[] };
+type Service = ServiceCopy & { n: string; visual: VisualKind };
 
-const SERVICES: Service[] = [
-  {
-    n: '01',
-    title: 'Таргетированная реклама',
-    sub: 'Meta · Instagram · Facebook',
-    description:
-      'Запускаем эффективную рекламу, которая окупает сама себя. Каждый сомони трафика работает на бизнес-модель, а не на CTR.',
-    benefits: ['Сквозная аналитика', 'A/B тестирование креативов', 'Снижение CPL до 40%'],
-    visual: 'target',
-  },
-  {
-    n: '02',
-    title: 'Контент-съёмка',
-    sub: 'Reels · съёмка · монтаж',
-    description:
-      'Премиальная продакшн-команда. Снимаем продающий контент, который работает на продажи и формирует образ бренда.',
-    benefits: ['Сценарии под платформы', 'In-house продакшн', 'Контент направления на месяц для СММ'],
-    visual: 'camera',
-  },
-  {
-    n: '03',
-    title: 'Маркетинговая стратегия',
-    sub: 'Система роста бизнеса',
-    description:
-      'Глубокая диагностика, позиционирование и дорожная карта на 3–12 месяцев. Стратегия, как инструмент для продвижения, а не презентация.',
-    benefits: ['Анализ ниши и конкурентов', 'Воронка под бизнес-модель', 'Классический и digital маркетинг'],
-    visual: 'strategy',
-  },
-  {
-    n: '04',
-    title: 'Брендинг',
-    sub: 'Позиционирование и визуал',
-    description:
-      'Собираем айдентику, тон голоса и визуальные коды. Бренд, который выделяется и продаёт без лишних слов.',
-    benefits: ['Logo & визуальная система', 'Brandbook + дизайн мерча', 'Tone of voice'],
-    visual: 'brand',
-  },
-  {
-    n: '05',
-    title: 'Воронки и автоматизация',
-    sub: 'Воронки · лидогенерация',
-    description:
-      'Строим лидген-машины: от первого касания до повторных продаж. Воронки, чат-боты, прогрев и сегментация — всё связано.',
-    benefits: ['Построение воронки продаж', 'Чат-боты и автоворонки', 'Сегментация и реактивация'],
-    visual: 'funnel',
-  },
-  {
-    n: '06',
-    title: 'Разработка сайтов',
-    sub: 'Landing · premium websites',
-    description:
-      'Сайты, которые конвертируют. От продающего лендинга до digital-флагмана бренда — с анимацией и быстрой загрузкой.',
-    benefits: ['Next.js · современный стек', 'Score 95+ по Lighthouse', 'Анимация уровня премиум'],
-    visual: 'web',
-  },
-  {
-    n: '07',
-    title: 'Мастер-классы по продажам',
-    sub: 'Обучение отдела продаж',
-    description:
-      'Прокачиваем отдел продаж: скрипты, работа с возражениями, дожим и контроль. Чтобы заявки от маркетинга превращались в деньги.',
-    benefits: ['Скрипты и работа с возражениями', 'Разбор реальных звонков', 'Контроль и регламенты продаж'],
-    visual: 'sales',
-  },
+const SERVICE_META: { n: string; visual: VisualKind }[] = [
+  { n: '01', visual: 'target' },
+  { n: '02', visual: 'camera' },
+  { n: '03', visual: 'strategy' },
+  { n: '04', visual: 'brand' },
+  { n: '05', visual: 'funnel' },
+  { n: '06', visual: 'web' },
+  { n: '07', visual: 'sales' },
 ];
+
+const ru = {
+  eyebrow: 'Услуги',
+  titlePre: 'Полный',
+  titleEmphasis: 'цикл.',
+  subtitle: 'Семь направлений, одна система. Подбираем под цели бизнеса, масштаб и бюджет.',
+  nicheLabel: 'направление',
+  services: [
+    { title: 'Таргетированная реклама', sub: 'Meta · Instagram · Facebook', description: 'Запускаем эффективную рекламу, которая окупает сама себя. Каждый сомони трафика работает на бизнес-модель, а не на CTR.', benefits: ['Сквозная аналитика', 'A/B тестирование креативов', 'Снижение CPL до 40%'] },
+    { title: 'Контент-съёмка', sub: 'Reels · съёмка · монтаж', description: 'Премиальная продакшн-команда. Снимаем продающий контент, который работает на продажи и формирует образ бренда.', benefits: ['Сценарии под платформы', 'In-house продакшн', 'Контент направления на месяц для СММ'] },
+    { title: 'Маркетинговая стратегия', sub: 'Система роста бизнеса', description: 'Глубокая диагностика, позиционирование и дорожная карта на 3–12 месяцев. Стратегия, как инструмент для продвижения, а не презентация.', benefits: ['Анализ ниши и конкурентов', 'Воронка под бизнес-модель', 'Классический и digital маркетинг'] },
+    { title: 'Брендинг', sub: 'Позиционирование и визуал', description: 'Собираем айдентику, тон голоса и визуальные коды. Бренд, который выделяется и продаёт без лишних слов.', benefits: ['Logo & визуальная система', 'Brandbook + дизайн мерча', 'Tone of voice'] },
+    { title: 'Воронки и автоматизация', sub: 'Воронки · лидогенерация', description: 'Строим лидген-машины: от первого касания до повторных продаж. Воронки, чат-боты, прогрев и сегментация — всё связано.', benefits: ['Построение воронки продаж', 'Чат-боты и автоворонки', 'Сегментация и реактивация'] },
+    { title: 'Разработка сайтов', sub: 'Landing · premium websites', description: 'Сайты, которые конвертируют. От продающего лендинга до digital-флагмана бренда — с анимацией и быстрой загрузкой.', benefits: ['Next.js · современный стек', 'Score 95+ по Lighthouse', 'Анимация уровня премиум'] },
+    { title: 'Мастер-классы по продажам', sub: 'Обучение отдела продаж', description: 'Прокачиваем отдел продаж: скрипты, работа с возражениями, дожим и контроль. Чтобы заявки от маркетинга превращались в деньги.', benefits: ['Скрипты и работа с возражениями', 'Разбор реальных звонков', 'Контроль и регламенты продаж'] },
+  ] as ServiceCopy[],
+  alacarte: {
+    eyebrow: 'Отдельные услуги',
+    pre: 'Заказать',
+    emphasis: 'поштучно.',
+    sub: 'Нужно что-то одно, без пакета? Берём отдельными задачами.',
+    items: ['Создание сайтов', 'Создание брендбуков', 'Создание скриптов продаж', 'Дизайн: баннеры, визитки и др.', 'Мастер-классы по продажам'],
+  },
+};
+const en: typeof ru = {
+  eyebrow: 'Services',
+  titlePre: 'Full',
+  titleEmphasis: 'cycle.',
+  subtitle: 'Seven directions, one system. Tailored to your goals, scale and budget.',
+  nicheLabel: 'direction',
+  services: [
+    { title: 'Targeted advertising', sub: 'Meta · Instagram · Facebook', description: 'We launch effective advertising that pays for itself. Every somoni of traffic works for the business model, not for CTR.', benefits: ['End-to-end analytics', 'A/B creative testing', 'CPL reduced by up to 40%'] },
+    { title: 'Content production', sub: 'Reels · shooting · editing', description: 'A premium production team. We shoot selling content that drives sales and builds the brand image.', benefits: ['Platform-specific scripts', 'In-house production', 'Monthly content plan for SMM'] },
+    { title: 'Marketing strategy', sub: 'Business growth system', description: 'Deep diagnostics, positioning and a 3–12 month roadmap. Strategy as a tool for growth, not a presentation.', benefits: ['Niche & competitor analysis', 'Funnel for your business model', 'Classic & digital marketing'] },
+    { title: 'Branding', sub: 'Positioning & visuals', description: 'We build the identity, tone of voice and visual codes. A brand that stands out and sells without extra words.', benefits: ['Logo & visual system', 'Brandbook + merch design', 'Tone of voice'] },
+    { title: 'Funnels & automation', sub: 'Funnels · lead generation', description: 'We build lead-gen machines: from first touch to repeat sales. Funnels, chatbots, nurturing and segmentation — all connected.', benefits: ['Sales funnel build', 'Chatbots & auto-funnels', 'Segmentation & reactivation'] },
+    { title: 'Web development', sub: 'Landing · premium websites', description: 'Websites that convert. From a selling landing page to a brand’s digital flagship — with animation and fast loading.', benefits: ['Next.js · modern stack', 'Lighthouse score 95+', 'Premium-level animation'] },
+    { title: 'Sales workshops', sub: 'Sales team training', description: 'We level up your sales team: scripts, objection handling, closing and control. So marketing leads turn into money.', benefits: ['Scripts & objection handling', 'Real call reviews', 'Sales control & playbooks'] },
+  ] as ServiceCopy[],
+  alacarte: {
+    eyebrow: 'À la carte',
+    pre: 'Order',
+    emphasis: 'piece by piece.',
+    sub: 'Need just one thing, without a package? We take it as a standalone task.',
+    items: ['Website creation', 'Brandbook creation', 'Sales script creation', 'Design: banners, cards, etc.', 'Sales workshops'],
+  },
+};
+const tg: typeof ru = {
+  eyebrow: 'Хидматҳо',
+  titlePre: 'Сикли',
+  titleEmphasis: 'пурра.',
+  subtitle: 'Ҳафт самт, як система. Мувофиқи ҳадаф, миқёс ва буҷети бизнес интихоб мекунем.',
+  nicheLabel: 'самт',
+  services: [
+    { title: 'Рекламаи мақсаднок', sub: 'Meta · Instagram · Facebook', description: 'Рекламаи самаранокеро роҳандозӣ мекунем, ки худро мепӯшонад. Ҳар сомонии трафик ба модели бизнес кор мекунад, на ба CTR.', benefits: ['Таҳлили пурра', 'Тестбандии A/B-и креативҳо', 'Кам кардани CPL то 40%'] },
+    { title: 'Гирифтани контент', sub: 'Reels · наворбардорӣ · монтаж', description: 'Дастаи продакшни сатҳи баланд. Контенти фурӯшгареро наворбардорӣ мекунем, ки фурӯшро зиёд карда, симои брендро месозад.', benefits: ['Сенарияҳо барои платформаҳо', 'Продакшни дохилӣ', 'Нақшаи контент барои СММ дар як моҳ'] },
+    { title: 'Стратегияи маркетингӣ', sub: 'Системаи рушди бизнес', description: 'Ташхиси амиқ, мавқеъгузорӣ ва нақшаи роҳ барои 3–12 моҳ. Стратегия ҳамчун воситаи пешбарӣ, на презентатсия.', benefits: ['Таҳлили ниша ва рақибон', 'Воронка барои модели бизнес', 'Маркетинги классикӣ ва рақамӣ'] },
+    { title: 'Брендинг', sub: 'Мавқеъгузорӣ ва визуал', description: 'Айдентика, оҳанги овоз ва кодҳои визуалиро месозем. Бренде, ки фарқ мекунад ва бе суханони зиёдатӣ мефурӯшад.', benefits: ['Лого ва системаи визуалӣ', 'Брендбук + дизайни мерч', 'Оҳанги овоз'] },
+    { title: 'Воронкаҳо ва автоматизатсия', sub: 'Воронкаҳо · лидгенератсия', description: 'Мошинҳои лидгенро месозем: аз тамоси аввал то фурӯшҳои такрорӣ. Воронкаҳо, чат-ботҳо, гармкунӣ ва сегментатсия — ҳама пайваст.', benefits: ['Сохтани воронкаи фурӯш', 'Чат-ботҳо ва автоворонкаҳо', 'Сегментатсия ва реактиватсия'] },
+    { title: 'Сохтани сайтҳо', sub: 'Landing · premium websites', description: 'Сайтҳое, ки конверсия медиҳанд. Аз лендинги фурӯшгар то парчами рақамии бренд — бо анимация ва боркунии тез.', benefits: ['Next.js · стеки муосир', 'Score 95+ дар Lighthouse', 'Анимацияи сатҳи премиум'] },
+    { title: 'Мастер-классҳои фурӯш', sub: 'Омӯзиши шуъбаи фурӯш', description: 'Шуъбаи фурӯшро тақвият медиҳем: скриптҳо, кор бо эътирозҳо, ниҳоӣ ва назорат. То заявкаҳои маркетинг ба пул табдил ёбанд.', benefits: ['Скриптҳо ва кор бо эътирозҳо', 'Таҳлили зангҳои воқеӣ', 'Назорат ва регламенти фурӯш'] },
+  ] as ServiceCopy[],
+  alacarte: {
+    eyebrow: 'Хидматҳои алоҳида',
+    pre: 'Фармоиш',
+    emphasis: 'донагӣ.',
+    sub: 'Танҳо як чиз лозим аст, бе баста? Ҳамчун вазифаи алоҳида қабул мекунем.',
+    items: ['Сохтани сайтҳо', 'Сохтани брендбукҳо', 'Сохтани скриптҳои фурӯш', 'Дизайн: баннерҳо, визиткаҳо ва ғ.', 'Мастер-классҳои фурӯш'],
+  },
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 /* ─── abstract visual per service ─── */
 function Visual({ kind }: { kind: Service['visual'] }) {
@@ -182,8 +194,10 @@ function Visual({ kind }: { kind: Service['visual'] }) {
 }
 
 export function ServicesSection() {
+  const t = useCopy(COPY);
   const [active, setActive] = useState(0);
   const [mobileOpen, setMobileOpen] = useState<number | null>(null);
+  const SERVICES: Service[] = SERVICE_META.map((m, i) => ({ ...m, ...t.services[i] }));
   const current = SERVICES[active];
 
   return (
@@ -193,18 +207,18 @@ export function ServicesSection() {
         <div className="mb-14 grid grid-cols-1 gap-8 lg:mb-20 lg:grid-cols-[1fr_2fr] lg:items-end">
           <div>
             <Reveal>
-              <p className="text-eyebrow uppercase text-brand-orange">Услуги</p>
+              <p className="text-eyebrow uppercase text-brand-orange">{t.eyebrow}</p>
             </Reveal>
             <Reveal delay={0.06}>
               <h2 className="mt-5 max-w-[12ch] font-display text-hero-sm font-extrabold text-light">
-                Полный{' '}
-                <span className="font-serif italic font-normal text-lime-grad">цикл.</span>
+                {t.titlePre}{' '}
+                <span className="font-serif italic font-normal text-lime-grad">{t.titleEmphasis}</span>
               </h2>
             </Reveal>
           </div>
           <Reveal delay={0.12}>
             <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              Семь направлений, одна система. Подбираем под цели бизнеса, масштаб и бюджет.
+              {t.subtitle}
             </p>
           </Reveal>
         </div>
@@ -230,7 +244,7 @@ export function ServicesSection() {
                     {current.n} / 07
                   </motion.span>
                 </AnimatePresence>
-                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">направление</span>
+                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">{t.nicheLabel}</span>
               </div>
 
               <div className="relative mt-8 aspect-[5/3] w-full overflow-hidden rounded-2xl border border-white/[0.05] bg-ink/40">
@@ -385,24 +399,18 @@ export function ServicesSection() {
           <div className="mt-16 overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-white/[0.01] p-8 lg:mt-20 lg:p-10">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-eyebrow uppercase text-brand-orange">Отдельные услуги</p>
+                <p className="text-eyebrow uppercase text-brand-orange">{t.alacarte.eyebrow}</p>
                 <h3 className="mt-3 font-display text-2xl font-extrabold text-light lg:text-3xl">
-                  Заказать{' '}
-                  <span className="font-serif italic font-normal text-lime-grad">поштучно.</span>
+                  {t.alacarte.pre}{' '}
+                  <span className="font-serif italic font-normal text-lime-grad">{t.alacarte.emphasis}</span>
                 </h3>
               </div>
               <p className="max-w-md text-sm leading-relaxed text-light/55 lg:text-right">
-                Нужно что-то одно, без пакета? Берём отдельными задачами.
+                {t.alacarte.sub}
               </p>
             </div>
             <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                'Создание сайтов',
-                'Создание брендбуков',
-                'Создание скриптов продаж',
-                'Дизайн: баннеры, визитки и др.',
-                'Мастер-классы по продажам',
-              ].map((item) => (
+              {t.alacarte.items.map((item) => (
                 <li
                   key={item}
                   className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-ink/40 px-5 py-4 text-sm text-light/80 transition-colors hover:border-brand-lime/40 hover:text-light"

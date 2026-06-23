@@ -3,8 +3,37 @@
 import { Reveal } from '@/components/ui/Reveal';
 import { MagneticButton } from '@/components/ui/MagneticButton';
 import { ContactForm } from './ContactForm';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
+
+const ru = {
+  eyebrow: 'Финал',
+  titlePre: 'Готовы к ',
+  titleEmphasis: 'системному',
+  titlePost: 'росту?',
+  subtitle: 'Покажем точки роста в вашей нише за 48 часов. Без обязательств и продающих звонков.',
+  cta: 'Получить аудит',
+};
+const en: typeof ru = {
+  eyebrow: 'Final',
+  titlePre: 'Ready for ',
+  titleEmphasis: 'systematic',
+  titlePost: 'growth?',
+  subtitle: 'We’ll show the growth points in your niche within 48 hours. No obligations, no sales calls.',
+  cta: 'Get an audit',
+};
+const tg: typeof ru = {
+  eyebrow: 'Финал',
+  titlePre: 'Ба рушди ',
+  titleEmphasis: 'системавӣ',
+  titlePost: 'тайёред?',
+  subtitle: 'Нуқтаҳои рушди нишаи шуморо дар 48 соат нишон медиҳем. Бе уҳдадорӣ ва зангҳои фурӯшгар.',
+  cta: 'Гирифтани аудит',
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 export function FinalCTA() {
+  const t = useCopy(COPY);
   return (
     <section id="cta" className="relative w-full overflow-hidden px-6 py-section lg:px-12">
       {/* Soft cinematic vignette */}
@@ -15,26 +44,25 @@ export function FinalCTA() {
       <div className="relative mx-auto grid max-w-[1500px] grid-cols-1 gap-16 lg:grid-cols-[1fr_1fr] lg:items-center">
         <div>
           <Reveal>
-            <p className="text-eyebrow uppercase text-brand-orange">Финал</p>
+            <p className="text-eyebrow uppercase text-brand-orange">{t.eyebrow}</p>
           </Reveal>
           <Reveal delay={0.06}>
             <h2 className="mt-8 max-w-[16ch] font-display text-hero font-extrabold leading-[1] text-light">
-              Готовы к&nbsp;
+              {t.titlePre}
               <span className="font-serif italic font-normal text-lime-grad">
-                системному
+                {t.titleEmphasis}
               </span>{' '}
-              росту?
+              {t.titlePost}
             </h2>
           </Reveal>
           <Reveal delay={0.18}>
             <p className="mt-8 max-w-md text-base leading-relaxed text-light/60">
-              Покажем точки роста в вашей нише за 48 часов. Без обязательств и
-              продающих звонков.
+              {t.subtitle}
             </p>
           </Reveal>
           <Reveal delay={0.28} className="mt-10 flex flex-wrap items-center gap-5">
             <MagneticButton href="#cta-form" variant="lime" arrow>
-              Получить аудит
+              {t.cta}
             </MagneticButton>
             <a
               href="https://instagram.com/mimi.agency.tj"

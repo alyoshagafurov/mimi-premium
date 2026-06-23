@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Reveal } from '@/components/ui/Reveal';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
 
 /**
  * FAQ — responsive interactive section.
@@ -15,47 +17,60 @@ import { Reveal } from '@/components/ui/Reveal';
  *     Single column accordion — tap a question to expand the answer inline.
  */
 
-type Item = {
-  n: string;
-  q: string;
-  a: string;
-  tag: string;
-};
+type Item = { n: string; q: string; a: string; tag: string };
+type ItemCopy = { q: string; a: string; tag: string };
+const ITEM_N = ['01', '02', '03', '04', '05'];
 
-const ITEMS: Item[] = [
-  {
-    n: '01',
-    q: 'Сколько занимает запуск?',
-    a: '7–14 дней в зависимости от тарифа и готовности материалов. PRO — быстрее, ELITE — полная стратегия и брендинг до старта. Точный план даём на брифе.',
-    tag: 'Сроки',
-  },
-  {
-    n: '02',
-    q: 'Какие гарантии вы даёте?',
-    a: 'Мы не обещаем «лиды в первый день». Обещаем прозрачность: вы видите все цифры в личном кабинете и каждую неделю получаете разбор гипотез и итераций.',
-    tag: 'Гарантии',
-  },
-  {
-    n: '03',
-    q: 'Можно начать с одного направления?',
-    a: 'Да. PRO включает только таргет + аналитику. STANDART и ELITE — система, где работают все каналы вместе и усиливают друг друга.',
-    tag: 'Форматы',
-  },
-  {
-    n: '04',
-    q: 'Кому вы НЕ подходите?',
-    a: 'Тем, кто хочет «магический рост» без перестройки воронки и контента. Мы строим систему — это требует включённости с обеих сторон и горизонта 3+ месяца.',
-    tag: 'Ожидания',
-  },
-  {
-    n: '05',
-    q: 'Что внутри личного кабинета?',
-    a: 'Дашборд с KPI, ROMI, воронкой, лидами и активными кампаниями. Обновляется по мере поступления метрик. Доступ — после оплаты тарифа.',
-    tag: 'Продукт',
-  },
-];
+const ru = {
+  titlePre: 'Частые',
+  titleEmphasis: 'вопросы.',
+  subtitle: 'Если остался вопрос — напишите нам, ответим лично.',
+  answerLabel: 'ответ',
+  stillQuestion: 'остался вопрос?',
+  whatsapp: 'написать в WhatsApp →',
+  items: [
+    { q: 'Сколько занимает запуск?', a: '7–14 дней в зависимости от тарифа и готовности материалов. PRO — быстрее, ELITE — полная стратегия и брендинг до старта. Точный план даём на брифе.', tag: 'Сроки' },
+    { q: 'Какие гарантии вы даёте?', a: 'Мы не обещаем «лиды в первый день». Обещаем прозрачность: вы видите все цифры в личном кабинете и каждую неделю получаете разбор гипотез и итераций.', tag: 'Гарантии' },
+    { q: 'Можно начать с одного направления?', a: 'Да. PRO включает только таргет + аналитику. STANDART и ELITE — система, где работают все каналы вместе и усиливают друг друга.', tag: 'Форматы' },
+    { q: 'Кому вы НЕ подходите?', a: 'Тем, кто хочет «магический рост» без перестройки воронки и контента. Мы строим систему — это требует включённости с обеих сторон и горизонта 3+ месяца.', tag: 'Ожидания' },
+    { q: 'Что внутри личного кабинета?', a: 'Дашборд с KPI, ROMI, воронкой, лидами и активными кампаниями. Обновляется по мере поступления метрик. Доступ — после оплаты тарифа.', tag: 'Продукт' },
+  ] as ItemCopy[],
+};
+const en: typeof ru = {
+  titlePre: 'Frequent',
+  titleEmphasis: 'questions.',
+  subtitle: 'Still have a question? Write to us and we’ll answer personally.',
+  answerLabel: 'answer',
+  stillQuestion: 'still have a question?',
+  whatsapp: 'message on WhatsApp →',
+  items: [
+    { q: 'How long does launch take?', a: '7–14 days depending on the plan and readiness of materials. PRO — faster, ELITE — full strategy and branding before launch. We give an exact plan at the brief.', tag: 'Timing' },
+    { q: 'What guarantees do you give?', a: 'We don’t promise «leads on day one». We promise transparency: you see all the numbers in your dashboard and get a weekly review of hypotheses and iterations.', tag: 'Guarantees' },
+    { q: 'Can we start with one direction?', a: 'Yes. PRO includes only targeting + analytics. STANDART and ELITE — a system where all channels work together and reinforce each other.', tag: 'Formats' },
+    { q: 'Who are you NOT a fit for?', a: 'Those who want «magic growth» without rebuilding the funnel and content. We build a system — that requires involvement from both sides and a 3+ month horizon.', tag: 'Expectations' },
+    { q: 'What’s inside the dashboard?', a: 'A dashboard with KPIs, ROMI, funnel, leads and active campaigns. Updated as metrics come in. Access — after paying for a plan.', tag: 'Product' },
+  ] as ItemCopy[],
+};
+const tg: typeof ru = {
+  titlePre: 'Саволҳои',
+  titleEmphasis: 'зуд-зуд.',
+  subtitle: 'Агар саволе монд — ба мо нависед, шахсан ҷавоб медиҳем.',
+  answerLabel: 'ҷавоб',
+  stillQuestion: 'саволе монд?',
+  whatsapp: 'навиштан дар WhatsApp →',
+  items: [
+    { q: 'Оғоз чӣ қадар вақт мегирад?', a: '7–14 рӯз вобаста ба тариф ва омодагии маводҳо. PRO — тезтар, ELITE — стратегияи пурра ва брендинг то оғоз. Нақшаи дақиқро дар бриф медиҳем.', tag: 'Мӯҳлат' },
+    { q: 'Шумо чӣ кафолат медиҳед?', a: 'Мо «лид дар рӯзи аввал»-ро ваъда намедиҳем. Шаффофиятро ваъда медиҳем: шумо ҳамаи рақамҳоро дар кабинети шахсӣ мебинед ва ҳар ҳафта таҳлили гипотезаҳо ва итератсияҳоро мегиред.', tag: 'Кафолат' },
+    { q: 'Бо як самт оғоз кардан мумкин аст?', a: 'Бале. PRO танҳо таргет + аналитикаро дар бар мегирад. STANDART ва ELITE — система, ки дар он ҳамаи каналҳо якҷоя кор карда, ҳамдигарро тақвият медиҳанд.', tag: 'Форматҳо' },
+    { q: 'Шумо ба КӢ мувофиқ НЕСТЕД?', a: 'Ба онҳое, ки «рушди ҷодугарона»-ро бе аз нав сохтани воронка ва контент мехоҳанд. Мо системаро месозем — ин иштироки ҳарду тараф ва уфуқи 3+ моҳро талаб мекунад.', tag: 'Интизориҳо' },
+    { q: 'Дар дохили кабинети шахсӣ чӣ ҳаст?', a: 'Дашборд бо KPI, ROMI, воронка, лидҳо ва маъракаҳои фаъол. Бо воридшавии метрикаҳо нав мешавад. Дастрасӣ — пас аз пардохти тариф.', tag: 'Маҳсулот' },
+  ] as ItemCopy[],
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 export function FAQSection() {
+  const t = useCopy(COPY);
+  const ITEMS: Item[] = t.items.map((it, i) => ({ ...it, n: ITEM_N[i] }));
   const [active, setActive] = useState(0);
   const [mobileOpen, setMobileOpen] = useState<number | null>(0);
   const current = ITEMS[active];
@@ -71,14 +86,14 @@ export function FAQSection() {
             </Reveal>
             <Reveal delay={0.06}>
               <h2 className="mt-5 max-w-[12ch] font-display text-hero-sm font-extrabold">
-                Частые{' '}
-                <span className="font-serif italic font-normal text-lime-grad">вопросы.</span>
+                {t.titlePre}{' '}
+                <span className="font-serif italic font-normal text-lime-grad">{t.titleEmphasis}</span>
               </h2>
             </Reveal>
           </div>
           <Reveal delay={0.12}>
             <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              Если остался вопрос — напишите нам, ответим лично.
+              {t.subtitle}
             </p>
           </Reveal>
         </div>
@@ -104,7 +119,7 @@ export function FAQSection() {
                     {current.n} / 05 · {current.tag}
                   </motion.span>
                 </AnimatePresence>
-                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">ответ</span>
+                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">{t.answerLabel}</span>
               </div>
 
               <div className="relative mt-8 min-h-[280px]">
@@ -126,14 +141,14 @@ export function FAQSection() {
               </div>
 
               <div className="relative mt-10 flex items-center justify-between border-t border-white/[0.06] pt-6">
-                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">остался вопрос?</span>
+                <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">{t.stillQuestion}</span>
                 <a
                   href="https://wa.me/992070217755"
                   target="_blank"
                   rel="noreferrer"
                   className="text-[11px] uppercase tracking-[0.24em] text-brand-lime transition-colors hover:text-brand-limeSoft"
                 >
-                  написать в WhatsApp →
+                  {t.whatsapp}
                 </a>
               </div>
             </div>

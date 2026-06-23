@@ -4,15 +4,35 @@ import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { Reveal } from '@/components/ui/Reveal';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
 
 /**
  * About — signature animation: word-by-word reveal driven by scroll position.
  * Each word lifts from black to full opacity as it passes the scroll midpoint.
  */
-const LINE_A = 'Мы не запускаем рекламу.';
-const LINE_B = 'Мы строим систему роста.';
+const ru = {
+  eyebrow: 'О нас',
+  lineA: 'Мы не запускаем рекламу.',
+  lineB: 'Мы строим систему роста.',
+  para: 'MIMI помогает бизнесу избавиться от хаоса в маркетинге и превратить продвижение в понятную систему результата.',
+};
+const en: typeof ru = {
+  eyebrow: 'About',
+  lineA: 'We don’t just run ads.',
+  lineB: 'We build a growth system.',
+  para: 'MIMI helps businesses get rid of marketing chaos and turn promotion into a clear system of results.',
+};
+const tg: typeof ru = {
+  eyebrow: 'Дар бораи мо',
+  lineA: 'Мо танҳо реклама роҳандозӣ намекунем.',
+  lineB: 'Мо системаи рушдро месозем.',
+  para: 'MIMI ба бизнес кӯмак мекунад, ки аз бесарусомонии маркетингӣ халос шуда, пешбариро ба системаи фаҳмои натиҷа табдил диҳад.',
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 export function AboutSection() {
+  const t = useCopy(COPY);
   const sectionRef = useRef<HTMLElement>(null);
   const wordsRef = useRef<HTMLSpanElement[]>([]);
 
@@ -63,19 +83,18 @@ export function AboutSection() {
 
       <div className="relative mx-auto max-w-4xl text-left md:text-center">
         <Reveal>
-          <p className="text-[10px] uppercase tracking-[0.5em] text-brand-orange">О нас</p>
+          <p className="text-[10px] uppercase tracking-[0.5em] text-brand-orange">{t.eyebrow}</p>
         </Reveal>
 
         <h2 className="mt-12 font-display text-hero-sm font-extrabold leading-[1.05] tracking-tight">
-          {words(LINE_A, 0)}
+          {words(t.lineA, 0)}
           <br />
-          {words(LINE_B, LINE_A.split(' ').length, true)}
+          {words(t.lineB, t.lineA.split(' ').length, true)}
         </h2>
 
         <Reveal delay={0.2}>
           <p className="mx-auto mt-12 max-w-xl text-lg leading-relaxed text-light/65 md:text-xl">
-            MIMI помогает бизнесу избавиться от хаоса в маркетинге и превратить
-            продвижение в понятную систему результата.
+            {t.para}
           </p>
         </Reveal>
       </div>

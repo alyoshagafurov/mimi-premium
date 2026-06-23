@@ -7,22 +7,66 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from './Logo';
 import { LangSwitcher } from './LangSwitcher';
 import { cn } from '@/lib/utils';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
 
 type NavItem = { href: string; label: string; n: string };
 
-const NAV: NavItem[] = [
-  { href: '/', label: 'Главная', n: '01' },
-  { href: '/#services', label: 'Услуги', n: '02' },
-  { href: '/#cases', label: 'Кейсы', n: '03' },
-  { href: '/pricing', label: 'Тарифы', n: '04' },
-  { href: '/#faq', label: 'FAQ', n: '05' },
-  { href: '/contacts', label: 'Контакты', n: '06' },
-];
+const ru = {
+  nav: { home: 'Главная', services: 'Услуги', cases: 'Кейсы', pricing: 'Тарифы', faq: 'FAQ', contacts: 'Контакты' },
+  cabinet: 'Кабинет',
+  logout: 'Выйти',
+  login: 'Вход',
+  loginCabinet: 'Вход в кабинет',
+  cta: 'Получить аудит',
+  openCabinet: 'Открыть кабинет',
+  loggedAs: 'Вы вошли как',
+  menu: 'меню',
+  openMenu: 'Открыть меню',
+  closeMenu: 'Закрыть меню',
+};
+const en: typeof ru = {
+  nav: { home: 'Home', services: 'Services', cases: 'Cases', pricing: 'Pricing', faq: 'FAQ', contacts: 'Contacts' },
+  cabinet: 'Dashboard',
+  logout: 'Sign out',
+  login: 'Sign in',
+  loginCabinet: 'Sign in',
+  cta: 'Get an audit',
+  openCabinet: 'Open dashboard',
+  loggedAs: 'Signed in as',
+  menu: 'menu',
+  openMenu: 'Open menu',
+  closeMenu: 'Close menu',
+};
+const tg: typeof ru = {
+  nav: { home: 'Асосӣ', services: 'Хидматҳо', cases: 'Кейсҳо', pricing: 'Тарифҳо', faq: 'Саволҳо', contacts: 'Тамос' },
+  cabinet: 'Кабинет',
+  logout: 'Баромад',
+  login: 'Воридшавӣ',
+  loginCabinet: 'Ворид шудан',
+  cta: 'Гирифтани аудит',
+  openCabinet: 'Кушодани кабинет',
+  loggedAs: 'Шумо ворид шудед ҳамчун',
+  menu: 'меню',
+  openMenu: 'Кушодани меню',
+  closeMenu: 'Бастани меню',
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 export function TopNav({ transparent = false }: { transparent?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
+  const t = useCopy(COPY);
+
+  const NAV: NavItem[] = [
+    { href: '/', label: t.nav.home, n: '01' },
+    { href: '/#services', label: t.nav.services, n: '02' },
+    { href: '/#cases', label: t.nav.cases, n: '03' },
+    { href: '/pricing', label: t.nav.pricing, n: '04' },
+    { href: '/#faq', label: t.nav.faq, n: '05' },
+    { href: '/contacts', label: t.nav.contacts, n: '06' },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -61,28 +105,28 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-9 text-[12px] uppercase tracking-[0.2em] text-light/65 md:flex">
-            <Link href="/" className="transition-colors hover:text-brand-lime">Главная</Link>
-            <Link href="/#services" className="transition-colors hover:text-brand-lime">Услуги</Link>
-            <Link href="/#cases" className="transition-colors hover:text-brand-lime">Кейсы</Link>
-            <Link href="/pricing" className="transition-colors hover:text-brand-lime">Тарифы</Link>
-            <Link href="/contacts" className="transition-colors hover:text-brand-lime">Контакты</Link>
+            <Link href="/" className="transition-colors hover:text-brand-lime">{t.nav.home}</Link>
+            <Link href="/#services" className="transition-colors hover:text-brand-lime">{t.nav.services}</Link>
+            <Link href="/#cases" className="transition-colors hover:text-brand-lime">{t.nav.cases}</Link>
+            <Link href="/pricing" className="transition-colors hover:text-brand-lime">{t.nav.pricing}</Link>
+            <Link href="/contacts" className="transition-colors hover:text-brand-lime">{t.nav.contacts}</Link>
             {session?.user ? (
               <>
                 <Link href={cabinHref} className="transition-colors hover:text-brand-lime">
-                  Кабинет
+                  {t.cabinet}
                 </Link>
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
                   className="transition-colors hover:text-brand-lime"
                 >
-                  Выйти
+                  {t.logout}
                 </button>
               </>
             ) : (
               <>
-                <Link href="/auth/login" className="transition-colors hover:text-brand-lime">Вход</Link>
+                <Link href="/auth/login" className="transition-colors hover:text-brand-lime">{t.login}</Link>
                 <Link href="/#cta" className="btn-lime !px-5 !py-2 !text-[11px]">
-                  Получить аудит
+                  {t.cta}
                 </Link>
               </>
             )}
@@ -92,7 +136,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
           {/* Mobile burger */}
           <button
             type="button"
-            aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
+            aria-label={open ? t.closeMenu : t.openMenu}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
             className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] transition-all duration-300 hover:border-brand-lime/50 hover:bg-brand-lime/[0.06] md:hidden"
@@ -137,7 +181,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
             {/* Backdrop */}
             <motion.button
               type="button"
-              aria-label="Закрыть меню"
+              aria-label={t.closeMenu}
               onClick={() => setOpen(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -164,7 +208,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
               <div className="relative flex items-center justify-between px-6 pt-6">
                 <Logo size="md" />
                 <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-brand-orange">
-                  меню
+                  {t.menu}
                 </span>
               </div>
               <div className="relative mx-6 mt-5 h-px bg-gradient-to-r from-brand-lime/40 via-white/[0.06] to-transparent" />
@@ -212,7 +256,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                     <>
                       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
                         <p className="text-[10px] uppercase tracking-[0.28em] text-light/45">
-                          Вы вошли как
+                          {t.loggedAs}
                         </p>
                         <p className="mt-2 font-display text-base font-bold text-light">
                           {session.user.name ?? session.user.email}
@@ -224,7 +268,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                         onClick={() => setOpen(false)}
                         className="btn-lime w-full !py-3 !text-[11px]"
                       >
-                        Открыть кабинет
+                        {t.openCabinet}
                       </Link>
                       <button
                         onClick={() => {
@@ -233,7 +277,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                         }}
                         className="btn-ghost w-full !py-3 !text-[11px]"
                       >
-                        Выйти
+                        {t.logout}
                       </button>
                     </>
                   ) : (
@@ -243,14 +287,14 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                         onClick={() => setOpen(false)}
                         className="btn-lime w-full !py-3 !text-[11px]"
                       >
-                        Получить аудит
+                        {t.cta}
                       </Link>
                       <Link
                         href="/auth/login"
                         onClick={() => setOpen(false)}
                         className="btn-ghost w-full !py-3 !text-[11px]"
                       >
-                        Вход в кабинет
+                        {t.loginCabinet}
                       </Link>
                     </>
                   )}

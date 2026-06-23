@@ -1,6 +1,28 @@
 'use client';
 
 import { Reveal } from '@/components/ui/Reveal';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
+
+const ru = {
+  eyebrow: 'Каналы',
+  titlePre: 'Везде,',
+  titleEmphasis: 'где платят.',
+  subtitle: 'Десять платформ, одна стратегия. Подключаем те, что подходят бизнесу — без маркетингового хаоса.',
+};
+const en: typeof ru = {
+  eyebrow: 'Channels',
+  titlePre: 'Everywhere',
+  titleEmphasis: 'that pays.',
+  subtitle: 'Ten platforms, one strategy. We switch on the ones that fit your business — without marketing chaos.',
+};
+const tg: typeof ru = {
+  eyebrow: 'Каналҳо',
+  titlePre: 'Дар ҳама ҷо,',
+  titleEmphasis: 'ки месупорад.',
+  subtitle: 'Даҳ платформа, як стратегия. Онҳоеро пайваст мекунем, ки ба бизнес мувофиқанд — бе бесарусомонии маркетингӣ.',
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 /**
  * Channels — horizontal infinite marquee with the ad platforms we run.
@@ -39,6 +61,7 @@ function Track() {
 }
 
 export function ChannelsSection() {
+  const t = useCopy(COPY);
   return (
     <section
       id="channels"
@@ -49,18 +72,18 @@ export function ChannelsSection() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1fr] lg:items-end">
           <div>
             <Reveal>
-              <p className="text-eyebrow uppercase text-brand-orange">Каналы</p>
+              <p className="text-eyebrow uppercase text-brand-orange">{t.eyebrow}</p>
             </Reveal>
             <Reveal delay={0.06}>
               <h2 className="mt-6 max-w-[14ch] font-display text-hero-sm font-extrabold">
-                Везде,{' '}
-                <span className="font-serif italic font-normal text-lime-grad">где платят.</span>
+                {t.titlePre}{' '}
+                <span className="font-serif italic font-normal text-lime-grad">{t.titleEmphasis}</span>
               </h2>
             </Reveal>
           </div>
           <Reveal delay={0.14}>
             <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              Десять платформ, одна стратегия. Подключаем те, что подходят бизнесу — без маркетингового хаоса.
+              {t.subtitle}
             </p>
           </Reveal>
         </div>

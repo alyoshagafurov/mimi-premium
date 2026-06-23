@@ -7,8 +7,46 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Logo } from '@/components/ui/Logo';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
+
+const ru = {
+  cabinet: 'личный кабинет',
+  labelEmail: 'Email',
+  labelPassword: 'Пароль',
+  submit: 'Войти',
+  submitting: 'Входим...',
+  errorLogin: 'Неверный email или пароль',
+  successLogin: 'Добро пожаловать обратно',
+  home: '← На главную',
+  register: 'Создать аккаунт',
+};
+const en: typeof ru = {
+  cabinet: 'personal account',
+  labelEmail: 'Email',
+  labelPassword: 'Password',
+  submit: 'Sign in',
+  submitting: 'Signing in...',
+  errorLogin: 'Invalid email or password',
+  successLogin: 'Welcome back',
+  home: '← Home',
+  register: 'Create account',
+};
+const tg: typeof ru = {
+  cabinet: 'кабинети шахсӣ',
+  labelEmail: 'Email',
+  labelPassword: 'Парол',
+  submit: 'Даромадан',
+  submitting: 'Дохил мешавем...',
+  errorLogin: 'Email ё парол нодуруст аст',
+  successLogin: 'Хуш омадед',
+  home: '← Ба саҳифаи асосӣ',
+  register: 'Сохтани аккаунт',
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 function LoginInner() {
+  const t = useCopy(COPY);
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get('callbackUrl') ?? '/dashboard';
@@ -24,11 +62,10 @@ function LoginInner() {
     });
     setLoading(false);
     if (res?.error) {
-      toast.error('Неверный email или пароль');
+      toast.error(t.errorLogin);
       return;
     }
-    toast.success('Добро пожаловать обратно');
-    // Best-effort: server-side redirect uses role; fall back to callbackUrl
+    toast.success(t.successLogin);
     router.push(callbackUrl);
     router.refresh();
   };
@@ -47,11 +84,11 @@ function LoginInner() {
       >
         <div className="mb-8 text-center">
           <Logo size="md" />
-          <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">личный кабинет</p>
+          <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">{t.cabinet}</p>
         </div>
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label className="label-soft">Email</label>
+            <label className="label-soft">{t.labelEmail}</label>
             <input
               type="email"
               required
@@ -63,7 +100,7 @@ function LoginInner() {
             />
           </div>
           <div>
-            <label className="label-soft">Пароль</label>
+            <label className="label-soft">{t.labelPassword}</label>
             <input
               type="password"
               required
@@ -74,12 +111,12 @@ function LoginInner() {
             />
           </div>
           <button type="submit" disabled={loading} className="btn-gold w-full disabled:opacity-60">
-            {loading ? 'Входим...' : 'Войти'}
+            {loading ? t.submitting : t.submit}
           </button>
         </form>
         <div className="mt-6 flex items-center justify-between text-xs text-muted">
-          <Link href="/" className="transition hover:text-gold">← На главную</Link>
-          <Link href="/auth/register" className="transition hover:text-gold">Создать аккаунт</Link>
+          <Link href="/" className="transition hover:text-gold">{t.home}</Link>
+          <Link href="/auth/register" className="transition hover:text-gold">{t.register}</Link>
         </div>
       </motion.div>
     </main>

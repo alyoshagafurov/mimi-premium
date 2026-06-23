@@ -3,6 +3,40 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MagneticButton } from '@/components/ui/MagneticButton';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
+
+const ru = {
+  titlePre: 'Минимизируем шум',
+  titleEmphasis: 'Максимизируем',
+  titlePost: 'узнаваемость',
+  subtitle: 'Системный маркетинг в Таджикистане для бизнеса, который хочет расти без хаоса и лишних затрат.',
+  ctaPrimary: 'Получить аудит',
+  ctaSecondary: 'Смотреть кейсы',
+  stat1: '+14 проектов',
+  stat3: '50% по рекомендациям',
+};
+const en: typeof ru = {
+  titlePre: 'We minimise noise',
+  titleEmphasis: 'Maximise',
+  titlePost: 'recognition',
+  subtitle: 'Systematic marketing in Tajikistan for businesses that want to grow without chaos and wasted spend.',
+  ctaPrimary: 'Get an audit',
+  ctaSecondary: 'View cases',
+  stat1: '+14 projects',
+  stat3: '50% by referral',
+};
+const tg: typeof ru = {
+  titlePre: 'Садоро кам мекунем',
+  titleEmphasis: 'Шинохтро',
+  titlePost: 'зиёд мекунем',
+  subtitle: 'Маркетинги системавӣ дар Тоҷикистон барои бизнесе, ки бе бесарусомонӣ ва хароҷоти зиёдатӣ рушд карданӣ аст.',
+  ctaPrimary: 'Гирифтани аудит',
+  ctaSecondary: 'Дидани кейсҳо',
+  stat1: '+14 лоиҳа',
+  stat3: '50% бо тавсия',
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 /**
  * mimi Hero — mouse-reactive aurora.
@@ -20,6 +54,7 @@ import { MagneticButton } from '@/components/ui/MagneticButton';
  * Pure CSS + SVG — no images, no video.
  */
 export function VideoHero() {
+  const t = useCopy(COPY);
   const sectionRef = useRef<HTMLElement>(null);
   const auroraARef = useRef<HTMLDivElement>(null);
   const auroraBRef = useRef<HTMLDivElement>(null);
@@ -145,12 +180,12 @@ export function VideoHero() {
             transition={{ duration: 1.0, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="mt-7 max-w-[22ch] font-display text-hero font-extrabold text-light"
           >
-            Минимизируем шум
+            {t.titlePre}
             <br />
             <span className="font-serif italic font-normal text-lime-grad">
-              Максимизируем
+              {t.titleEmphasis}
             </span>{' '}
-            <span className="text-light">узнаваемость</span>
+            <span className="text-light">{t.titlePost}</span>
           </motion.h1>
 
           <motion.p
@@ -159,8 +194,7 @@ export function VideoHero() {
             transition={{ duration: 0.9, delay: 0.45 }}
             className="mt-7 max-w-[46ch] text-[15px] leading-[1.7] text-light/65"
           >
-            Системный маркетинг в Таджикистане для бизнеса, который хочет расти без хаоса
-            и&nbsp;лишних затрат.
+            {t.subtitle}
           </motion.p>
 
           <motion.div
@@ -170,10 +204,10 @@ export function VideoHero() {
             className="mt-10 flex flex-wrap items-center gap-4"
           >
             <MagneticButton href="#cta" variant="lime" arrow>
-              Получить аудит
+              {t.ctaPrimary}
             </MagneticButton>
             <MagneticButton href="#cases" variant="ghost">
-              Смотреть кейсы
+              {t.ctaSecondary}
             </MagneticButton>
           </motion.div>
 
@@ -183,11 +217,11 @@ export function VideoHero() {
             transition={{ duration: 1.1, delay: 1.0 }}
             className="mt-14 hidden flex-wrap items-center gap-x-8 gap-y-3 font-mono text-[10px] uppercase tracking-[0.24em] text-light/40 md:flex"
           >
-            <span>+14 проектов</span>
+            <span>{t.stat1}</span>
             <span className="h-px w-6 bg-light/15" />
             <span>4.8 ROAS</span>
             <span className="h-px w-6 bg-light/15" />
-            <span>50% по рекомендациям</span>
+            <span>{t.stat3}</span>
           </motion.div>
         </div>
 

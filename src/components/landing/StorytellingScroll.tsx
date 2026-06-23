@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { useCopy } from '@/i18n/LanguageProvider';
+import type { Lang } from '@/i18n/config';
 
 /**
  * Storytelling — premium pinned scroll with alternating-side principles.
@@ -23,66 +25,57 @@ import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
  *       and scroll-driven progress bar
  */
 
-type Story = {
-  n: string;
-  title: string;
-  body: string[];
-  side: 'right' | 'left';
-};
+type StoryCopy = { title: string; body: string[] };
+type Story = StoryCopy & { n: string; side: 'right' | 'left' };
 
-const INTRO =
-  'Минимизировать расходы предпринимателей на маркетинг и максимизировать их доход с медиаплощадок.';
-const CODA = 'меньше шума, больше смысла и ответственности.';
-
-const STORIES: Story[] = [
-  {
-    n: '01',
-    title: 'Умная эффективность',
-    body: [
-      'Мы не делаем «больше ради больше».',
-      'Каждое действие должно иметь смысл и результат.',
-      'Если что-то не работает — мы это убираем, даже если «так принято».',
-    ],
-    side: 'right',
-  },
-  {
-    n: '02',
-    title: 'Смелость мышления',
-    body: [
-      'Мы не копируем рынок и не боимся нестандартных решений.',
-      'В Mimi важно предлагать идеи, думать шире и брать ответственность за своё мнение.',
-    ],
-    side: 'left',
-  },
-  {
-    n: '03',
-    title: 'Премиальное отношение',
-    body: [
-      'Каждый проект — как наш собственный бренд.',
-      'Внимание к деталям, аккуратность и качество — это наш стандарт, а не дополнительная опция.',
-    ],
-    side: 'right',
-  },
-  {
-    n: '04',
-    title: 'Результат как репутация',
-    body: [
-      'Наше имя строится не на словах, а на кейсах.',
-      'То, что мы делаем сегодня, формирует то, как Mimi будут воспринимать завтра.',
-    ],
-    side: 'left',
-  },
-  {
-    n: '05',
-    title: 'Партнёрство',
-    body: [
-      'Мы не «исполнители задач».',
-      'Мы думаем вместе с клиентами и друг с другом, работаем на долгую и растём как команда.',
-      'Мы партнёр, а не подрядчик.',
-    ],
-    side: 'right',
-  },
+const STORY_META: { n: string; side: 'right' | 'left' }[] = [
+  { n: '01', side: 'right' },
+  { n: '02', side: 'left' },
+  { n: '03', side: 'right' },
+  { n: '04', side: 'left' },
+  { n: '05', side: 'right' },
 ];
+
+const ru = {
+  intro: 'Минимизировать расходы предпринимателей на маркетинг и максимизировать их доход с медиаплощадок.',
+  coda: 'меньше шума, больше смысла и ответственности.',
+  eyebrow: 'наши принципы',
+  ofTotal: 'из',
+  stories: [
+    { title: 'Умная эффективность', body: ['Мы не делаем «больше ради больше».', 'Каждое действие должно иметь смысл и результат.', 'Если что-то не работает — мы это убираем, даже если «так принято».'] },
+    { title: 'Смелость мышления', body: ['Мы не копируем рынок и не боимся нестандартных решений.', 'В Mimi важно предлагать идеи, думать шире и брать ответственность за своё мнение.'] },
+    { title: 'Премиальное отношение', body: ['Каждый проект — как наш собственный бренд.', 'Внимание к деталям, аккуратность и качество — это наш стандарт, а не дополнительная опция.'] },
+    { title: 'Результат как репутация', body: ['Наше имя строится не на словах, а на кейсах.', 'То, что мы делаем сегодня, формирует то, как Mimi будут воспринимать завтра.'] },
+    { title: 'Партнёрство', body: ['Мы не «исполнители задач».', 'Мы думаем вместе с клиентами и друг с другом, работаем на долгую и растём как команда.', 'Мы партнёр, а не подрядчик.'] },
+  ] as StoryCopy[],
+};
+const en: typeof ru = {
+  intro: 'Minimise entrepreneurs’ marketing spend and maximise their revenue from media channels.',
+  coda: 'less noise, more meaning and responsibility.',
+  eyebrow: 'our principles',
+  ofTotal: 'of',
+  stories: [
+    { title: 'Smart efficiency', body: ['We don’t do «more for the sake of more».', 'Every action must carry meaning and a result.', 'If something doesn’t work, we remove it — even if it’s «the norm».'] },
+    { title: 'Bold thinking', body: ['We don’t copy the market and aren’t afraid of unconventional decisions.', 'At Mimi it matters to propose ideas, think broader and own your opinion.'] },
+    { title: 'Premium attitude', body: ['Every project is like our own brand.', 'Attention to detail, accuracy and quality are our standard, not an add-on.'] },
+    { title: 'Results as reputation', body: ['Our name is built on cases, not words.', 'What we do today shapes how Mimi will be seen tomorrow.'] },
+    { title: 'Partnership', body: ['We are not «task executors».', 'We think together with clients and with each other, work for the long run and grow as a team.', 'We are a partner, not a contractor.'] },
+  ] as StoryCopy[],
+};
+const tg: typeof ru = {
+  intro: 'Хароҷоти соҳибкоронро ба маркетинг кам карда, даромади онҳоро аз медиаплатформаҳо зиёд кунем.',
+  coda: 'камтар садо, бештар маъно ва масъулият.',
+  eyebrow: 'принсипҳои мо',
+  ofTotal: 'аз',
+  stories: [
+    { title: 'Самаранокии оқилона', body: ['Мо «бештар ба хотири бештар» намекунем.', 'Ҳар амал бояд маъно ва натиҷа дошта бошад.', 'Агар чизе кор накунад — онро мебардорем, ҳатто агар «чунин қабул шуда бошад».'] },
+    { title: 'Ҷасорати тафаккур', body: ['Мо бозорро нусхабардорӣ намекунем ва аз қарорҳои ғайристандартӣ наметарсем.', 'Дар Mimi пешниҳоди ғоя, васеътар фикр кардан ва масъулият барои фикри худ муҳим аст.'] },
+    { title: 'Муносибати премиалӣ', body: ['Ҳар лоиҳа — ҳамчун бренди худи мо.', 'Диққат ба ҷузъиёт, дақиқӣ ва сифат — ин стандарти мост, на имконоти иловагӣ.'] },
+    { title: 'Натиҷа ҳамчун обрӯ', body: ['Номи мо на бо суханон, балки бо кейсҳо сохта мешавад.', 'Он чи мо имрӯз мекунем, тарзи фардо қабул шудани Mimi-ро месозад.'] },
+    { title: 'Шарикӣ', body: ['Мо «иҷрокунандаи вазифаҳо» нестем.', 'Мо якҷоя бо муштариён ва бо ҳамдигар фикр мекунем, дарозмуддат кор карда, ҳамчун даста рушд мекунем.', 'Мо шарик ҳастем, на пудратчӣ.'] },
+  ] as StoryCopy[],
+};
+const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
 /* ─── 5 phase decorations (one brightens per active panel) ─── */
 const Decorations = () => (
@@ -151,6 +144,8 @@ const Particles = () => (
 );
 
 export function StorytellingScroll() {
+  const t = useCopy(COPY);
+  const STORIES: Story[] = STORY_META.map((m, i) => ({ ...m, ...t.stories[i] }));
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const mimiBgRef = useRef<HTMLDivElement>(null);
@@ -383,11 +378,11 @@ export function StorytellingScroll() {
         >
           <p className="flex items-center justify-center gap-3 text-eyebrow uppercase text-brand-orange">
             <span className="h-px w-10 bg-brand-orange/60" />
-            наши принципы
+            {t.eyebrow}
             <span className="h-px w-10 bg-brand-orange/60" />
           </p>
           <p className="mx-auto mt-5 max-w-md text-[13px] leading-relaxed text-light/50 md:text-[14px]">
-            {INTRO}
+            {t.intro}
           </p>
         </motion.div>
 
@@ -405,7 +400,7 @@ export function StorytellingScroll() {
                 <div className="flex items-center gap-4 text-eyebrow uppercase">
                   <span className="font-mono text-brand-lime">{s.n}</span>
                   <span className="h-px w-14 bg-brand-lime/40" />
-                  <span className="text-light/45">из 05</span>
+                  <span className="text-light/45">{t.ofTotal} 05</span>
                 </div>
                 <h3 className="mt-7 max-w-[16ch] font-display text-hero-sm font-extrabold text-light">
                   {s.title}
@@ -427,7 +422,7 @@ export function StorytellingScroll() {
               ref={codaRef}
               className="mb-7 text-center font-serif italic text-light/55 text-[13px] md:text-[14px]"
             >
-              {CODA}
+              {t.coda}
             </p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <div className="flex items-baseline gap-4 font-mono text-[11px] uppercase tracking-[0.32em]">
