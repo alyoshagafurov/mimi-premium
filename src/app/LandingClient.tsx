@@ -14,6 +14,7 @@ import { AboutSection } from '@/components/landing/AboutSection';
 import { CasesSection } from '@/components/landing/CasesSection';
 import { ProcessSection } from '@/components/landing/ProcessSection';
 import { PricingTeaser } from '@/components/landing/PricingTeaser';
+import { GuaranteesSection } from '@/components/landing/GuaranteesSection';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 
@@ -51,6 +52,7 @@ export function LandingClient() {
         <CasesSection />
         <ProcessSection />
         <PricingTeaser />
+        <GuaranteesSection />
         <FAQSection />
         <FinalCTA />
       </main>

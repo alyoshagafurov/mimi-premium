@@ -1,26 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { z } from 'zod';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ensureAdmin } from '@/lib/api-guard';
 
 const schema = z.object({
-  status: z.enum(['ACTIVE', 'PAUSED', 'SCALING', 'ARCHIVED']).optional(),
-  budget: z.number().nonnegative().optional(),
-  name: z.string().optional(),
+  name: z.string().min(1).optional(),
+  platform: z.string().min(1).optional(),
+  status: z.enum(['ACTIVE', 'PAUSED', 'FINISHED']).optional(),
 });
-
-async function ensureAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || (session.user as any).role !== 'ADMIN') return null;
-  return session;
-}
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   if (!(await ensureAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
-    const body = await req.json();
-    const data = schema.parse(body);
+    const data = schema.parse(await req.json());
     const campaign = await prisma.campaign.update({ where: { id: params.id }, data });
     return NextResponse.json(campaign);
   } catch (e: any) {

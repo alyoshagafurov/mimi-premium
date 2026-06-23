@@ -1,84 +1,83 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { DEAL_STAGES, monthName } from '@/lib/utils';
 import { AdminDashboardClient } from './AdminDashboardClient';
 
 export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
   const me = session?.user?.name ?? 'Admin';
 
-  const [clients, campaigns, leads, metrics, contactRequests] = await Promise.all([
-    prisma.client.findMany({ include: { owner: true } }),
-    prisma.campaign.findMany(),
-    prisma.lead.findMany(),
-    prisma.metric.findMany({ orderBy: { date: 'asc' } }),
-    prisma.contactRequest.findMany({ orderBy: { createdAt: 'desc' }, take: 5 }),
+  const [clients, deals, tasks, payments] = await Promise.all([
+    prisma.client.findMany({ include: { owner: { select: { name: true, tariff: true, tariffEnd: true } } } }),
+    prisma.deal.findMany({ select: { stage: true, amount: true } }),
+    prisma.task.findMany({
+      where: { done: false },
+      orderBy: [{ dueDate: 'asc' }],
+      take: 8,
+      include: { client: { select: { businessName: true } }, deal: { select: { title: true } } },
+    }),
+    prisma.payment.findMany(),
   ]);
 
-  const totalClients = clients.length;
-  const activeCampaigns = campaigns.filter((c) => c.status === 'ACTIVE').length;
-  const totalBudget = campaigns.reduce((s, c) => s + c.budget, 0);
-  const avgRomi = campaigns.length ? campaigns.reduce((s, c) => s + c.romi, 0) / campaigns.length : 0;
-
-  // Group clients-served per month (last 6 months)
   const now = new Date();
-  const monthBuckets: Record<string, number> = {};
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    monthBuckets[key] = 0;
-  }
-  for (const c of clients) {
-    const d = new Date(c.createdAt);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    if (key in monthBuckets) monthBuckets[key] += 1;
-  }
-  // cumulative count of active clients
-  let cum = 0;
-  const monthly = Object.entries(monthBuckets).map(([k, v]) => {
-    cum += v;
-    return { month: k, helped: cum + 3 + Math.round(Math.random() * 2) };
+  const curMonth = now.getMonth() + 1;
+  const curYear = now.getFullYear();
+
+  const totalClients = clients.length;
+  const activeClients = clients.filter((c) => c.status === 'ACTIVE').length;
+  const activeDeals = deals.filter((d) => d.stage !== 'WON' && d.stage !== 'LOST').length;
+
+  // Finance
+  const revenueMonth = payments
+    .filter((p) => p.status === 'PAID' && p.year === curYear && p.month === curMonth)
+    .reduce((s, p) => s + p.amount, 0);
+  const overdue = payments.filter((p) => p.status === 'OVERDUE').reduce((s, p) => s + p.amount, 0);
+
+  // Pipeline summary
+  const pipeline = DEAL_STAGES.map((stage) => {
+    const col = deals.filter((d) => d.stage === stage);
+    return { stage, count: col.length, sum: col.reduce((s, d) => s + d.amount, 0) };
   });
 
-  // Profit forecast: extrapolate metrics revenue trend
-  const weeklyRevenue: Record<string, number> = {};
-  for (const m of metrics) {
-    const key = m.date.toISOString().slice(0, 10);
-    weeklyRevenue[key] = (weeklyRevenue[key] ?? 0) + m.revenue;
+  // Revenue trend — paid amount per month, last 6 months
+  const buckets: { key: string; label: string; amount: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(curYear, now.getMonth() - i, 1);
+    buckets.push({ key: `${d.getFullYear()}-${d.getMonth() + 1}`, label: monthName(d.getMonth() + 1), amount: 0 });
   }
-  const points = Object.entries(weeklyRevenue)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([d, v]) => ({ date: d, profit: v }));
-  // Append 6 forecast points
-  const last = points.at(-1);
-  if (last) {
-    const trend = points.length >= 3
-      ? (last.profit - points[points.length - 3].profit) / 2
-      : last.profit * 0.05;
-    for (let i = 1; i <= 6; i++) {
-      const d = new Date(last.date);
-      d.setDate(d.getDate() + i * 7);
-      points.push({
-        date: d.toISOString().slice(0, 10),
-        profit: Math.max(0, last.profit + trend * i * (1 + Math.random() * 0.15)),
-      });
-    }
+  for (const p of payments) {
+    if (p.status !== 'PAID') continue;
+    const b = buckets.find((x) => x.key === `${p.year}-${p.month}`);
+    if (b) b.amount += p.amount;
   }
+  const revenueTrend = buckets.map(({ label, amount }) => ({ label, amount }));
+
+  // Tariff-renewal reminders (≤ 30 days, or already overdue)
+  const dayMs = 1000 * 60 * 60 * 24;
+  const renewals = clients
+    .filter((c) => c.owner.tariff !== 'NONE' && c.owner.tariffEnd)
+    .map((c) => ({
+      businessName: c.businessName,
+      tariff: c.owner.tariff,
+      daysLeft: Math.ceil((new Date(c.owner.tariffEnd!).getTime() - now.getTime()) / dayMs),
+    }))
+    .filter((r) => r.daysLeft <= 30)
+    .sort((a, b) => a.daysLeft - b.daysLeft);
 
   return (
     <AdminDashboardClient
       me={me}
-      stats={{ totalClients, activeCampaigns, totalBudget, avgRomi }}
-      monthly={monthly}
-      forecast={points}
-      recentLeads={contactRequests.map((c) => ({
-        id: c.id,
-        name: c.name,
-        email: c.email,
-        message: c.message ?? '',
-        status: c.status,
-        createdAt: c.createdAt.toISOString(),
+      stats={{ totalClients, activeClients, activeDeals, revenueMonth, overdue }}
+      pipeline={pipeline}
+      revenueTrend={revenueTrend}
+      tasks={tasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        dueDate: t.dueDate?.toISOString() ?? null,
+        context: t.client?.businessName ?? t.deal?.title ?? null,
       }))}
+      renewals={renewals}
     />
   );
 }

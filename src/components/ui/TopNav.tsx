@@ -5,16 +5,18 @@ import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from './Logo';
+import { LangSwitcher } from './LangSwitcher';
 import { cn } from '@/lib/utils';
 
 type NavItem = { href: string; label: string; n: string };
 
 const NAV: NavItem[] = [
-  { href: '/#services', label: 'Услуги', n: '01' },
-  { href: '/#cases', label: 'Кейсы', n: '02' },
-  { href: '/pricing', label: 'Тарифы', n: '03' },
-  { href: '/#faq', label: 'FAQ', n: '04' },
-  { href: '/contacts', label: 'Контакты', n: '05' },
+  { href: '/', label: 'Главная', n: '01' },
+  { href: '/#services', label: 'Услуги', n: '02' },
+  { href: '/#cases', label: 'Кейсы', n: '03' },
+  { href: '/pricing', label: 'Тарифы', n: '04' },
+  { href: '/#faq', label: 'FAQ', n: '05' },
+  { href: '/contacts', label: 'Контакты', n: '06' },
 ];
 
 export function TopNav({ transparent = false }: { transparent?: boolean }) {
@@ -59,6 +61,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-9 text-[12px] uppercase tracking-[0.2em] text-light/65 md:flex">
+            <Link href="/" className="transition-colors hover:text-brand-lime">Главная</Link>
             <Link href="/#services" className="transition-colors hover:text-brand-lime">Услуги</Link>
             <Link href="/#cases" className="transition-colors hover:text-brand-lime">Кейсы</Link>
             <Link href="/pricing" className="transition-colors hover:text-brand-lime">Тарифы</Link>
@@ -79,10 +82,11 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
               <>
                 <Link href="/auth/login" className="transition-colors hover:text-brand-lime">Вход</Link>
                 <Link href="/#cta" className="btn-lime !px-5 !py-2 !text-[11px]">
-                  Получить стратегию
+                  Получить аудит
                 </Link>
               </>
             )}
+            <LangSwitcher />
           </nav>
 
           {/* Mobile burger */}
@@ -239,7 +243,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                         onClick={() => setOpen(false)}
                         className="btn-lime w-full !py-3 !text-[11px]"
                       >
-                        Получить стратегию
+                        Получить аудит
                       </Link>
                       <Link
                         href="/auth/login"
@@ -259,6 +263,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                   transition={{ duration: 0.5, delay: 0.55 }}
                   className="mt-10 space-y-2 border-t border-white/[0.05] pt-6"
                 >
+                  <LangSwitcher className="mb-4 w-max" />
                   <p className="text-[10px] uppercase tracking-[0.28em] text-light/35">
                     mimi · marketing agency
                   </p>

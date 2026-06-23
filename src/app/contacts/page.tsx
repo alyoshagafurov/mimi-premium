@@ -71,6 +71,10 @@ export default function ContactsPage() {
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-purple text-brand-lime">📞</span>
                       <span>{BRAND_PHONE}</span>
                     </a>
+                    <a href="https://wa.me/992070217755" target="_blank" rel="noreferrer" className="group flex items-center gap-3 transition hover:text-brand-orange">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-purple text-brand-lime">💬</span>
+                      <span>Написать в WhatsApp</span>
+                    </a>
                     <a href={BRAND_INSTAGRAM} className="group flex items-center gap-3 transition hover:text-brand-orange">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-purple text-brand-lime">◎</span>
                       <span>{BRAND_INSTAGRAM_HANDLE}</span>

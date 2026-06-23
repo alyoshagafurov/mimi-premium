@@ -34,7 +34,7 @@ export function FinalCTA() {
           </Reveal>
           <Reveal delay={0.28} className="mt-10 flex flex-wrap items-center gap-5">
             <MagneticButton href="#cta-form" variant="lime" arrow>
-              Получить стратегию
+              Получить аудит
             </MagneticButton>
             <a
               href="https://instagram.com/mimi.agency.tj"

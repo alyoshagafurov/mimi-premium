@@ -127,8 +127,13 @@ export function FAQSection() {
 
               <div className="relative mt-10 flex items-center justify-between border-t border-white/[0.06] pt-6">
                 <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">остался вопрос?</span>
-                <a href="#contact" className="text-[11px] uppercase tracking-[0.24em] text-brand-lime transition-colors hover:text-brand-limeSoft">
-                  написать нам →
+                <a
+                  href="https://wa.me/992070217755"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] uppercase tracking-[0.24em] text-brand-lime transition-colors hover:text-brand-limeSoft"
+                >
+                  написать в WhatsApp →
                 </a>
               </div>
             </div>

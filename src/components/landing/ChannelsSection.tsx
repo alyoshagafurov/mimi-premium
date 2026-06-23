@@ -60,7 +60,7 @@ export function ChannelsSection() {
           </div>
           <Reveal delay={0.14}>
             <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              Десять платформ, одна стратегия. Подключаем те, что подходят бизнесу — без модного шума.
+              Десять платформ, одна стратегия. Подключаем те, что подходят бизнесу — без маркетингового хаоса.
             </p>
           </Reveal>
         </div>

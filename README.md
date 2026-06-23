@@ -1,123 +1,112 @@
-# mimi — minimise marketing agency
+# mimi — minimise marketing agency 2026
 
 > Minimise the noise. Maximise the impact.
 
-Маркетинговое агентство полного цикла из Таджикистана. Сайт — SaaS-экосистема:
-иммерсивный 3D-сторителлинг на главной, регистрация и оплата тарифа,
-клиентский BI-дашборд и админ-панель в едином бренде.
+Платформа маркетингового агентства **mimi** (Таджикистан): продающий лендинг,
+личный кабинет клиента с помесячной аналитикой и **внутренний CRM** для команды
+агентства — воронка сделок, задачи, история взаимодействий и финансы.
 
----
-
-## 🎨 Бренд
-
-| Цвет | HEX | Использование |
-|---|---|---|
-| Глубокий фиолетовый | `#3C1975` | Основной фон, заливки |
-| Лаймовый | `#D4EC4C` | Логотип, CTA, акценты |
-| Оранжевый | `#FC9603` | Точки над `i`, sub-tagline, hover |
-
-Шрифты: **Outfit** (display) + **Manrope** (body). В брендбуке —
-Moderustic + Nekst; Moderustic заменён на ближайший по силуэту Outfit, т.к.
-`next/font` ещё не содержит Moderustic.
+Прод: https://mimi-agency-v2.vercel.app
 
 ---
 
 ## Стек
 
 - **Next.js 14** (App Router, TypeScript, Server Components)
-- **Tailwind CSS** + кастомная brand-система (purple/lime/orange)
-- **React Three Fiber** — единый Canvas, 4 000 частиц, морфирующих через 5 сцен
-- **GSAP + ScrollTrigger** — синхронизация сцен со скроллом, fade-окна для текстовых overlays
-- **Framer Motion** — микроанимации появления на остальных страницах
-- **Recharts** — графики ROMI, прогнозы, бар-чарты в админке
-- **NextAuth.js** (Credentials + JWT) + **bcryptjs**
-- **Prisma + PostgreSQL**
-- **react-hot-toast**, **qrcode.react**, **date-fns**, **zod**
+- **Tailwind CSS** + кастомная brand-система (purple `#3C1975` / lime `#D4EC4C` / orange `#FC9603`)
+- **Prisma + PostgreSQL** (Neon)
+- **NextAuth.js** (Credentials + JWT, роли ADMIN / CLIENT) + **bcryptjs**
+- **Framer Motion**, **GSAP + ScrollTrigger**, **Recharts**
+- **react-hot-toast**, **zod**, **date-fns**
 
 ---
 
-## Главная страница — 5 сцен
+## Возможности
 
-Один пинованный 3D Canvas, ScrollTrigger гонит `scrollProgress` (0→1),
-текстовые overlays крест-фейдятся через GSAP. Камера тилтится за курсором
-(mouse-параллакс).
+### Лендинг (`/`)
+Сторителлинг-скролл с принципами агентства, блоки услуг, каналов, цифр, тарифов,
+FAQ и форма захвата. Заявка с формы **создаёт сделку** в CRM (этап «Новая заявка»).
+Переключатель языков Tj / Ru / En (UI; локализация — в планах).
 
-| # | Сцена | Что происходит |
-|---|---|---|
-| 1 | **CHAOS** | Тысячи частиц мечутся хаотично, поверх — глитч-плашки `"$12k wasted"`, `"no conversions"` |
-| 2 | **AI FILTER** | Появляются торы-сканеры, слабые лиды краснеют и улетают вниз, ценные становятся лаймовыми |
-| 3 | **FUNNEL** | Лаймовые ленты формируют коническую воронку: Traffic → Qualification → Trust → Conversion |
-| 4 | **MORPH** | Камера влетает в лаймовую сферу, появляется dashboard: ROAS +327%, Revenue ×3.4, CAC ↓41% |
-| 5 | **DOMINO** | Частицы рассыпаются в сетку города, столбики-узлы вырастают цепной реакцией, камера поднимается |
+### Кабинет клиента (`/dashboard`)
+Помесячные отчёты, которые агентство заполняет вручную:
+- 4 метрики с дельтой к прошлому месяцу: потрачено (сомони), охват, клики, заявки;
+- динамика охвата (график), прогресс-бар бюджета;
+- разбивка по платформам (Instagram / Facebook) + ROAS;
+- список кампаний со статусами и разбивка аудитории по возрасту.
+
+### CRM для агентства (`/admin`)
+- **Дашборд** — KPI (клиенты, активные сделки, выручка за месяц, долг),
+  мини-воронка, график выручки, задачи на сегодня/просроченные, напоминания о продлении тарифов.
+- **Воронка сделок** (`/admin/leads`) — kanban: Новая заявка → Переговоры →
+  Коммерческое → Клиент → Отказ. Drag-and-drop между этапами (смена этапа логируется
+  в историю), сумма, ответственный, карточка сделки с задачами и таймлайном.
+- **Клиенты** (`/admin/clients`) — список + создание клиента + управление:
+  - помесячные отчёты (метрики, платформы, кампании, аудитория);
+  - **оплаты** (оплачено / ожидается / долг, история по месяцам);
+  - **задачи** (дедлайны, приоритет);
+  - **история** (заметки, звонки, встречи, письма).
+
+Доступ к роутам разграничен `middleware.ts`: `/admin/*` — только ADMIN,
+`/dashboard/*` — авторизованный клиент.
+
+---
+
+## Модель данных (Prisma)
+
+`User` · `Client` · `MonthlyReport` (→ `Platform`, `Campaign`, `AudienceBreakdown`)
+· `Deal` (воронка) · `Task` · `Activity` (заметки/история) · `Payment`.
 
 ---
 
 ## Установка
 
-**Требования**: Node.js 18+, PostgreSQL 13+
+**Требования**: Node.js 18+, PostgreSQL 13+ (рекомендуется Neon).
 
 ```bash
 npm install
-cp .env.example .env       # вставить DATABASE_URL и NEXTAUTH_SECRET
-npm run db:push            # применить схему к БД
-npm run db:seed            # создать admin-аккаунт и демо-данные
-npm run dev                # http://localhost:3000
+cp .env.example .env        # DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL
+npm run db:push             # применить схему к БД
+npm run db:seed             # демо-данные (команда, клиенты, сделки, оплаты)
+npm run dev                 # http://localhost:3000
 ```
 
 ### Переменные окружения
 
 | Переменная | Описание |
 |---|---|
-| `DATABASE_URL` | строка PostgreSQL |
+| `DATABASE_URL` | строка PostgreSQL. **Для Vercel используйте пулерный endpoint Neon** (хост `-pooler`, `?pgbouncer=true`) — иначе возможны ошибки connection pool |
 | `NEXTAUTH_SECRET` | секрет JWT (`openssl rand -base64 32`) |
 | `NEXTAUTH_URL` | базовый URL приложения |
 | `NEXT_PUBLIC_APP_URL` | публичный URL |
-| `NEXT_PUBLIC_BRAND_PHONE` | `+992 07 021 77 55` |
-| `NEXT_PUBLIC_BRAND_INSTAGRAM` | `https://instagram.com/mimi.agency.tj` |
-| `NEXT_PUBLIC_BRAND_WEB` | `mimi.agency.tj.com` |
-| `NEXT_PUBLIC_BRAND_EMAIL` | контактный email |
+| `NEXT_PUBLIC_BRAND_PHONE` / `_INSTAGRAM` / `_WEB` / `_EMAIL` | контакты бренда |
 
 ---
 
-## Демо-аккаунт
+## Демо-аккаунты (из seed)
 
 | Роль | Email | Пароль |
 |---|---|---|
 | Админ | `admin@mimi.agency` | `mimi2024` |
-
-Демо-клиенты убраны из seed — клиенты регистрируются сами через сайт.
-
----
-
-## Тарифы (из брендбука)
-
-| Тариф | 1-й месяц | Со 2-го месяца |
-|---|---|---|
-| **PRO** | 2 500 сомони | 2 500 сомони |
-| **STANDART** | 6 000 сомони | 5 000 сомони |
-| **ELITE** | 10 000 сомони | 8 000 сомони |
-
-Под капотом enum в Prisma остался `START / GROWTH / PREMIUM` для совместимости;
-UI-обёртка показывает PRO / STANDART / ELITE.
+| Админ (команда) | `sabina@mimi.agency` | `mimi2024` |
+| Клиент | `aesthetic@mimi.dev` | `client2024` |
+| Клиент | `fitness@mimi.dev` | `client2024` |
 
 ---
 
-## Структура страниц
+## Маршруты
 
 | Маршрут | Описание |
 |---|---|
-| `/` | Новый 3D-storytelling: 5 сцен + CTA + форма захвата |
-| `/auth/login` · `/auth/register` | Стеклянные карточки на ambient-частицах |
-| `/pricing` | PRO / STANDART / ELITE с полным составом из брошюры |
-| `/checkout?plan=...` | Имитация оплаты в сомони |
-| `/dashboard` | Клиентский кабинет: KPI, ROMI, воронка, лиды, кампании |
-| `/admin` | Прогноз прибыли, помогли клиентам, заявки |
-| `/admin/clients` | Таблица + редактирование + архивация |
-| `/admin/campaigns` | Фильтры, действия Пауза/Запустить/Масштабировать |
-| `/admin/metrics` | Форма ввода + история |
-| `/admin/leads` | Заявки с фильтром |
+| `/` | Лендинг (сторителлинг, услуги, тарифы, форма → сделка) |
+| `/auth/login` · `/auth/register` | Авторизация / регистрация |
+| `/pricing` · `/checkout` | Тарифы и имитация оплаты в сомони |
+| `/dashboard` | Кабинет клиента — помесячные отчёты |
+| `/admin` | CRM-дашборд (воронка, задачи, финансы) |
+| `/admin/clients` · `/admin/clients/[id]` | Клиенты и управление (отчёты, оплаты, задачи, история) |
+| `/admin/leads` | Воронка сделок (kanban) |
 | `/admin/settings` | Профиль администратора |
-| `/contacts` | Бренд-визитка purple/lime + QR + ценности |
+| `/contacts` | Бренд-визитка |
 
 ---
 
@@ -125,24 +114,13 @@ UI-обёртка показывает PRO / STANDART / ELITE.
 
 ```bash
 npm run dev          # dev-сервер
-npm run build        # prod-сборка
+npm run build        # prod-сборка (prisma generate + next build)
 npm run start        # запуск prod-сборки
 npm run db:push      # применить schema.prisma к БД
-npm run db:migrate   # создать миграцию
-npm run db:seed      # admin only
-npm run db:studio    # GUI для БД
+npm run db:seed      # демо-данные
+npm run db:studio    # Prisma Studio
 ```
 
 ---
 
-## Производительность
-
-- Единый Canvas, 4 000 точек, все анимации через рефы — никаких setState per frame
-- DPR clamp `[1, 1.6]` — баланс между чёткостью и FPS
-- AdditiveBlending + `depthWrite: false` — мягкое свечение без z-fighting
-- На мобильных: количество частиц сохраняется, но Canvas dpr автоматически снижается ≤1
-- Текстовые overlays — `position: sticky` внутри `100vh+` секций, GSAP крест-фейдит
-
----
-
-© mimi · сделано с лаймовой пылью.
+© mimi · minimise marketing agency

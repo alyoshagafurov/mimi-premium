@@ -1,122 +1,251 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { StatusPill } from '@/components/ui/StatusPill';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { DealDrawer } from './DealDrawer';
+import { DEAL_STAGES, dealStageLabel, dealStageAccent, formatMoney, cn } from '@/lib/utils';
 
-type Row = {
+type Deal = {
   id: string;
-  name: string;
+  title: string;
+  contactName: string;
   phone: string;
   email: string;
   message: string;
-  status: string;
+  source: string;
+  stage: string;
+  amount: number;
+  ownerId: string | null;
+  ownerName: string | null;
+  clientId: string | null;
+  clientName: string | null;
   createdAt: string;
 };
+type Team = { id: string; name: string }[];
+type Clients = { id: string; businessName: string }[];
 
-export function LeadsClient({ leads }: { leads: Row[] }) {
+const emptyNew = { title: '', contactName: '', phone: '', email: '', amount: '', ownerId: '', stage: 'NEW' };
+
+export function LeadsClient({ deals: initial, team, clients }: { deals: Deal[]; team: Team; clients: Clients }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<string>('');
+  const [deals, setDeals] = useState<Deal[]>(initial);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overStage, setOverStage] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState(emptyNew);
 
-  const filtered = filter ? leads.filter((l) => l.status === filter) : leads;
+  useEffect(() => setDeals(initial), [initial]);
 
-  const change = async (id: string, status: string) => {
-    const res = await fetch(`/api/contact-requests/${id}`, {
+  const moveStage = async (id: string, stage: string) => {
+    const current = deals.find((d) => d.id === id);
+    if (!current || current.stage === stage) return;
+    setDeals((ds) => ds.map((d) => (d.id === id ? { ...d, stage } : d))); // optimistic
+    const res = await fetch(`/api/deals/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ stage }),
+    });
+    if (res.ok) router.refresh();
+    else {
+      toast.error('Не удалось переместить');
+      setDeals(initial);
+    }
+  };
+
+  const createDeal = async () => {
+    if (!form.title.trim() || !form.contactName.trim()) {
+      toast.error('Заполните название и контакт');
+      return;
+    }
+    const res = await fetch('/api/deals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: form.title,
+        contactName: form.contactName,
+        phone: form.phone || undefined,
+        email: form.email || undefined,
+        amount: Number(form.amount) || 0,
+        stage: form.stage,
+        ownerId: form.ownerId || null,
+        source: 'Вручную',
+      }),
     });
     if (res.ok) {
-      toast.success('Статус обновлён');
+      toast.success('Сделка создана');
+      setCreating(false);
+      setForm(emptyNew);
       router.refresh();
-    } else toast.error('Не удалось обновить');
+    } else toast.error('Не удалось создать');
   };
 
-  const counts = {
-    NEW: leads.filter((l) => l.status === 'NEW').length,
-    WORKING: leads.filter((l) => l.status === 'WORKING').length,
-    CLOSED: leads.filter((l) => l.status === 'CLOSED').length,
-  };
+  const totalActive = deals.filter((d) => d.stage !== 'LOST').reduce((s, d) => s + d.amount, 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        eyebrow="Inbox"
-        title={<>Свежие <span className="text-lime-grad">заявки</span></>}
-        subtitle="Обращения с лендинга. Меняйте статус сразу — клиенты увидят его в кабинете."
+        eyebrow="Pipeline"
+        title={<>Воронка <span className="text-lime-grad">сделок</span></>}
+        subtitle={`${deals.length} сделок · ${formatMoney(totalActive)} в работе`}
+        action={
+          <button onClick={() => setCreating(true)} className="btn-gold !px-5 !py-3 !text-[11px]">
+            + Новая сделка
+          </button>
+        }
       />
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <button
-          onClick={() => setFilter(filter === 'NEW' ? '' : 'NEW')}
-          className={`glass-luxury rounded-xl p-3 text-left transition sm:rounded-2xl sm:p-5 ${filter === 'NEW' ? 'ring-1 ring-brand-lime/40 shadow-[0_0_30px_-8px_rgba(212,236,76,0.45)]' : ''}`}
-        >
-          <div className="text-[9px] uppercase tracking-[0.2em] text-light/45 sm:text-[10px] sm:tracking-[0.24em]">Новые</div>
-          <div className="mt-1.5 font-display text-2xl font-extrabold text-brand-lime sm:mt-2 sm:text-3xl">{counts.NEW}</div>
-        </button>
-        <button
-          onClick={() => setFilter(filter === 'WORKING' ? '' : 'WORKING')}
-          className={`glass-luxury rounded-xl p-3 text-left transition sm:rounded-2xl sm:p-5 ${filter === 'WORKING' ? 'ring-1 ring-brand-orange/40 shadow-[0_0_30px_-8px_rgba(252,150,3,0.45)]' : ''}`}
-        >
-          <div className="text-[9px] uppercase tracking-[0.2em] text-light/45 sm:text-[10px] sm:tracking-[0.24em]">В работе</div>
-          <div className="mt-1.5 font-display text-2xl font-extrabold text-brand-orange sm:mt-2 sm:text-3xl">{counts.WORKING}</div>
-        </button>
-        <button
-          onClick={() => setFilter(filter === 'CLOSED' ? '' : 'CLOSED')}
-          className={`glass-luxury rounded-xl p-3 text-left transition sm:rounded-2xl sm:p-5 ${filter === 'CLOSED' ? 'ring-1 ring-white/15' : ''}`}
-        >
-          <div className="text-[9px] uppercase tracking-[0.2em] text-light/45 sm:text-[10px] sm:tracking-[0.24em]">Закрыты</div>
-          <div className="mt-1.5 font-display text-2xl font-extrabold text-light/55 sm:mt-2 sm:text-3xl">{counts.CLOSED}</div>
-        </button>
+      {/* Board */}
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {DEAL_STAGES.map((stage) => {
+          const column = deals.filter((d) => d.stage === stage);
+          const sum = column.reduce((s, d) => s + d.amount, 0);
+          return (
+            <div
+              key={stage}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setOverStage(stage);
+              }}
+              onDragLeave={() => setOverStage((s) => (s === stage ? null : s))}
+              onDrop={() => {
+                if (dragId) moveStage(dragId, stage);
+                setDragId(null);
+                setOverStage(null);
+              }}
+              className={cn(
+                'flex w-72 shrink-0 flex-col rounded-2xl border bg-white/[0.015] p-3 transition-colors',
+                overStage === stage ? 'border-brand-lime/40 bg-brand-lime/[0.04]' : 'border-white/[0.06]',
+              )}
+            >
+              <div className={cn('mb-2 flex items-center justify-between rounded-xl border px-3 py-2', dealStageAccent(stage))}>
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em]">{dealStageLabel(stage)}</span>
+                <span className="text-[11px] opacity-80">{column.length}</span>
+              </div>
+              <div className="px-1 text-[10px] uppercase tracking-[0.16em] text-muted">{formatMoney(sum)}</div>
+
+              <div className="mt-2 flex flex-1 flex-col gap-2">
+                {column.map((d) => (
+                  <button
+                    key={d.id}
+                    draggable
+                    onDragStart={() => setDragId(d.id)}
+                    onDragEnd={() => setDragId(null)}
+                    onClick={() => setOpenId(d.id)}
+                    className={cn(
+                      'group rounded-xl border border-white/[0.06] bg-ink2/40 p-3 text-left transition-all hover:border-brand-lime/30 hover:bg-white/[0.03]',
+                      dragId === d.id && 'opacity-40',
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="truncate font-medium text-light">{d.title}</span>
+                      {d.amount > 0 && <span className="shrink-0 text-[11px] font-semibold text-brand-lime">{formatMoney(d.amount)}</span>}
+                    </div>
+                    <div className="mt-1 truncate text-[11px] text-muted">{d.contactName}{d.phone ? ` · ${d.phone}` : ''}</div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted">{d.source}</span>
+                      {d.ownerName && <span className="text-[10px] text-light/50">{d.ownerName}</span>}
+                    </div>
+                  </button>
+                ))}
+                {!column.length && (
+                  <div className="rounded-xl border border-dashed border-white/[0.06] py-6 text-center text-[11px] text-muted">
+                    Перетащите сюда
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="space-y-3">
-        {filtered.map((l, i) => (
-          <motion.div
-            key={l.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: i * 0.03 }}
-            className="glass rounded-2xl p-5"
-          >
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="font-medium text-light">{l.name}</span>
-                  <StatusPill status={l.status} />
-                  <span className="text-[11px] text-muted">
-                    {format(new Date(l.createdAt), 'd MMMM, HH:mm', { locale: ru })}
-                  </span>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-                  <a href={`tel:${l.phone}`} className="transition hover:text-gold">{l.phone}</a>
-                  <a href={`mailto:${l.email}`} className="transition hover:text-gold">{l.email}</a>
-                </div>
-                {l.message && <p className="mt-3 text-sm text-light/90">{l.message}</p>}
-              </div>
-              <select
-                value={l.status}
-                onChange={(e) => change(l.id, e.target.value)}
-                className="input-glass w-full sm:w-auto sm:max-w-[200px]"
-              >
-                <option value="NEW">Новая</option>
-                <option value="WORKING">В работе</option>
-                <option value="CLOSED">Закрыта</option>
-              </select>
-            </div>
-          </motion.div>
-        ))}
-        {!filtered.length && (
-          <div className="glass rounded-2xl p-10 text-center text-sm text-muted">
-            Заявок по фильтру нет
-          </div>
+      {/* Detail drawer */}
+      <AnimatePresence>
+        {openId && (
+          <DealDrawer
+            dealId={openId}
+            team={team}
+            clients={clients}
+            onClose={() => setOpenId(null)}
+            onChanged={() => router.refresh()}
+          />
         )}
-      </div>
+      </AnimatePresence>
+
+      {/* Create modal */}
+      <AnimatePresence>
+        {creating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setCreating(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-gold w-full max-w-md rounded-3xl p-8"
+            >
+              <h2 className="font-display text-xl font-bold">Новая сделка</h2>
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="label-soft">Название</label>
+                  <input className="input-glass" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label-soft">Контакт</label>
+                    <input className="input-glass" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label-soft">Телефон</label>
+                    <input className="input-glass" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label-soft">Email</label>
+                    <input className="input-glass" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label-soft">Сумма (сомони)</label>
+                    <input type="number" min={0} className="input-glass" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label-soft">Этап</label>
+                    <select className="input-glass" value={form.stage} onChange={(e) => setForm({ ...form, stage: e.target.value })}>
+                      {DEAL_STAGES.map((s) => (
+                        <option key={s} value={s}>{dealStageLabel(s)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-soft">Ответственный</label>
+                    <select className="input-glass" value={form.ownerId} onChange={(e) => setForm({ ...form, ownerId: e.target.value })}>
+                      <option value="">—</option>
+                      {team.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button onClick={() => setCreating(false)} className="btn-ghost">Отмена</button>
+                <button onClick={createDeal} className="btn-gold">Создать</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

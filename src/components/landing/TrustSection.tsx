@@ -4,10 +4,10 @@ import { Reveal } from '@/components/ui/Reveal';
 import { CountUp } from '@/components/ui/CountUp';
 
 const stats = [
-  { value: 120, suffix: '+', label: 'проектов' },
+  { value: 15, suffix: '+', label: 'проектов' },
   { value: 4.8, decimals: 1, suffix: '×', label: 'средний ROAS' },
-  { value: 90, suffix: '%', label: 'по рекомендациям' },
-  { value: 7, suffix: '+', label: 'направлений' },
+  { value: 50, suffix: '%', label: 'по рекомендациям' },
+  { value: 20, suffix: '+', label: 'направлений' },
 ];
 
 export function TrustSection() {
@@ -33,7 +33,7 @@ export function TrustSection() {
           </div>
           <Reveal delay={0.14}>
             <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              Восемь лет в performance-маркетинге. Среднее по нашим клиентам — без черри-пика.
+              С февраля 2026 года на рынке маркетинга Таджикистана.
             </p>
           </Reveal>
         </div>

@@ -11,10 +11,8 @@ import { cn } from '@/lib/utils';
 const ITEMS = [
   { href: '/admin', label: 'Дашборд', n: '01' },
   { href: '/admin/clients', label: 'Клиенты', n: '02' },
-  { href: '/admin/campaigns', label: 'Кампании', n: '03' },
-  { href: '/admin/metrics', label: 'Метрики', n: '04' },
-  { href: '/admin/leads', label: 'Заявки', n: '05' },
-  { href: '/admin/settings', label: 'Настройки', n: '06' },
+  { href: '/admin/leads', label: 'Сделки', n: '03' },
+  { href: '/admin/settings', label: 'Настройки', n: '04' },
 ];
 
 export function Sidebar({ name }: { name: string }) {
@@ -72,6 +70,12 @@ export function Sidebar({ name }: { name: string }) {
             <div className="text-[10px] uppercase tracking-[0.18em] text-light/45">Administrator</div>
           </div>
         </div>
+        <Link
+          href="/"
+          className="mb-2 block w-full rounded-xl border border-white/10 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-light/55 transition-all hover:border-brand-lime/40 hover:text-brand-lime"
+        >
+          На главную
+        </Link>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
           className="w-full rounded-xl border border-white/10 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-light/55 transition-all hover:border-brand-lime/40 hover:text-brand-lime"
@@ -225,6 +229,13 @@ export function MobileTopbar({ name }: { name: string }) {
                     <p className="mt-2 font-display text-base font-bold text-light">{name}</p>
                     <p className="text-[11px] text-light/40">Admin Panel</p>
                   </div>
+                  <Link
+                    href="/"
+                    onClick={() => setOpen(false)}
+                    className="btn-lime w-full !py-3 !text-[11px]"
+                  >
+                    На главную
+                  </Link>
                   <button
                     onClick={() => {
                       setOpen(false);

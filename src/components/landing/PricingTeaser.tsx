@@ -17,28 +17,26 @@ const plans = [
   {
     name: 'PRO',
     audience: 'Стартапы и новый бизнес',
-    price: '2 500',
+    price: '5 000',
     sub: 'сомони / мес',
-    bullets: ['Таргет + аналитика', 'До 8 креативов', '4 продающих Reels'],
+    bullets: ['Мини-стратегия', 'Таргет + аналитика', '4 Reels · до 8 креативов'],
     href: '/pricing',
   },
   {
     name: 'STANDART',
     audience: 'Бизнес, готовый к росту',
-    price: '6 000',
-    sub: 'сомони / 1-й мес',
-    second: 'со 2-го месяца — 5 000',
-    bullets: ['Полная аналитика', '15 креативов', 'Брендинг + воронка', 'Аудит маркетинга'],
+    price: '8 000',
+    sub: 'сомони / мес',
+    bullets: ['Стратегия + аналитика', '15 креативов · 4 Reels', 'Брендинг + воронка', 'Консультации продаж'],
     featured: true,
     href: '/pricing',
   },
   {
     name: 'ELITE',
     audience: 'Управляемый рост, не эксперимент',
-    price: '10 000',
-    sub: 'сомони / 1-й мес',
-    second: 'со 2-го месяца — 8 000',
-    bullets: ['Стратегия и рост-план', 'Полный брендинг', '8–10 Reels', 'Сайт в подарок'],
+    price: '12 000',
+    sub: 'сомони / мес',
+    bullets: ['Полная стратегия + брендинг', '8 Reels · 15 креативов', 'Контент для SMM', 'Сайт в подарок'],
     href: '/pricing',
   },
 ];
@@ -118,7 +116,6 @@ function TiltCard({
             </span>
           </div>
           <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-brand-orange">{plan.sub}</p>
-          {plan.second && <p className="mt-1.5 text-[11px] text-light/40">{plan.second}</p>}
         </div>
 
         <ul className="relative mt-10 flex-1 space-y-3 text-sm text-light/75">

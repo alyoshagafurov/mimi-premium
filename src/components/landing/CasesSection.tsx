@@ -12,29 +12,29 @@ import { Reveal } from '@/components/ui/Reveal';
 const cases = [
   {
     n: '01',
-    niche: 'Эстетическая медицина',
-    metric: '+320%',
+    niche: 'Магазин спорттоваров',
+    metric: '+2459%',
     metricLabel: 'ROMI',
-    desc: 'Сеть клиник в 4 городах. Перестроили воронку, заменили креативы, подключили сквозную аналитику.',
+    desc: 'Открылась новая точка. С нуля подняли маркетинговую систему. В первый же месяц маркетинг окупил себя ×25: на каждый 1 сомони рекламы — 25,5 сомони выручки.',
     // path describes an ascending curve
     path: 'M 0 90 C 60 80, 110 88, 170 65 S 250 35, 320 12',
   },
   {
     n: '02',
-    niche: 'Премиум фитнес',
-    metric: '×3',
-    metricLabel: 'рост заявок',
-    desc: 'Студия персональных тренировок. От 40 до 120+ заявок в месяц при сниженном CAC.',
-    path: 'M 0 88 L 60 78 L 120 70 L 180 52 L 240 30 L 320 10',
+    niche: 'Врач-флеболог',
+    metric: '−60%',
+    metricLabel: 'стоимость лида',
+    desc: 'Снизили CPL до −60% и улучшили качество лидов. В первый же месяц маркетинг окупился ×3.',
+    // descending curve (price going down)
+    path: 'M 0 20 C 80 30, 140 50, 200 65 S 280 88, 320 92',
   },
   {
     n: '03',
-    niche: 'Премиум недвижимость',
-    metric: '−47%',
-    metricLabel: 'стоимость лида',
-    desc: 'Девелопер новостроек. Переориентация на тёплый интент снизила CPL почти вдвое.',
-    // descending curve (price going down)
-    path: 'M 0 20 C 80 30, 140 50, 200 65 S 280 88, 320 92',
+    niche: 'Визово-консалтинговое агентство',
+    metric: '×4',
+    metricLabel: 'выручка отдела продаж',
+    desc: 'Выстроили воронку, CRM и контроль продаж. Стабилизировали поток: с 30 до 140+ заявок в день. За первые два месяца подняли выручку отдела продаж ×4 — без учёта up-sell.',
+    path: 'M 0 88 L 60 78 L 120 70 L 180 52 L 240 30 L 320 10',
   },
 ];
 
@@ -124,7 +124,7 @@ export function CasesSection() {
 
                   {/* signature: draw-on-scroll growth path */}
                   <div className="mt-10">
-                    <CaseChart d={c.path} color={i === 2 ? '#FC9603' : '#D4EC4C'} />
+                    <CaseChart d={c.path} color={i === 1 ? '#FC9603' : '#D4EC4C'} />
                   </div>
                 </div>
                 <p className="mt-10 max-w-[26ch] text-sm leading-relaxed text-light/55">{c.desc}</p>

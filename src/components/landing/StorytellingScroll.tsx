@@ -31,7 +31,7 @@ type Story = {
 };
 
 const INTRO =
-  'Это не красивые слова для презентаций. Принципы, по которым мы работаем, принимаем решения и растём.';
+  'Минимизировать расходы предпринимателей на маркетинг и максимизировать их доход с медиаплощадок.';
 const CODA = 'меньше шума, больше смысла и ответственности.';
 
 const STORIES: Story[] = [
@@ -78,6 +78,7 @@ const STORIES: Story[] = [
     body: [
       'Мы не «исполнители задач».',
       'Мы думаем вместе с клиентами и друг с другом, работаем на долгую и растём как команда.',
+      'Мы партнёр, а не подрядчик.',
     ],
     side: 'right',
   },
@@ -307,7 +308,7 @@ export function StorytellingScroll() {
             className="absolute top-1/2 right-2 -translate-y-1/2 font-mono text-[10px] uppercase tracking-[0.36em] text-light/25"
             style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
           >
-            05 / 2026
+            01 / 2026
           </div>
         </div>
 

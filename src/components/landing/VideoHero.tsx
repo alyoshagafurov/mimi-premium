@@ -25,8 +25,6 @@ export function VideoHero() {
   const auroraBRef = useRef<HTMLDivElement>(null);
   const spotRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLDivElement>(null);
-  const gem1Ref = useRef<HTMLDivElement>(null);
-  const gem2Ref = useRef<HTMLDivElement>(null);
   const gem3Ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,8 +38,6 @@ export function VideoHero() {
       auroraA: { x: 0, y: 0, k: 0.04, mult: 60 },
       auroraB: { x: 0, y: 0, k: 0.06, mult: 90 },
       word:    { x: 0, y: 0, k: 0.07, mult: 14 },
-      gem1:    { x: 0, y: 0, k: 0.05, mult: 26 },
-      gem2:    { x: 0, y: 0, k: 0.08, mult: 32 },
       gem3:    { x: 0, y: 0, k: 0.10, mult: 22 },
     };
     let spotPX = 0, spotPY = 0;
@@ -73,8 +69,6 @@ export function VideoHero() {
       apply(auroraARef.current, layers.auroraA);
       apply(auroraBRef.current, layers.auroraB);
       apply(wordRef.current, layers.word, `rotateY(${layers.word.x * 5}deg) rotateX(${-layers.word.y * 3.5}deg)`);
-      apply(gem1Ref.current, layers.gem1, 'rotate(18deg)');
-      apply(gem2Ref.current, layers.gem2, 'rotate(-24deg)');
       apply(gem3Ref.current, layers.gem3, 'rotate(38deg)');
       if (spotRef.current) {
         spotRef.current.style.setProperty('--sx', `${spotPX}px`);
@@ -142,7 +136,7 @@ export function VideoHero() {
             className="flex items-center gap-3 text-eyebrow uppercase text-brand-orange"
           >
             <span className="h-px w-10 bg-brand-orange/60" />
-            minimise marketing agency
+            minimise marketing agency 2026
           </motion.div>
 
           <motion.h1
@@ -151,12 +145,12 @@ export function VideoHero() {
             transition={{ duration: 1.0, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="mt-7 max-w-[22ch] font-display text-hero font-extrabold text-light"
           >
-            Минимизируем шум.
+            Минимизируем шум
             <br />
             <span className="font-serif italic font-normal text-lime-grad">
               Максимизируем
             </span>{' '}
-            <span className="text-light">узнаваемость.</span>
+            <span className="text-light">узнаваемость</span>
           </motion.h1>
 
           <motion.p
@@ -165,7 +159,7 @@ export function VideoHero() {
             transition={{ duration: 0.9, delay: 0.45 }}
             className="mt-7 max-w-[46ch] text-[15px] leading-[1.7] text-light/65"
           >
-            Системный маркетинг для бизнеса, который хочет расти без хаоса
+            Системный маркетинг в Таджикистане для бизнеса, который хочет расти без хаоса
             и&nbsp;лишних затрат.
           </motion.p>
 
@@ -176,7 +170,7 @@ export function VideoHero() {
             className="mt-10 flex flex-wrap items-center gap-4"
           >
             <MagneticButton href="#cta" variant="lime" arrow>
-              Получить стратегию
+              Получить аудит
             </MagneticButton>
             <MagneticButton href="#cases" variant="ghost">
               Смотреть кейсы
@@ -189,11 +183,11 @@ export function VideoHero() {
             transition={{ duration: 1.1, delay: 1.0 }}
             className="mt-14 hidden flex-wrap items-center gap-x-8 gap-y-3 font-mono text-[10px] uppercase tracking-[0.24em] text-light/40 md:flex"
           >
-            <span>120+ проектов</span>
+            <span>+14 проектов</span>
             <span className="h-px w-6 bg-light/15" />
-            <span>4.8× ROAS</span>
+            <span>4.8 ROAS</span>
             <span className="h-px w-6 bg-light/15" />
-            <span>90% по рекомендациям</span>
+            <span>50% по рекомендациям</span>
           </motion.div>
         </div>
 
@@ -205,27 +199,21 @@ export function VideoHero() {
           className="relative mx-auto aspect-square w-full max-w-[480px]"
           style={{ perspective: '1800px' }}
         >
-          {/* Floating accent gems — different depths via mouse parallax */}
-          <div
-            ref={gem1Ref}
-            aria-hidden
-            className="absolute left-[2%] top-[14%] h-12 w-12 will-change-transform"
-            style={{
-              background: 'linear-gradient(135deg, rgba(212,236,76,0.85), rgba(168,189,47,0.4))',
-              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-              filter: 'drop-shadow(0 0 18px rgba(212,236,76,0.45))',
-            }}
-          />
-          <div
-            ref={gem2Ref}
-            aria-hidden
-            className="absolute right-[4%] top-[8%] h-9 w-9 will-change-transform"
-            style={{
-              background: 'linear-gradient(135deg, rgba(252,150,3,0.8), rgba(252,150,3,0.3))',
-              clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
-              filter: 'drop-shadow(0 0 14px rgba(252,150,3,0.45))',
-            }}
-          />
+          {/* Ornament — central-asian pattern framing the wordmark */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <motion.img
+              src="/ornament.png"
+              alt=""
+              aria-hidden
+              initial={{ rotate: 0 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 240, repeat: Infinity, ease: 'linear' }}
+              className="h-[118%] w-[118%] max-w-none select-none opacity-[0.22]"
+              style={{ filter: 'drop-shadow(0 0 50px rgba(252,150,3,0.22))' }}
+            />
+          </div>
+
+          {/* Floating accent gem — depth via mouse parallax */}
           <div
             ref={gem3Ref}
             aria-hidden
@@ -284,7 +272,7 @@ export function VideoHero() {
             }}
           />
 
-          {/* WORDMARK — full "mimi" with two orange dots */}
+          {/* WORDMARK — full "mimi" */}
           <div
             ref={wordRef}
             className="absolute inset-0 flex items-center justify-center will-change-transform"
@@ -295,15 +283,9 @@ export function VideoHero() {
             >
               {/* m  i  m  i — dots above each 'i' */}
               <span>m</span>
-              <span className="relative">
-                <span className="absolute -top-[0.36em] left-1/2 h-[0.22em] w-[0.22em] -translate-x-1/2 rounded-full bg-brand-orange" style={{ boxShadow: '0 0 14px rgba(252,150,3,0.55)' }} />
-                <span>i</span>
-              </span>
+              <span>i</span>
               <span>m</span>
-              <span className="relative">
-                <span className="absolute -top-[0.36em] left-1/2 h-[0.22em] w-[0.22em] -translate-x-1/2 rounded-full bg-brand-orange" style={{ boxShadow: '0 0 14px rgba(252,150,3,0.55)' }} />
-                <span>i</span>
-              </span>
+              <span>i</span>
             </div>
           </div>
         </motion.div>

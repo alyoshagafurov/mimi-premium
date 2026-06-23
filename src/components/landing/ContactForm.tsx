@@ -124,7 +124,7 @@ export function ContactForm() {
           Отправляя форму, вы соглашаетесь на обработку данных.
         </p>
         <button type="submit" disabled={loading} className="btn-lime w-full md:w-auto disabled:opacity-60">
-          {loading ? 'Отправляем...' : 'Получить стратегию'}
+          {loading ? 'Отправляем...' : 'Получить аудит'}
         </button>
       </div>
     </motion.form>

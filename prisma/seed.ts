@@ -3,238 +3,176 @@ import {
   Role,
   Tariff,
   CampaignStatus,
-  LeadStatus,
-  ContactStatus,
   ClientStatus,
+  DealStage,
+  TaskPriority,
+  ActivityKind,
+  PaymentStatus,
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const today = new Date();
+today.setHours(12, 0, 0, 0);
+const addDays = (n: number) => {
+  const d = new Date(today);
+  d.setDate(d.getDate() + n);
+  return d;
+};
+const CUR_MONTH = today.getMonth() + 1;
+const CUR_YEAR = today.getFullYear();
+
 /**
- * Seed mimi agency database with a working dataset:
- *   • 1 admin user
- *   • 4 client accounts (each owns a Client business)
- *   • Realistic campaigns per client
- *   • 60 days of daily metrics per client
- *   • 12 leads + 8 contact-requests with mixed statuses
+ * Seed the mimi agency CRM with a working dataset:
+ *   • 2 admin/team users
+ *   • 2 client accounts, each with 2 monthly reports (platforms / campaigns / audience)
+ *   • payments (paid / pending / overdue), tasks, activities
+ *   • a sales pipeline of deals across all stages
  *
  * Re-running is safe — every table is wiped in dependency order first.
  */
-
-function rand(min: number, max: number) {
-  return Math.random() * (max - min) + min;
-}
-function randInt(min: number, max: number) {
-  return Math.floor(rand(min, max + 1));
-}
-function pick<T>(arr: readonly T[]): T {
-  return arr[randInt(0, arr.length - 1)];
-}
-
 async function main() {
-  console.log('🌱 Seeding mimi-agency database…');
+  console.log('🌱 Seeding mimi-agency CRM…');
 
-  // 1. Wipe in dependency order
-  await prisma.metric.deleteMany();
-  await prisma.lead.deleteMany();
+  await prisma.activity.deleteMany();
+  await prisma.task.deleteMany();
+  await prisma.payment.deleteMany();
   await prisma.campaign.deleteMany();
-  await prisma.contactRequest.deleteMany();
+  await prisma.platform.deleteMany();
+  await prisma.audienceBreakdown.deleteMany();
+  await prisma.monthlyReport.deleteMany();
+  await prisma.deal.deleteMany();
   await prisma.client.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Admin user
+  // 1. Team
   const adminPwd = await bcrypt.hash('mimi2024', 10);
-  await prisma.user.create({
-    data: {
-      email: 'admin@mimi.agency',
-      password: adminPwd,
-      name: 'mimi admin',
-      phone: '+992 07 021 77 55',
-      role: Role.ADMIN,
-    },
+  const admin = await prisma.user.create({
+    data: { email: 'admin@mimi.agency', password: adminPwd, name: 'mimi admin', phone: '+992 07 021 77 55', role: Role.ADMIN },
+  });
+  const manager = await prisma.user.create({
+    data: { email: 'sabina@mimi.agency', password: adminPwd, name: 'Сабина Рахимова', phone: '+992 90 700 11 22', role: Role.ADMIN },
   });
 
-  // 3. Client accounts + businesses
+  // 2. Clients + monthly reports
   const clientPwd = await bcrypt.hash('client2024', 10);
-  const clientSeeds = [
-    {
-      email: 'aesthetic@mimi.dev',
-      name: 'Алина Каримова',
-      phone: '+992 90 111 22 33',
-      tariff: Tariff.PREMIUM,
-      business: 'Aesthetic Clinic',
-      niche: 'Эстетическая медицина',
+
+  const aestheticUser = await prisma.user.create({
+    data: {
+      email: 'aesthetic@mimi.dev', password: clientPwd, name: 'Алина Каримова', phone: '+992 90 111 22 33',
+      role: Role.CLIENT, tariff: Tariff.PREMIUM, tariffEnd: addDays(12),
+      client: { create: { businessName: 'Aesthetic Clinic', niche: 'Эстетическая медицина', status: ClientStatus.ACTIVE } },
     },
-    {
-      email: 'fitness@mimi.dev',
-      name: 'Рустам Холов',
-      phone: '+992 90 222 33 44',
-      tariff: Tariff.GROWTH,
-      business: 'Studio Forma',
-      niche: 'Премиум фитнес',
+    include: { client: true },
+  });
+  const fitnessUser = await prisma.user.create({
+    data: {
+      email: 'fitness@mimi.dev', password: clientPwd, name: 'Рустам Холов', phone: '+992 90 222 33 44',
+      role: Role.CLIENT, tariff: Tariff.GROWTH, tariffEnd: addDays(95),
+      client: { create: { businessName: 'Studio Forma', niche: 'Премиум фитнес', status: ClientStatus.ACTIVE } },
     },
-    {
-      email: 'realty@mimi.dev',
-      name: 'Дилшод Назаров',
-      phone: '+992 90 333 44 55',
-      tariff: Tariff.GROWTH,
-      business: 'Capital Estate',
-      niche: 'Премиум недвижимость',
-    },
-    {
-      email: 'cafe@mimi.dev',
-      name: 'Лола Мирзоева',
-      phone: '+992 90 444 55 66',
-      tariff: Tariff.START,
-      business: 'Cafe Aurora',
-      niche: 'HoReCa · кофейня',
-    },
-  ];
+    include: { client: true },
+  });
 
-  const createdClients = await Promise.all(
-    clientSeeds.map(async (c, i) => {
-      const user = await prisma.user.create({
-        data: {
-          email: c.email,
-          password: clientPwd,
-          name: c.name,
-          phone: c.phone,
-          role: Role.CLIENT,
-          tariff: c.tariff,
-          tariffEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * (30 + i * 15)),
-        },
-      });
-      const client = await prisma.client.create({
-        data: {
-          ownerId: user.id,
-          businessName: c.business,
-          niche: c.niche,
-          status: ClientStatus.ACTIVE,
-        },
-      });
-      return { user, client, seed: c };
-    }),
-  );
+  const aesthetic = aestheticUser.client!;
+  const fitness = fitnessUser.client!;
 
-  // 4. Campaigns per client
-  const platforms = ['Instagram', 'Facebook', 'Google Ads', 'TikTok', 'YouTube', 'Яндекс.Директ'];
-  const campaignNames = [
-    'Brand awareness — Q4',
-    'Performance — leads',
-    'Reels — продвижение',
-    'Конверсии — посадка',
-    'Retargeting — тёплые',
-    'Search — premium intent',
-  ];
+  const report = (clientId: string, month: number, ig: [number, number], fb: [number, number], data: { spent: number; budget: number; reach: number; clicks: number; leads: number }, aud: [number, number, number, number], campaigns: { name: string; platform: string; status: CampaignStatus }[]) =>
+    prisma.monthlyReport.create({
+      data: {
+        clientId, month, year: 2026, ...data,
+        platforms: { create: [{ name: 'Instagram', spent: ig[0], roas: ig[1] }, { name: 'Facebook', spent: fb[0], roas: fb[1] }] },
+        audience: { create: { age18_24: aud[0], age25_34: aud[1], age35_44: aud[2], age45plus: aud[3] } },
+        campaigns: { create: campaigns },
+      },
+    });
 
-  for (const { client } of createdClients) {
-    const n = randInt(3, 5);
-    for (let i = 0; i < n; i++) {
-      const budget = randInt(50, 280) * 100;
-      const spent = Math.round(budget * rand(0.4, 0.95));
-      const leads = randInt(20, 180);
-      const sales = Math.round(leads * rand(0.08, 0.32));
-      const revenue = sales * randInt(2000, 9000);
-      const romi = spent > 0 ? Math.round(((revenue - spent) / spent) * 100) : 0;
-      await prisma.campaign.create({
-        data: {
-          clientId: client.id,
-          name: pick(campaignNames),
-          platform: pick(platforms),
-          budget,
-          spent,
-          leads,
-          sales,
-          romi,
-          status: pick<CampaignStatus>([
-            CampaignStatus.ACTIVE,
-            CampaignStatus.ACTIVE,
-            CampaignStatus.ACTIVE,
-            CampaignStatus.SCALING,
-            CampaignStatus.PAUSED,
-          ]),
-        },
-      });
-    }
-  }
+  await report(aesthetic.id, 4, [11000, 3.1], [7000, 2.4], { spent: 18000, budget: 20000, reach: 145000, clicks: 8200, leads: 210 }, [30, 40, 20, 10], [
+    { name: 'Reels — продвижение', platform: 'Instagram', status: CampaignStatus.ACTIVE },
+    { name: 'Lead Gen — заявки', platform: 'Facebook', status: CampaignStatus.ACTIVE },
+    { name: 'Retargeting — тёплые', platform: 'Instagram', status: CampaignStatus.PAUSED },
+  ]);
+  await report(aesthetic.id, 5, [13000, 3.4], [8000, 2.6], { spent: 21000, budget: 22000, reach: 168000, clicks: 9100, leads: 245 }, [28, 42, 21, 9], [
+    { name: 'Reels — продвижение', platform: 'Instagram', status: CampaignStatus.ACTIVE },
+    { name: 'Lead Gen — заявки', platform: 'Facebook', status: CampaignStatus.ACTIVE },
+    { name: 'Летняя акция', platform: 'Instagram', status: CampaignStatus.ACTIVE },
+  ]);
+  await report(fitness.id, 4, [5500, 2.8], [3500, 2.1], { spent: 9000, budget: 10000, reach: 78000, clicks: 5400, leads: 120 }, [38, 36, 18, 8], [
+    { name: 'Trial Offer — пробное', platform: 'Instagram', status: CampaignStatus.ACTIVE },
+    { name: 'Бренд — охват', platform: 'Facebook', status: CampaignStatus.PAUSED },
+  ]);
+  await report(fitness.id, 5, [6000, 3.0], [3500, 2.3], { spent: 9500, budget: 10000, reach: 92000, clicks: 6100, leads: 142 }, [40, 35, 17, 8], [
+    { name: 'Trial Offer — пробное', platform: 'Instagram', status: CampaignStatus.ACTIVE },
+    { name: 'Бренд — охват', platform: 'Facebook', status: CampaignStatus.ACTIVE },
+    { name: 'Абонементы — весна', platform: 'Instagram', status: CampaignStatus.FINISHED },
+  ]);
 
-  // 5. Daily metrics: last 60 days per client (gentle upward trend + noise)
-  for (const { client } of createdClients) {
-    const base = randInt(40, 120);
-    for (let d = 60; d >= 0; d--) {
-      const date = new Date();
-      date.setDate(date.getDate() - d);
-      date.setHours(12, 0, 0, 0);
-      const growth = 1 + (60 - d) * 0.012; // gentle climb
-      const clicks = Math.round(base * 8 * growth * rand(0.85, 1.15));
-      const leadsCount = Math.round(base * 0.45 * growth * rand(0.85, 1.2));
-      const qualified = Math.round(leadsCount * rand(0.45, 0.7));
-      const sales = Math.round(qualified * rand(0.18, 0.38));
-      const spent = Math.round(clicks * rand(8, 18));
-      const revenue = Math.round(sales * randInt(2500, 7500));
-      const romi = spent > 0 ? Math.round(((revenue - spent) / spent) * 100) : 0;
-      await prisma.metric.create({
-        data: {
-          clientId: client.id,
-          date,
-          clicks,
-          leads: leadsCount,
-          qualified,
-          sales,
-          spent,
-          revenue,
-          romi,
-        },
-      });
-    }
-  }
+  // 3. Payments
+  await prisma.payment.createMany({
+    data: [
+      { clientId: aesthetic.id, amount: 12000, month: 4, year: 2026, status: PaymentStatus.PAID, paidAt: new Date('2026-04-03') },
+      { clientId: aesthetic.id, amount: 12000, month: 5, year: 2026, status: PaymentStatus.PAID, paidAt: new Date('2026-05-04') },
+      { clientId: aesthetic.id, amount: 12000, month: CUR_MONTH, year: CUR_YEAR, status: PaymentStatus.PAID, paidAt: today },
+      { clientId: fitness.id, amount: 8000, month: 4, year: 2026, status: PaymentStatus.PAID, paidAt: new Date('2026-04-05') },
+      { clientId: fitness.id, amount: 8000, month: 5, year: 2026, status: PaymentStatus.PAID, paidAt: new Date('2026-05-06') },
+      { clientId: fitness.id, amount: 8000, month: CUR_MONTH, year: CUR_YEAR, status: PaymentStatus.OVERDUE, dueDate: addDays(-5) },
+    ],
+  });
 
-  // 6. Internal lead pipeline (per client)
-  const leadSources = ['Instagram', 'Web', 'Реферал', 'WhatsApp', 'Telegram', 'Яндекс.Директ'];
-  const leadNames = ['Алексей', 'Дарья', 'Тимур', 'Ольга', 'Камрон', 'Зарина', 'Ирина', 'Парвиз', 'Шахром', 'Малика'];
-  for (const { client } of createdClients) {
-    const n = randInt(3, 6);
-    for (let i = 0; i < n; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - randInt(0, 21));
-      await prisma.lead.create({
-        data: {
-          clientId: client.id,
-          name: pick(leadNames),
-          contact: `+992 9${randInt(0, 9)} ${randInt(100, 999)} ${randInt(10, 99)} ${randInt(10, 99)}`,
-          source: pick(leadSources),
-          status: pick<LeadStatus>([LeadStatus.NEW, LeadStatus.NEW, LeadStatus.WORKING, LeadStatus.CLOSED]),
-          createdAt: date,
-        },
-      });
-    }
-  }
+  // 4. Sales pipeline
+  const won1 = await prisma.deal.create({
+    data: { title: 'Aesthetic Clinic', contactName: 'Алина Каримова', phone: '+992 90 111 22 33', email: 'aesthetic@mimi.dev', source: 'Реферал', stage: DealStage.WON, amount: 12000, ownerId: admin.id, clientId: aesthetic.id },
+  });
+  await prisma.deal.create({
+    data: { title: 'Studio Forma', contactName: 'Рустам Холов', phone: '+992 90 222 33 44', source: 'Instagram', stage: DealStage.WON, amount: 8000, ownerId: manager.id, clientId: fitness.id },
+  });
+  const dealSmile = await prisma.deal.create({
+    data: { title: 'Стоматология Smile', contactName: 'Фарход Юсупов', phone: '+992 90 555 66 77', email: 'smile@dent.tj', source: 'Лендинг', stage: DealStage.NEGOTIATION, amount: 8000, ownerId: manager.id, message: 'Нужен поток пациентов на имплантацию.' },
+  });
+  const dealPulse = await prisma.deal.create({
+    data: { title: 'Фитнес Pulse', contactName: 'Дильноза', phone: '+992 90 444 33 22', source: 'Лендинг', stage: DealStage.PROPOSAL, amount: 12000, ownerId: admin.id, message: 'Запуск нового зала, нужен старт с трафиком.' },
+  });
+  await prisma.deal.create({
+    data: { title: 'Кофейня Aurora', contactName: 'Лола Мирзоева', phone: '+992 90 444 55 66', email: 'aurora@cafe.tj', source: 'Лендинг', stage: DealStage.NEW, amount: 5000, message: 'Соцсети + контент для новой кофейни.' },
+  });
+  await prisma.deal.create({
+    data: { title: 'Барбершоп Lion', contactName: 'Камрон', phone: '+992 90 999 88 77', source: 'Instagram', stage: DealStage.NEW, amount: 5000 },
+  });
+  await prisma.deal.create({
+    data: { title: 'Магазин цветов', contactName: 'Зарина', phone: '+992 90 222 11 00', source: 'Лендинг', stage: DealStage.LOST, amount: 0, message: 'Не устроил бюджет.' },
+  });
 
-  // 7. Contact requests on the landing form (incoming demo)
-  const contactSeeds = [
-    { name: 'Карим Шарипов', email: 'karim@premier-clinic.tj', phone: '+992 90 111 99 11', message: 'Хотим расширить эстетическую клинику, нужен audit + стратегия.', status: ContactStatus.NEW },
-    { name: 'Анна Левитан', email: 'anna@studioforma.ru', phone: '+992 90 222 88 22', message: 'Запустили студию, нужен performance-маркетинг с первого месяца.', status: ContactStatus.WORKING },
-    { name: 'Ферузшох', email: 'feruz@capital.tj', phone: '+992 90 333 77 33', message: 'Девелопер. Снизить CPL для премиум-сегмента.', status: ContactStatus.WORKING },
-    { name: 'Лола Каримова', email: 'lola@cafe-aurora.tj', phone: '+992 90 444 66 44', message: 'Кофейня в центре. Соцсети + контент + посадка.', status: ContactStatus.NEW },
-    { name: 'Тимур Назаров', email: 'timur@gymlabs.tj', phone: '+992 90 555 55 55', message: 'Сеть фитнес-клубов, нужен бренд + новые каналы.', status: ContactStatus.NEW },
-    { name: 'Полина Свердлова', email: 'polina@beauty.tj', phone: '+992 90 666 44 66', message: 'Beauty-салон, нужен полный цикл — от стратегии до Reels.', status: ContactStatus.CLOSED },
-    { name: 'Алексей Барсуков', email: 'alex@barsuckov.dev', phone: '+992 90 777 33 77', message: 'Личный бренд, эксперт по финансам. Запуск курса.', status: ContactStatus.WORKING },
-    { name: 'Шерхон Эмомов', email: 'sher@premier-real.tj', phone: '+992 90 888 22 88', message: 'Недвижимость VIP. Хотим автоматизировать воронку.', status: ContactStatus.NEW },
-  ];
-  for (const cr of contactSeeds) {
-    const date = new Date();
-    date.setDate(date.getDate() - randInt(0, 14));
-    date.setHours(randInt(9, 19), randInt(0, 59), 0, 0);
-    await prisma.contactRequest.create({ data: { ...cr, createdAt: date } });
-  }
+  // 5. Tasks
+  await prisma.task.createMany({
+    data: [
+      { title: 'Позвонить в Стоматологию Smile', dealId: dealSmile.id, ownerId: manager.id, priority: TaskPriority.HIGH, dueDate: addDays(-2) },
+      { title: 'Отправить КП — Фитнес Pulse', dealId: dealPulse.id, ownerId: admin.id, priority: TaskPriority.HIGH, dueDate: today },
+      { title: 'Подготовить отчёт за май — Aesthetic', clientId: aesthetic.id, ownerId: admin.id, priority: TaskPriority.MEDIUM, dueDate: addDays(2) },
+      { title: 'Напомнить о продлении тарифа', clientId: aesthetic.id, ownerId: manager.id, priority: TaskPriority.MEDIUM, dueDate: addDays(5) },
+      { title: 'Согласовать креативы — Studio Forma', clientId: fitness.id, ownerId: admin.id, priority: TaskPriority.LOW, dueDate: addDays(4) },
+      { title: 'Завести рекламный кабинет', clientId: fitness.id, ownerId: admin.id, priority: TaskPriority.MEDIUM, done: true },
+    ],
+  });
 
-  console.log('✅ Database seeded.\n');
-  console.log('   ADMIN  → admin@mimi.agency / mimi2024');
-  console.log('   CLIENT → aesthetic@mimi.dev / client2024');
-  console.log('   CLIENT → fitness@mimi.dev   / client2024');
-  console.log('   CLIENT → realty@mimi.dev    / client2024');
-  console.log('   CLIENT → cafe@mimi.dev      / client2024\n');
+  // 6. Activities (notes & history)
+  await prisma.activity.createMany({
+    data: [
+      { kind: ActivityKind.CALL, body: 'Созвон по результатам мая — клиент доволен ростом заявок.', clientId: aesthetic.id, authorId: admin.id },
+      { kind: ActivityKind.NOTE, body: 'Согласовали бюджет 22 000 сомони на июнь.', clientId: aesthetic.id, authorId: admin.id },
+      { kind: ActivityKind.MEETING, body: 'Встреча по стратегии Q3.', clientId: fitness.id, authorId: manager.id },
+      { kind: ActivityKind.NOTE, body: 'Запросили КП, готовят решение до конца недели.', dealId: dealSmile.id, authorId: manager.id },
+    ],
+  });
+
+  // touch won1 so linter keeps the reference meaningful
+  void won1;
+
+  console.log('✅ CRM seeded.\n');
+  console.log('   ADMIN  → admin@mimi.agency   / mimi2024');
+  console.log('   ADMIN  → sabina@mimi.agency  / mimi2024');
+  console.log('   CLIENT → aesthetic@mimi.dev  / client2024');
+  console.log('   CLIENT → fitness@mimi.dev    / client2024\n');
 }
 
 main()

@@ -9,9 +9,9 @@ import { TopNav } from '@/components/ui/TopNav';
 import { formatMoney, tariffLabel, tariffPrice, tariffRecurring } from '@/lib/utils';
 
 const PLAN_DESC: Record<string, string> = {
-  START: 'Таргет, до 8 креативов, 4 Reels, понятная отчётность',
-  GROWTH: 'Аналитика, до 15 креативов, брендинг, воронка, аудит',
-  PREMIUM: 'Стратегия, полный брендинг, 8–10 Reels, веб-страница, масштабирование',
+  START: 'Мини-стратегия, таргет + аналитика, 4 Reels, до 8 креативов, отчётность',
+  GROWTH: 'Стратегия, таргет + аналитика, 15 креативов, 4 Reels, брендинг, воронка, консультации продаж',
+  PREMIUM: 'Полная стратегия, брендинг, глубокая аналитика, 8 Reels, 15 креативов, SMM, сайт, сопровождение',
 };
 
 export function CheckoutClient({ plan }: { plan: string }) {

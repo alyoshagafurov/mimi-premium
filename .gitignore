@@ -14,5 +14,9 @@ coverage/
 prisma/migrations/
 *.tsbuildinfo
 .claude/
+.claude-flow/
 .vercel
 .env*
+
+# stray working file (duplicate of public/ornament.png)
+/орнамент.png

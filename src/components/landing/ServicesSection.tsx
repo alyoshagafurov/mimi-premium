@@ -22,7 +22,7 @@ type Service = {
   sub: string;
   description: string;
   benefits: string[];
-  visual: 'target' | 'camera' | 'strategy' | 'brand' | 'funnel' | 'web';
+  visual: 'target' | 'camera' | 'strategy' | 'brand' | 'funnel' | 'web' | 'sales';
 };
 
 const SERVICES: Service[] = [
@@ -31,8 +31,8 @@ const SERVICES: Service[] = [
     title: 'Таргетированная реклама',
     sub: 'Meta · Instagram · Facebook',
     description:
-      'Запускаем performance-кампании с прозрачной экономикой. Каждый рубль трафика работает на бизнес-модель, а не на CTR.',
-    benefits: ['Сквозная аналитика', 'A/B тестирование креативов', 'Снижение CAC до 40%'],
+      'Запускаем эффективную рекламу, которая окупает сама себя. Каждый сомони трафика работает на бизнес-модель, а не на CTR.',
+    benefits: ['Сквозная аналитика', 'A/B тестирование креативов', 'Снижение CPL до 40%'],
     visual: 'target',
   },
   {
@@ -40,8 +40,8 @@ const SERVICES: Service[] = [
     title: 'Контент-съёмка',
     sub: 'Reels · съёмка · монтаж',
     description:
-      'Премиальная продакшн-команда. Снимаем контент, который работает на продажи и формирует образ бренда.',
-    benefits: ['Сценарии под платформы', 'In-house продакшн', 'Готовый контент-план на месяц'],
+      'Премиальная продакшн-команда. Снимаем продающий контент, который работает на продажи и формирует образ бренда.',
+    benefits: ['Сценарии под платформы', 'In-house продакшн', 'Контент направления на месяц для СММ'],
     visual: 'camera',
   },
   {
@@ -49,8 +49,8 @@ const SERVICES: Service[] = [
     title: 'Маркетинговая стратегия',
     sub: 'Система роста бизнеса',
     description:
-      'Глубокая диагностика, позиционирование и дорожная карта на 6–12 месяцев. Стратегия с цифрами, а не презентация.',
-    benefits: ['Анализ ниши и конкурентов', 'Воронка под бизнес-модель', 'KPI-дорожная карта'],
+      'Глубокая диагностика, позиционирование и дорожная карта на 3–12 месяцев. Стратегия, как инструмент для продвижения, а не презентация.',
+    benefits: ['Анализ ниши и конкурентов', 'Воронка под бизнес-модель', 'Классический и digital маркетинг'],
     visual: 'strategy',
   },
   {
@@ -59,16 +59,16 @@ const SERVICES: Service[] = [
     sub: 'Позиционирование и визуал',
     description:
       'Собираем айдентику, тон голоса и визуальные коды. Бренд, который выделяется и продаёт без лишних слов.',
-    benefits: ['Logo & визуальная система', 'Brandbook + гайдлайны', 'Tone of voice'],
+    benefits: ['Logo & визуальная система', 'Brandbook + дизайн мерча', 'Tone of voice'],
     visual: 'brand',
   },
   {
     n: '05',
     title: 'Воронки и автоматизация',
-    sub: 'CRM · лидогенерация',
+    sub: 'Воронки · лидогенерация',
     description:
-      'Строим лидген-машины: от первого касания до повторных продаж. CRM, чат-боты, прогрев и сегментация — всё связано.',
-    benefits: ['amoCRM / Bitrix24 интеграция', 'Чат-боты и автоворонки', 'Сегментация и реактивация'],
+      'Строим лидген-машины: от первого касания до повторных продаж. Воронки, чат-боты, прогрев и сегментация — всё связано.',
+    benefits: ['Построение воронки продаж', 'Чат-боты и автоворонки', 'Сегментация и реактивация'],
     visual: 'funnel',
   },
   {
@@ -79,6 +79,15 @@ const SERVICES: Service[] = [
       'Сайты, которые конвертируют. От продающего лендинга до digital-флагмана бренда — с анимацией и быстрой загрузкой.',
     benefits: ['Next.js · современный стек', 'Score 95+ по Lighthouse', 'Анимация уровня премиум'],
     visual: 'web',
+  },
+  {
+    n: '07',
+    title: 'Мастер-классы по продажам',
+    sub: 'Обучение отдела продаж',
+    description:
+      'Прокачиваем отдел продаж: скрипты, работа с возражениями, дожим и контроль. Чтобы заявки от маркетинга превращались в деньги.',
+    benefits: ['Скрипты и работа с возражениями', 'Разбор реальных звонков', 'Контроль и регламенты продаж'],
+    visual: 'sales',
   },
 ];
 
@@ -156,6 +165,19 @@ function Visual({ kind }: { kind: Service['visual'] }) {
           <rect x="46" y="124" width="114" height="20" rx="3" fill="none" stroke="rgba(212,236,76,0.25)" strokeWidth="0.6" />
         </svg>
       );
+    case 'sales':
+      return (
+        <svg viewBox="0 0 200 200" className="h-full w-full">
+          <rect x="40" y="40" width="120" height="80" rx="6" fill="none" stroke="rgba(212,236,76,0.4)" strokeWidth="1.2" />
+          <path d="M 58 102 L 86 78 L 108 90 L 140 58" stroke="#D4EC4C" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 130 58 L 142 58 L 142 70" stroke="#FC9603" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="100" y1="120" x2="100" y2="136" stroke="rgba(212,236,76,0.4)" strokeWidth="1.2" />
+          <line x1="74" y1="136" x2="126" y2="136" stroke="rgba(212,236,76,0.4)" strokeWidth="1.2" />
+          <circle cx="64" cy="158" r="6" fill="none" stroke="rgba(212,236,76,0.45)" strokeWidth="1" />
+          <circle cx="100" cy="164" r="6" fill="none" stroke="rgba(212,236,76,0.45)" strokeWidth="1" />
+          <circle cx="136" cy="158" r="6" fill="none" stroke="rgba(252,150,3,0.5)" strokeWidth="1" />
+        </svg>
+      );
   }
 }
 
@@ -182,7 +204,7 @@ export function ServicesSection() {
           </div>
           <Reveal delay={0.12}>
             <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              Шесть направлений, одна система. Подбираем под цели бизнеса, масштаб и бюджет.
+              Семь направлений, одна система. Подбираем под цели бизнеса, масштаб и бюджет.
             </p>
           </Reveal>
         </div>
@@ -205,7 +227,7 @@ export function ServicesSection() {
                     transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
                     className="font-mono text-[11px] uppercase tracking-[0.32em] text-brand-orange"
                   >
-                    {current.n} / 06
+                    {current.n} / 07
                   </motion.span>
                 </AnimatePresence>
                 <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">направление</span>
@@ -357,6 +379,41 @@ export function ServicesSection() {
             );
           })}
         </ul>
+
+        {/* ─── Отдельные услуги (à la carte) ─── */}
+        <Reveal delay={0.1}>
+          <div className="mt-16 overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-white/[0.01] p-8 lg:mt-20 lg:p-10">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-eyebrow uppercase text-brand-orange">Отдельные услуги</p>
+                <h3 className="mt-3 font-display text-2xl font-extrabold text-light lg:text-3xl">
+                  Заказать{' '}
+                  <span className="font-serif italic font-normal text-lime-grad">поштучно.</span>
+                </h3>
+              </div>
+              <p className="max-w-md text-sm leading-relaxed text-light/55 lg:text-right">
+                Нужно что-то одно, без пакета? Берём отдельными задачами.
+              </p>
+            </div>
+            <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                'Создание сайтов',
+                'Создание брендбуков',
+                'Создание скриптов продаж',
+                'Дизайн: баннеры, визитки и др.',
+                'Мастер-классы по продажам',
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-ink/40 px-5 py-4 text-sm text-light/80 transition-colors hover:border-brand-lime/40 hover:text-light"
+                >
+                  <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-lime shadow-[0_0_10px_rgba(212,236,76,0.6)]" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

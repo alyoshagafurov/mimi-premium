@@ -9,12 +9,22 @@ const schema = z.object({
   message: z.string().optional(),
 });
 
+/** Public: landing-form submission → a new Deal at the top of the pipeline. */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const data = schema.parse(body);
-    const lead = await prisma.contactRequest.create({ data });
-    return NextResponse.json({ id: lead.id });
+    const data = schema.parse(await req.json());
+    const deal = await prisma.deal.create({
+      data: {
+        title: data.name,
+        contactName: data.name,
+        phone: data.phone,
+        email: data.email,
+        message: data.message,
+        source: 'Лендинг',
+        stage: 'NEW',
+      },
+    });
+    return NextResponse.json({ id: deal.id });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });
   }

@@ -2,8 +2,8 @@ import { cn, statusLabel } from '@/lib/utils';
 
 const palette: Record<string, string> = {
   ACTIVE: 'bg-brand-lime/12 text-brand-lime border-brand-lime/30',
-  SCALING: 'bg-brand-lime/12 text-brand-lime border-brand-lime/30',
   PAUSED: 'bg-brand-orange/15 text-brand-orange border-brand-orange/40',
+  FINISHED: 'bg-white/5 text-muted border-white/10',
   ARCHIVED: 'bg-white/5 text-muted border-white/10',
   NEW: 'bg-brand-lime/12 text-brand-lime border-brand-lime/30',
   WORKING: 'bg-brand-orange/15 text-brand-orange border-brand-orange/40',

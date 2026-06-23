@@ -2,7 +2,14 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { monthName } from '@/lib/utils';
 import { DashboardClient } from './DashboardClient';
+
+const deltaPct = (cur?: number, prev?: number): number | null => {
+  if (prev === undefined || prev === null || prev === 0) return null;
+  if (cur === undefined || cur === null) return null;
+  return ((cur - prev) / prev) * 100;
+};
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -13,9 +20,14 @@ export default async function DashboardPage() {
     include: {
       client: {
         include: {
-          campaigns: true,
-          leads: { orderBy: { createdAt: 'desc' }, take: 10 },
-          metrics: { orderBy: { date: 'asc' } },
+          reports: {
+            orderBy: [{ year: 'asc' }, { month: 'asc' }],
+            include: {
+              platforms: { orderBy: { name: 'asc' } },
+              campaigns: { orderBy: { createdAt: 'asc' } },
+              audience: true,
+            },
+          },
         },
       },
     },
@@ -32,23 +44,9 @@ export default async function DashboardPage() {
     );
   }
 
-  const metrics = user.client.metrics;
-  const last = metrics.at(-1);
-  const prev = metrics.at(-2);
-  const totalSpentMonth = metrics.slice(-4).reduce((s, m) => s + m.spent, 0);
-  const totalLeadsMonth = metrics.slice(-4).reduce((s, m) => s + m.leads, 0);
-  const totalSalesMonth = metrics.slice(-4).reduce((s, m) => s + m.sales, 0);
-  const totalRevenueMonth = metrics.slice(-4).reduce((s, m) => s + m.revenue, 0);
-  const romiAvg = totalSpentMonth > 0 ? ((totalRevenueMonth - totalSpentMonth) / totalSpentMonth) * 100 : 0;
-
-  const deltaPct = (cur?: number, p?: number) => (!cur || !p) ? 0 : ((cur - p) / p) * 100;
-
-  const funnel = [
-    { label: 'Клики', value: metrics.slice(-4).reduce((s, m) => s + m.clicks, 0) },
-    { label: 'Заявки', value: totalLeadsMonth },
-    { label: 'Квалифицированные', value: metrics.slice(-4).reduce((s, m) => s + m.qualified, 0) },
-    { label: 'Продажи', value: totalSalesMonth },
-  ];
+  const reports = user.client.reports;
+  const current = reports.at(-1);
+  const prev = reports.at(-2);
 
   return (
     <DashboardClient
@@ -57,42 +55,44 @@ export default async function DashboardPage() {
         tariff: user.tariff,
         tariffEnd: user.tariffEnd?.toISOString() ?? null,
       }}
-      kpi={{
-        spent: totalSpentMonth,
-        leads: totalLeadsMonth,
-        sales: totalSalesMonth,
-        romi: romiAvg,
-        spentDelta: deltaPct(last?.spent, prev?.spent),
-        leadsDelta: deltaPct(last?.leads, prev?.leads),
-        salesDelta: deltaPct(last?.sales, prev?.sales),
-        romiDelta: deltaPct(last?.romi, prev?.romi),
+      business={{ name: user.client.businessName, niche: user.client.niche }}
+      period={current ? { month: current.month, year: current.year } : null}
+      metrics={{
+        spent: current?.spent ?? 0,
+        reach: current?.reach ?? 0,
+        clicks: current?.clicks ?? 0,
+        leads: current?.leads ?? 0,
+        budget: current?.budget ?? 0,
+        spentDelta: deltaPct(current?.spent, prev?.spent),
+        reachDelta: deltaPct(current?.reach, prev?.reach),
+        clicksDelta: deltaPct(current?.clicks, prev?.clicks),
+        leadsDelta: deltaPct(current?.leads, prev?.leads),
       }}
-      chart={metrics.map((m) => ({
-        date: m.date.toISOString(),
-        romi: m.romi,
-        revenue: m.revenue,
+      reachTrend={reports.map((r) => ({
+        label: `${monthName(r.month)} ${String(r.year).slice(2)}`,
+        reach: r.reach,
       }))}
-      funnel={funnel}
-      leads={user.client.leads.map((l) => ({
-        id: l.id,
-        name: l.name,
-        contact: l.contact,
-        source: l.source,
-        status: l.status,
-        createdAt: l.createdAt.toISOString(),
+      platforms={(current?.platforms ?? []).map((p) => ({
+        name: p.name,
+        spent: p.spent,
+        roas: p.roas,
       }))}
-      campaigns={user.client.campaigns.map((c) => ({
+      campaigns={(current?.campaigns ?? []).map((c) => ({
         id: c.id,
         name: c.name,
         platform: c.platform,
-        budget: c.budget,
-        spent: c.spent,
-        leads: c.leads,
-        sales: c.sales,
-        romi: c.romi,
         status: c.status,
       }))}
-      business={{ name: user.client.businessName, niche: user.client.niche }}
+      audience={
+        current?.audience
+          ? {
+              age18_24: current.audience.age18_24,
+              age25_34: current.audience.age25_34,
+              age35_44: current.audience.age35_44,
+              age45plus: current.audience.age45plus,
+            }
+          : null
+      }
     />
   );
 }

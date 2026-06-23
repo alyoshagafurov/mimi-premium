@@ -23,7 +23,7 @@ type Step = {
   title: string;
   desc: string;
   detail: string;
-  visual: 'analyze' | 'strategy' | 'launch' | 'optimize' | 'scale';
+  visual: 'analyze' | 'strategy' | 'produce' | 'launch' | 'optimize' | 'systemize' | 'scale';
 };
 
 const STEPS: Step[] = [
@@ -31,32 +31,46 @@ const STEPS: Step[] = [
     n: '01',
     title: 'Анализ',
     desc: 'Погружение в нишу, продукт, аудиторию и текущие связки.',
-    detail: 'Аудит рекламных кабинетов, CRM, посадок и контента. Формируем карту гипотез и приоритеты для запуска.',
+    detail: 'Аудит рекламных кабинетов, посадок и контента. Формируем карту гипотез и приоритеты для запуска.',
     visual: 'analyze',
   },
   {
     n: '02',
     title: 'Стратегия',
-    desc: 'План роста на 6–12 месяцев с понятными KPI.',
+    desc: 'План роста на 3–6 месяцев с понятными KPI.',
     detail: 'Дорожная карта с приоритетами, бюджетами и KPI по каждому каналу. Не презентация — рабочий документ.',
     visual: 'strategy',
   },
   {
     n: '03',
-    title: 'Запуск',
-    desc: 'Креативы, посадки, кабинеты, аналитика — за 7–14 дней.',
-    detail: 'Собираем всё в систему: рекламные кампании, UTM-разметку, CRM-интеграции, дашборд аналитики.',
-    visual: 'launch',
+    title: 'Продюсирование',
+    desc: 'Превращаем стратегию в готовый к запуску контент и креативы.',
+    detail: 'Сценарии, съёмки, монтаж, продающие креативы и посадочные. Собираем всё, что нужно для старта рекламы.',
+    visual: 'produce',
   },
   {
     n: '04',
+    title: 'Запуск',
+    desc: 'Креативы, посадки, кабинеты, аналитика — за 7–14 дней.',
+    detail: 'Собираем всё в систему: рекламные кампании, UTM-разметку и дашборд аналитики.',
+    visual: 'launch',
+  },
+  {
+    n: '05',
     title: 'Оптимизация',
     desc: 'Еженедельный разбор: убираем слабое, усиливаем работающее.',
     detail: 'A/B тесты креативов и аудиторий. Перераспределение бюджетов на основе данных, а не ощущений.',
     visual: 'optimize',
   },
   {
-    n: '05',
+    n: '06',
+    title: 'Систематизация маркетинга и продаж',
+    desc: 'Связываем маркетинг с отделом продаж в единую систему.',
+    detail: 'Выстраиваем воронку и контроль продаж, регламенты и отчётность. Маркетинг и продажи работают как один механизм.',
+    visual: 'systemize',
+  },
+  {
+    n: '07',
     title: 'Масштабирование',
     desc: 'Увеличиваем бюджет на проверенных связках, без рывков.',
     detail: 'Подключаем новые каналы и форматы. Растём вместе с клиентом — от тестовых бюджетов до системного роста.',
@@ -113,6 +127,29 @@ function StepVisual({ kind }: { kind: Step['visual'] }) {
             );
           })}
           <line x1="20" y1="120" x2="190" y2="120" stroke="rgba(245,241,250,0.1)" strokeWidth="0.6" />
+        </svg>
+      );
+    case 'produce':
+      return (
+        <svg viewBox="0 0 200 140" className="h-full w-full">
+          <rect x="48" y="38" width="104" height="66" rx="6" fill="none" stroke="rgba(212,236,76,0.4)" strokeWidth="1.2" />
+          <line x1="48" y1="56" x2="152" y2="56" stroke="rgba(212,236,76,0.25)" strokeWidth="0.8" />
+          <circle cx="58" cy="47" r="1.6" fill="#FC9603" />
+          <circle cx="68" cy="47" r="1.6" fill="rgba(212,236,76,0.5)" />
+          <path d="M 90 66 L 90 92 L 116 79 Z" fill="none" stroke="#D4EC4C" strokeWidth="1.4" strokeLinejoin="round" />
+          <text x="100" y="124" fill="rgba(245,241,250,0.5)" fontSize="7" letterSpacing="3" fontFamily="monospace" textAnchor="middle">CONTENT</text>
+        </svg>
+      );
+    case 'systemize':
+      return (
+        <svg viewBox="0 0 200 140" className="h-full w-full">
+          <circle cx="62" cy="64" r="20" fill="none" stroke="#D4EC4C" strokeWidth="1.2" />
+          <circle cx="62" cy="64" r="4" fill="#D4EC4C" />
+          <circle cx="138" cy="64" r="20" fill="none" stroke="#FC9603" strokeWidth="1.2" />
+          <circle cx="138" cy="64" r="4" fill="#FC9603" />
+          <line x1="82" y1="64" x2="118" y2="64" stroke="rgba(212,236,76,0.6)" strokeWidth="1" strokeDasharray="3 4" />
+          <text x="62" y="100" fill="rgba(245,241,250,0.5)" fontSize="7" letterSpacing="1.5" fontFamily="monospace" textAnchor="middle">МАРКЕТИНГ</text>
+          <text x="138" y="100" fill="rgba(245,241,250,0.5)" fontSize="7" letterSpacing="1.5" fontFamily="monospace" textAnchor="middle">ПРОДАЖИ</text>
         </svg>
       );
     case 'scale':
@@ -196,7 +233,7 @@ export function ProcessSection() {
             </Reveal>
             <Reveal delay={0.06}>
               <h2 className="mt-6 max-w-[14ch] font-display text-hero-sm font-extrabold">
-                Пять шагов{' '}
+                Семь шагов{' '}
                 <span className="font-serif italic font-normal text-lime-grad">
                   к&nbsp;системе.
                 </span>
@@ -228,7 +265,7 @@ export function ProcessSection() {
                     transition={{ duration: 0.3 }}
                     className="font-mono text-[11px] uppercase tracking-[0.32em] text-brand-orange"
                   >
-                    Шаг {current.n} / 05
+                    Шаг {current.n} / 07
                   </motion.span>
                 </AnimatePresence>
                 <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">этап</span>

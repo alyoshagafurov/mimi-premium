@@ -2,46 +2,39 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
-import { format, parse } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import { PageHeader } from '@/components/admin/PageHeader';
-import { StatusPill } from '@/components/ui/StatusPill';
-import { formatInt, formatMoney, formatPct } from '@/lib/utils';
+import {
+  dealStageLabel,
+  dealStageAccent,
+  formatInt,
+  formatMoney,
+  formatDate,
+  isOverdue,
+  cn,
+} from '@/lib/utils';
+
+type Stats = { totalClients: number; activeClients: number; activeDeals: number; revenueMonth: number; overdue: number };
+type Pipeline = { stage: string; count: number; sum: number }[];
+type TaskItem = { id: string; title: string; dueDate: string | null; context: string | null };
+type Renewal = { businessName: string; tariff: string; daysLeft: number };
 
 export function AdminDashboardClient({
   me,
   stats,
-  monthly,
-  forecast,
-  recentLeads,
+  pipeline,
+  revenueTrend,
+  tasks,
+  renewals,
 }: {
   me: string;
-  stats: { totalClients: number; activeCampaigns: number; totalBudget: number; avgRomi: number };
-  monthly: { month: string; helped: number }[];
-  forecast: { date: string; profit: number }[];
-  recentLeads: { id: string; name: string; email: string; message: string; status: string; createdAt: string }[];
+  stats: Stats;
+  pipeline: Pipeline;
+  revenueTrend: { label: string; amount: number }[];
+  tasks: TaskItem[];
+  renewals: Renewal[];
 }) {
-  const monthlyData = monthly.map((m) => ({
-    label: format(parse(m.month, 'yyyy-MM', new Date()), 'LLL', { locale: ru }),
-    helped: m.helped,
-  }));
-  const forecastData = forecast.map((p) => ({
-    label: format(new Date(p.date), 'd MMM', { locale: ru }),
-    profit: Math.round(p.profit),
-  }));
-
   const tooltipStyle = {
     background: 'rgba(10,7,18,0.95)',
     border: '1px solid rgba(212,236,76,0.3)',
@@ -50,67 +43,53 @@ export function AdminDashboardClient({
     fontSize: 12,
     boxShadow: '0 30px 60px -20px rgba(0,0,0,0.7)',
   };
+  const maxPipeline = Math.max(...pipeline.map((p) => p.count), 1);
 
   return (
     <div className="space-y-5 sm:space-y-8">
       <PageHeader
         eyebrow="Cabin"
-        title={
-          <>
-            С возвращением, <span className="text-lime-grad">{me.split(' ')[0]}</span>
-          </>
-        }
-        subtitle="Всё, что вы хотели знать о бизнесе — в одном экране."
+        title={<>С возвращением, <span className="text-lime-grad">{me.split(' ')[0]}</span></>}
+        subtitle="Воронка, задачи и финансы агентства — в одном экране."
       />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-        <KpiCard label="Всего клиентов" value={formatInt(stats.totalClients)} delay={0} icon={<span className="text-sm">◷</span>} />
-        <KpiCard label="Активные кампании" value={formatInt(stats.activeCampaigns)} delay={0.05} icon={<span className="text-sm">◐</span>} />
-        <KpiCard label="Общий бюджет" value={formatMoney(stats.totalBudget)} delay={0.1} icon={<span className="text-sm">$</span>} />
-        <KpiCard label="Средний ROMI" value={formatPct(stats.avgRomi, true)} delay={0.15} icon={<span className="text-sm">↗</span>} />
+        <KpiCard label="Клиентов" value={formatInt(stats.totalClients)} delay={0} icon={<span className="text-sm">◷</span>} />
+        <KpiCard label="Активные сделки" value={formatInt(stats.activeDeals)} delay={0.05} icon={<span className="text-sm">◐</span>} />
+        <KpiCard label="Выручка за месяц" value={formatMoney(stats.revenueMonth)} delay={0.1} icon={<span className="text-sm">$</span>} />
+        <KpiCard label="Долг" value={formatMoney(stats.overdue)} delay={0.15} icon={<span className="text-sm">!</span>} />
       </div>
 
-      {/* Charts row */}
-      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
+      {/* Pipeline + revenue */}
+      <div className="grid gap-5 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
           className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
         >
-          <div className="mb-4 flex items-center justify-between sm:mb-6">
+          <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Прогноз прибыли</p>
-              <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:mt-2 sm:text-2xl">Forecast 6 недель</h2>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Pipeline</p>
+              <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:text-2xl">Воронка сделок</h2>
             </div>
-            <span className="chip-lime">live</span>
+            <Link href="/admin/leads" className="btn-quiet">Открыть</Link>
           </div>
-          <div className="h-56 sm:h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={forecastData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="profitFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#D4EC4C" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#5B3CA3" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: 'rgba(245,241,250,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis
-                  tick={{ fill: 'rgba(245,241,250,0.5)', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `${Math.round(v / 1000)}k`}
-                />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  labelStyle={{ color: '#D4EC4C' }}
-                  formatter={(v: number) => [formatMoney(v), 'Прибыль']}
-                />
-                <Area type="monotone" dataKey="profit" stroke="#D4EC4C" strokeWidth={2.5} fill="url(#profitFill)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="space-y-3">
+            {pipeline.map((p) => (
+              <div key={p.stage}>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className={cn('rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em]', dealStageAccent(p.stage))}>
+                    {dealStageLabel(p.stage)}
+                  </span>
+                  <span className="text-muted">{p.count} · {formatMoney(p.sum)}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="h-full rounded-full bg-lime-gradient" style={{ width: `${(p.count / maxPipeline) * 100}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
         </motion.div>
 
@@ -120,72 +99,85 @@ export function AdminDashboardClient({
           transition={{ duration: 0.7, delay: 0.3 }}
           className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
         >
-          <div className="mb-4 sm:mb-6">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Помогли клиентам</p>
-            <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:mt-2 sm:text-2xl">На сопровождении</h2>
+          <div className="mb-4">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Finance</p>
+            <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:text-2xl">Выручка по месяцам</h2>
           </div>
-          <div className="h-56 sm:h-72">
+          <div className="h-56 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={revenueTrend} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#E4F47A" />
                     <stop offset="100%" stopColor="#A8BD2F" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: 'rgba(245,241,250,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'rgba(245,241,250,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  cursor={{ fill: 'rgba(212,236,76,0.05)' }}
-                  labelStyle={{ color: '#D4EC4C' }}
+                <YAxis
+                  tick={{ fill: 'rgba(245,241,250,0.5)', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => new Intl.NumberFormat('ru-RU', { notation: 'compact' }).format(v)}
                 />
-                <Bar dataKey="helped" fill="url(#barFill)" radius={[8, 8, 0, 0]} animationDuration={1200} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(212,236,76,0.05)' }} labelStyle={{ color: '#D4EC4C' }} formatter={(v: number) => [formatMoney(v), 'Выручка']} />
+                <Bar dataKey="amount" fill="url(#revFill)" radius={[8, 8, 0, 0]} animationDuration={1100} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
       </div>
 
-      {/* Recent contact requests */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.4 }}
-        className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
-      >
-        <div className="mb-4 flex items-center justify-between sm:mb-6">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-light/50">Последние</p>
-            <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:mt-2 sm:text-2xl">Свежие заявки</h2>
+      {/* Tasks + renewals */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.36 }}
+          className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
+        >
+          <h2 className="mb-4 font-display text-xl font-extrabold text-light sm:text-2xl">Задачи</h2>
+          <div className="space-y-2">
+            {tasks.map((t) => {
+              const over = isOverdue(t.dueDate);
+              return (
+                <div key={t.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-light">{t.title}</div>
+                    {t.context && <div className="truncate text-[11px] text-light/45">{t.context}</div>}
+                  </div>
+                  {t.dueDate && (
+                    <span className={cn('shrink-0 text-[11px]', over ? 'text-rose-400' : 'text-light/50')}>
+                      {over ? 'просрочено · ' : 'до '}{formatDate(t.dueDate)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            {!tasks.length && <p className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-8 text-center text-sm text-light/55">Открытых задач нет 🎉</p>}
           </div>
-          <Link href="/admin/leads" className="btn-quiet">Все заявки</Link>
-        </div>
-        <div className="space-y-2">
-          {recentLeads.map((l) => (
-            <div
-              key={l.id}
-              className="flex flex-col gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] p-5 transition-colors hover:border-brand-lime/20 md:flex-row md:items-center md:justify-between"
-            >
-              <div className="min-w-0">
-                <div className="font-medium text-light">{l.name}</div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-light/45">{l.email}</div>
-                {l.message && <div className="mt-2 line-clamp-1 text-sm text-light/70">{l.message}</div>}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.42 }}
+          className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
+        >
+          <h2 className="mb-4 font-display text-xl font-extrabold text-light sm:text-2xl">Продление тарифов</h2>
+          <div className="space-y-2">
+            {renewals.map((r) => (
+              <div key={r.businessName} className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+                <span className="truncate text-sm font-medium text-light">{r.businessName}</span>
+                <span className={cn('shrink-0 text-[11px]', r.daysLeft < 0 ? 'text-rose-400' : r.daysLeft <= 7 ? 'text-brand-orange' : 'text-light/50')}>
+                  {r.daysLeft < 0 ? `просрочено ${-r.daysLeft} дн.` : r.daysLeft === 0 ? 'сегодня' : `через ${r.daysLeft} дн.`}
+                </span>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] text-light/45">{format(new Date(l.createdAt), 'd MMM', { locale: ru })}</span>
-                <StatusPill status={l.status} />
-              </div>
-            </div>
-          ))}
-          {!recentLeads.length && (
-            <p className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-8 text-center text-sm text-light/55">
-              Заявок пока нет — отправьте трафик на главную.
-            </p>
-          )}
-        </div>
-      </motion.div>
+            ))}
+            {!renewals.length && <p className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-8 text-center text-sm text-light/55">Ближайших продлений нет.</p>}
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { ClientsClient } from './ClientsClient';
 
 export default async function AdminClientsPage() {
   const clients = await prisma.client.findMany({
-    include: { owner: true, campaigns: true },
+    include: { owner: true, _count: { select: { reports: true } } },
     orderBy: { createdAt: 'desc' },
   });
   return (
@@ -18,7 +18,7 @@ export default async function AdminClientsPage() {
         ownerEmail: c.owner.email,
         ownerPhone: c.owner.phone ?? '',
         tariff: c.owner.tariff,
-        campaigns: c.campaigns.length,
+        reports: c._count.reports,
       }))}
     />
   );
