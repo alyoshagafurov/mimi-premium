@@ -1,5 +1,5 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { formatMoney, formatDate } from '@/lib/utils';
 
@@ -20,8 +20,9 @@ const STATUS_COLOR = {
 } as const;
 
 export default async function ClientInvoicesPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   const me = session?.user as any;
+  if (!me?.id) redirect('/auth/login?callbackUrl=/dashboard/invoices');
   const client = await prisma.client.findUnique({ where: { ownerId: me.id }, select: { id: true } });
   const invoices = client
     ? await prisma.invoice.findMany({ where: { clientId: client.id }, orderBy: { issuedAt: 'desc' } })

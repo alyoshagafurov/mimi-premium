@@ -1,6 +1,5 @@
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { monthName } from '@/lib/utils';
 import { DashboardClient } from './DashboardClient';
@@ -12,7 +11,7 @@ const deltaPct = (cur?: number, prev?: number): number | null => {
 };
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) redirect('/auth/login');
 
   const user = await prisma.user.findUnique({

@@ -7,17 +7,11 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Logo } from '@/components/ui/Logo';
-import { cn } from '@/lib/utils';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
 
-type Role = 'CLIENT' | 'ADMIN';
-
 const ru = {
   cabinet: 'создание аккаунта',
-  roleClient: 'Владелец бизнеса',
-  roleAdmin: 'Администратор',
-  adminNote: '* Первый зарегистрированный админ получает права. Последующие — становятся клиентами по умолчанию.',
   labelName: 'Имя',
   placeholderName: 'Иван Иванов',
   labelPhone: 'Телефон',
@@ -30,7 +24,7 @@ const ru = {
   submit: 'Создать аккаунт',
   submitting: 'Создаём аккаунт...',
   errPassMatch: 'Пароли не совпадают',
-  errPassLen: 'Пароль минимум 6 символов',
+  errPassLen: 'Пароль минимум 8 символов',
   errBusiness: 'Укажите название бизнеса',
   errAutoLogin: 'Аккаунт создан, но не получилось войти. Попробуйте сами.',
   successAdmin: 'Админ-аккаунт создан',
@@ -41,9 +35,6 @@ const ru = {
 };
 const en: typeof ru = {
   cabinet: 'create account',
-  roleClient: 'Business owner',
-  roleAdmin: 'Administrator',
-  adminNote: '* The first registered admin gets full rights. Subsequent registrations default to client.',
   labelName: 'Name',
   placeholderName: 'John Smith',
   labelPhone: 'Phone',
@@ -56,7 +47,7 @@ const en: typeof ru = {
   submit: 'Create account',
   submitting: 'Creating account...',
   errPassMatch: 'Passwords do not match',
-  errPassLen: 'Password must be at least 6 characters',
+  errPassLen: 'Password must be at least 8 characters',
   errBusiness: 'Please enter business name',
   errAutoLogin: 'Account created but auto-login failed. Please sign in manually.',
   successAdmin: 'Admin account created',
@@ -67,9 +58,6 @@ const en: typeof ru = {
 };
 const tg: typeof ru = {
   cabinet: 'сохтани аккаунт',
-  roleClient: 'Соҳиби бизнес',
-  roleAdmin: 'Администратор',
-  adminNote: '* Аввалин админи бақайдшуда ҳуқуқ мегирад. Баъдиҳо бо нақши муштарӣ сабт мешаванд.',
   labelName: 'Ном',
   placeholderName: 'Аҳмад Аҳмадов',
   labelPhone: 'Телефон',
@@ -82,7 +70,7 @@ const tg: typeof ru = {
   submit: 'Сохтани аккаунт',
   submitting: 'Аккаунт сохта истодаем...',
   errPassMatch: 'Паролҳо мувофиқат намекунанд',
-  errPassLen: 'Парол ҳадди ақал 6 рамз',
+  errPassLen: 'Парол ҳадди ақал 8 рамз',
   errBusiness: 'Номи бизнесро нависед',
   errAutoLogin: 'Аккаунт сохта шуд, аммо даромадан нашуд. Худатон кӯшиш кунед.',
   successAdmin: 'Аккаунти админ сохта шуд',
@@ -105,7 +93,6 @@ export default function RegisterPage() {
     businessName: '',
     niche: '',
   });
-  const [role, setRole] = useState<Role>('CLIENT');
   const [loading, setLoading] = useState(false);
 
   const onChange = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -117,11 +104,11 @@ export default function RegisterPage() {
       toast.error(t.errPassMatch);
       return;
     }
-    if (form.password.length < 6) {
+    if (form.password.length < 8) {
       toast.error(t.errPassLen);
       return;
     }
-    if (role === 'CLIENT' && !form.businessName) {
+    if (!form.businessName) {
       toast.error(t.errBusiness);
       return;
     }
@@ -130,7 +117,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, role }),
+        body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'failed');
@@ -145,8 +132,8 @@ export default function RegisterPage() {
         router.push('/auth/login');
         return;
       }
-      toast.success(role === 'ADMIN' ? t.successAdmin : t.successClient);
-      router.push(role === 'ADMIN' ? '/admin' : '/dashboard');
+      toast.success(t.successClient);
+      router.push('/dashboard');
       router.refresh();
     } catch (err: any) {
       toast.error(err.message ?? t.errGeneric);
@@ -172,25 +159,6 @@ export default function RegisterPage() {
           <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">{t.cabinet}</p>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-white/[0.02] p-1.5">
-          {(['CLIENT', 'ADMIN'] as Role[]).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              className={cn(
-                'rounded-xl px-2 py-2.5 text-[10px] font-medium uppercase tracking-[0.08em] transition sm:px-4 sm:text-xs sm:tracking-[0.18em]',
-                role === r ? 'bg-gold-gradient text-ink shadow-gold' : 'text-muted hover:text-light',
-              )}
-            >
-              {r === 'CLIENT' ? t.roleClient : t.roleAdmin}
-            </button>
-          ))}
-        </div>
-        {role === 'ADMIN' && (
-          <p className="mb-5 text-[11px] text-muted">{t.adminNote}</p>
-        )}
-
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="label-soft">{t.labelName}</label>
@@ -204,25 +172,21 @@ export default function RegisterPage() {
             <label className="label-soft">{t.labelEmail}</label>
             <input type="email" required className="input-glass" value={form.email} onChange={onChange('email')} placeholder="you@company.com" />
           </div>
-          {role === 'CLIENT' && (
-            <>
-              <div>
-                <label className="label-soft">{t.labelBusiness}</label>
-                <input required className="input-glass" value={form.businessName} onChange={onChange('businessName')} placeholder="Acme Inc." />
-              </div>
-              <div>
-                <label className="label-soft">{t.labelNiche}</label>
-                <input className="input-glass" value={form.niche} onChange={onChange('niche')} placeholder={t.placeholderNiche} />
-              </div>
-            </>
-          )}
+          <div>
+            <label className="label-soft">{t.labelBusiness}</label>
+            <input required className="input-glass" value={form.businessName} onChange={onChange('businessName')} placeholder="Acme Inc." />
+          </div>
+          <div>
+            <label className="label-soft">{t.labelNiche}</label>
+            <input className="input-glass" value={form.niche} onChange={onChange('niche')} placeholder={t.placeholderNiche} />
+          </div>
           <div>
             <label className="label-soft">{t.labelPassword}</label>
-            <input type="password" required minLength={6} className="input-glass" value={form.password} onChange={onChange('password')} placeholder="••••••••" />
+            <input type="password" required minLength={8} className="input-glass" value={form.password} onChange={onChange('password')} placeholder="••••••••" />
           </div>
           <div>
             <label className="label-soft">{t.labelConfirm}</label>
-            <input type="password" required minLength={6} className="input-glass" value={form.confirm} onChange={onChange('confirm')} placeholder="••••••••" />
+            <input type="password" required minLength={8} className="input-glass" value={form.confirm} onChange={onChange('confirm')} placeholder="••••••••" />
           </div>
           <button type="submit" disabled={loading} className="btn-gold mt-2 w-full disabled:opacity-60 md:col-span-2">
             {loading ? t.submitting : t.submit}

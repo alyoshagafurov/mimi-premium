@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { CheckoutClient } from './CheckoutClient';
 
 export default async function CheckoutPage({
@@ -9,7 +8,7 @@ export default async function CheckoutPage({
 }: {
   searchParams: { plan?: string };
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) {
     redirect(`/auth/login?callbackUrl=/checkout?plan=${searchParams.plan ?? 'GROWTH'}`);
   }

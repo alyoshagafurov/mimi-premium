@@ -1,10 +1,9 @@
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { Sidebar, MobileTopbar } from '@/components/admin/Sidebar';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) redirect('/auth/login?callbackUrl=/admin');
   if ((session.user as any).role !== 'ADMIN') redirect('/dashboard');
 

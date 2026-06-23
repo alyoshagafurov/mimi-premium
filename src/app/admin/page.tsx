@@ -1,11 +1,10 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { DEAL_STAGES, monthName } from '@/lib/utils';
 import { AdminDashboardClient } from './AdminDashboardClient';
 
 export default async function AdminDashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   const me = session?.user?.name ?? 'Admin';
 
   const [clients, deals, tasks, payments] = await Promise.all([

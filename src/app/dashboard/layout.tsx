@@ -1,10 +1,9 @@
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) redirect('/auth/login?callbackUrl=/dashboard');
   if ((session.user as any).role === 'ADMIN') redirect('/admin');
   return (

@@ -1,19 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 
 const schema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  password: z.string().min(6).optional(),
+  password: z.string().min(8).optional(),
 });
 
 export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user || (session.user as any).role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }

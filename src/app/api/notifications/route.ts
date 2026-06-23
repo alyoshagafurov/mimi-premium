@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const userId = (session.user as any).id;
   const [items, unread] = await Promise.all([
@@ -19,7 +18,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const userId = (session.user as any).id;
   const { id, all } = await req.json().catch(() => ({}));

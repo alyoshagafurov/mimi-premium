@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { notify } from '@/lib/notify';
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const me = session.user as any;
   const url = new URL(req.url);
@@ -35,23 +34,33 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const me = session.user as any;
-  const { clientId: requestedClient, body } = await req.json();
+  const { clientId: requestedClient, body } = await req.json().catch(() => ({}));
+
+  const text = typeof body === 'string' ? body.trim() : '';
+  if (!text || text.length > 5000) {
+    return NextResponse.json({ error: 'bad_request' }, { status: 400 });
+  }
 
   let clientId: string | null = requestedClient;
   if (me.role === 'CLIENT') {
     const c = await prisma.client.findUnique({ where: { ownerId: me.id }, select: { id: true } });
     if (!c) return NextResponse.json({ error: 'no_client' }, { status: 400 });
     clientId = c.id;
+  } else {
+    // Admin must target an existing client
+    if (!clientId) return NextResponse.json({ error: 'no_client' }, { status: 400 });
+    const exists = await prisma.client.findUnique({ where: { id: clientId }, select: { id: true } });
+    if (!exists) return NextResponse.json({ error: 'no_client' }, { status: 400 });
   }
-  if (!clientId || !body?.trim()) {
+  if (!clientId) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 });
   }
 
   const msg = await prisma.message.create({
-    data: { clientId, senderId: me.id, body: body.trim() },
+    data: { clientId, senderId: me.id, body: text },
     include: { sender: { select: { id: true, name: true, role: true } } },
   });
 
@@ -65,7 +74,7 @@ export async function POST(req: Request) {
           userId: a.id,
           kind: 'MESSAGE',
           title: `Сообщение от ${client?.businessName ?? me.name}`,
-          body: body.slice(0, 80),
+          body: text.slice(0, 80),
           link: `/admin/clients/${clientId}`,
         }),
       ),

@@ -2,35 +2,37 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
+import { rateLimit } from '@/lib/rate-limit';
+import { clientIp } from '@/lib/request';
 
 const schema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  password: z.string().min(6),
-  role: z.enum(['CLIENT', 'ADMIN']).default('CLIENT'),
-  businessName: z.string().optional(),
-  niche: z.string().optional(),
+  name: z.string().min(2).max(80),
+  email: z.string().email().max(160),
+  phone: z.string().max(40).optional(),
+  password: z.string().min(8).max(200),
+  businessName: z.string().min(2).max(120).optional(),
+  niche: z.string().max(120).optional(),
 });
 
 export async function POST(req: Request) {
+  // Throttle: max 5 registrations per IP per 10 minutes
+  const ip = clientIp(req);
+  const limited = rateLimit(`register:${ip}`, 5, 10 * 60 * 1000);
+  if (!limited.ok) {
+    return NextResponse.json({ error: 'Слишком много попыток. Попробуйте позже.' }, { status: 429 });
+  }
+
   try {
     const body = await req.json();
     const data = schema.parse(body);
-    const email = data.email.toLowerCase();
+    const email = data.email.toLowerCase().trim();
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return NextResponse.json({ error: 'Email уже занят' }, { status: 400 });
 
-    // First admin gets ADMIN role; subsequent admin-registrations downgrade to CLIENT
-    let role: Role = data.role as Role;
-    if (role === 'ADMIN') {
-      const adminExists = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
-      if (adminExists) role = 'CLIENT';
-    }
-
-    const password = await bcrypt.hash(data.password, 10);
+    // Public self-registration ALWAYS creates a CLIENT. Admin accounts are
+    // provisioned via the seed/console only — never through this endpoint.
+    const password = await bcrypt.hash(data.password, 12);
 
     const user = await prisma.user.create({
       data: {
@@ -38,8 +40,8 @@ export async function POST(req: Request) {
         password,
         name: data.name,
         phone: data.phone,
-        role,
-        ...(role === 'CLIENT' && data.businessName
+        role: 'CLIENT',
+        ...(data.businessName
           ? {
               client: {
                 create: {
@@ -54,6 +56,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ id: user.id, role: user.role });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });
+    if (e?.name === 'ZodError') {
+      return NextResponse.json({ error: 'Проверьте корректность полей' }, { status: 400 });
+    }
+    console.error('[register] error:', e?.message);
+    return NextResponse.json({ error: 'Не удалось зарегистрироваться' }, { status: 400 });
   }
 }

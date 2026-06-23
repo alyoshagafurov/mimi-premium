@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { ensureAdmin } from '@/lib/api-guard';
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   if (!session?.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const url = new URL(req.url);
   const from = url.searchParams.get('from');

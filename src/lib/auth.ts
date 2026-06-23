@@ -3,9 +3,23 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 
+const isProd = process.env.NODE_ENV === 'production';
+
+/**
+ * A secret MUST be set via NEXTAUTH_SECRET in production. We fall back to a
+ * constant only to avoid a hard crash if the env var is missing on a given
+ * deploy — combined with getSafeSession(), a secret mismatch then degrades to
+ * "logged out" instead of a 500. Set a strong NEXTAUTH_SECRET in Vercel.
+ */
+const authSecret = process.env.NEXTAUTH_SECRET || 'mimi-fallback-secret-set-NEXTAUTH_SECRET-in-env';
+if (isProd && !process.env.NEXTAUTH_SECRET) {
+  console.error('[auth] NEXTAUTH_SECRET is not set — set it in the environment for secure, stable sessions.');
+}
+
 export const authOptions: NextAuthOptions = {
-  session: { strategy: 'jwt' },
+  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 }, // 30 days
   pages: { signIn: '/auth/login' },
+  useSecureCookies: isProd,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -49,5 +63,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: authSecret,
 };

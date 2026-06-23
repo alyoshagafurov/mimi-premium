@@ -1,11 +1,10 @@
 import { notFound } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { ReportPrintClient } from './ReportPrintClient';
 
 export default async function ReportPrintPage({ params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   const me = session?.user as any;
   const report = await prisma.monthlyReport.findUnique({
     where: { id: params.id },

@@ -1,12 +1,11 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { ChatPanel } from '@/components/dashboard/ChatPanel';
 
 export default async function AdminClientChatPage({ params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   const me = session?.user as any;
   const client = await prisma.client.findUnique({ where: { id: params.id } });
   if (!client) notFound();

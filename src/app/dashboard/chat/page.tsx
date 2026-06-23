@@ -1,9 +1,8 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSafeSession } from '@/lib/session';
 import { ChatPanel } from '@/components/dashboard/ChatPanel';
 
 export default async function DashboardChatPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeSession();
   const me = session?.user as any;
   return (
     <main className="mx-auto max-w-3xl px-4 py-6 lg:px-6">
