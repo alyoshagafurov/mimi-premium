@@ -30,13 +30,12 @@ enum ClientStatus {
   ARCHIVED
 }
 
-/// Sales-pipeline stages for an inbound lead / deal.
 enum DealStage {
-  NEW          // Новая заявка
-  NEGOTIATION  // Переговоры
-  PROPOSAL     // Коммерческое
-  WON          // Клиент
-  LOST         // Отказ
+  NEW
+  NEGOTIATION
+  PROPOSAL
+  WON
+  LOST
 }
 
 enum TaskPriority {
@@ -45,19 +44,52 @@ enum TaskPriority {
   HIGH
 }
 
-/// Type of a timeline entry (notes & history).
 enum ActivityKind {
   NOTE
   CALL
   MEETING
   EMAIL
-  STAGE   // automatic entry when a deal changes stage
+  STAGE
 }
 
 enum PaymentStatus {
   PAID
   PENDING
   OVERDUE
+}
+
+enum NotificationKind {
+  LEAD
+  PAYMENT
+  TASK
+  REPORT
+  MESSAGE
+  SYSTEM
+}
+
+enum CalendarEventKind {
+  MEETING
+  CALL
+  LAUNCH
+  DEADLINE
+  OTHER
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum FileKind {
+  IMAGE
+  DOCUMENT
+  VIDEO
+  CREATIVE
+  BRANDBOOK
+  OTHER
 }
 
 model User {
@@ -69,13 +101,18 @@ model User {
   role      Role     @default(CLIENT)
   tariff    Tariff   @default(NONE)
   tariffEnd DateTime?
+  avatar    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  client      Client?
-  ownedDeals  Deal[]     @relation("DealOwner")
-  ownedTasks  Task[]     @relation("TaskOwner")
-  activities  Activity[] @relation("ActivityAuthor")
+  client          Client?
+  ownedDeals      Deal[]            @relation("DealOwner")
+  ownedTasks      Task[]            @relation("TaskOwner")
+  activities      Activity[]        @relation("ActivityAuthor")
+  notifications   Notification[]
+  sentMessages    Message[]         @relation("MessageSender")
+  uploadedFiles   File[]            @relation("FileUploader")
+  calendarEvents  CalendarEvent[]   @relation("EventOwner")
 }
 
 model Client {
@@ -85,22 +122,36 @@ model Client {
   businessName String
   niche        String
   status       ClientStatus @default(ACTIVE)
+
+  // Onboarding brief
+  briefDone        Boolean   @default(false)
+  briefGoals       String?
+  briefTargetAudience String?
+  briefBudget      Float?
+  briefCompetitors String?
+  briefUSP         String?
+
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  reports      MonthlyReport[]
-  deals        Deal[]
-  tasks        Task[]
-  activities   Activity[]
-  payments     Payment[]
+  reports         MonthlyReport[]
+  deals           Deal[]
+  tasks           Task[]
+  activities      Activity[]
+  payments        Payment[]
+  files           File[]
+  invoices        Invoice[]
+  facebookAccount FacebookAccount?
+  adMetrics       AdMetric[]
+  messages        Message[]
+  calendarEvents  CalendarEvent[]
 }
 
-/// One report per client per calendar month — filled in manually by the agency.
 model MonthlyReport {
   id        String   @id @default(cuid())
   clientId  String
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  month     Int // 1–12
+  month     Int
   year      Int
   spent     Float    @default(0)
   budget    Float    @default(0)
@@ -118,7 +169,6 @@ model MonthlyReport {
   @@index([clientId, year, month])
 }
 
-/// Per-platform spend + ROAS inside a monthly report (Instagram / Facebook / …).
 model Platform {
   id       String        @id @default(cuid())
   reportId String
@@ -143,7 +193,6 @@ model Campaign {
   @@index([reportId])
 }
 
-/// Age-bucket split of the audience for a monthly report.
 model AudienceBreakdown {
   id        String        @id @default(cuid())
   reportId  String        @unique
@@ -154,21 +203,20 @@ model AudienceBreakdown {
   age45plus Int           @default(0)
 }
 
-/// A lead / deal in the sales pipeline. Inbound landing-form requests land here at stage NEW.
 model Deal {
   id          String     @id @default(cuid())
-  title       String                 // business / request title
+  title       String
   contactName String
   phone       String?
   email       String?
   message     String?
   source      String     @default("Лендинг")
   stage       DealStage  @default(NEW)
-  amount      Float      @default(0)  // expected monthly value (сомони)
-  position    Int        @default(0)  // ordering within a stage column
+  amount      Float      @default(0)
+  position    Int        @default(0)
   ownerId     String?
   owner       User?      @relation("DealOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  clientId    String?                 // linked client once won
+  clientId    String?
   client      Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -197,7 +245,6 @@ model Task {
   @@index([done, dueDate])
 }
 
-/// Timeline entry attached to a client or a deal (notes & history).
 model Activity {
   id        String       @id @default(cuid())
   kind      ActivityKind @default(NOTE)
@@ -220,7 +267,7 @@ model Payment {
   client    Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   amount    Float
   status    PaymentStatus @default(PENDING)
-  month     Int // period month 1–12
+  month     Int
   year      Int
   dueDate   DateTime?
   paidAt    DateTime?
@@ -230,4 +277,142 @@ model Payment {
   updatedAt DateTime      @updatedAt
 
   @@index([clientId, year, month])
+}
+
+/// In-app notifications shown via bell icon in topbar.
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      NotificationKind @default(SYSTEM)
+  title     String
+  body      String?
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+/// Chat messages between admin and client.
+model Message {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([clientId, createdAt])
+}
+
+/// File storage — creatives, brandbook, documents per client.
+model File {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uploaderId  String?
+  uploader    User?    @relation("FileUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+  name        String
+  url         String
+  size        Int      @default(0)
+  mime        String?
+  kind        FileKind @default(OTHER)
+  createdAt   DateTime @default(now())
+
+  @@index([clientId, createdAt])
+}
+
+/// Calendar events — meetings, launches, deadlines.
+model CalendarEvent {
+  id          String            @id @default(cuid())
+  title       String
+  description String?
+  kind        CalendarEventKind @default(MEETING)
+  startAt     DateTime
+  endAt       DateTime?
+  clientId    String?
+  client      Client?           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  ownerId     String?
+  owner       User?             @relation("EventOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([startAt])
+}
+
+/// Task template — a checklist of tasks applied to a client (e.g. "New PRO client" → 12 tasks).
+model TaskTemplate {
+  id        String                @id @default(cuid())
+  name      String
+  description String?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  items     TaskTemplateItem[]
+}
+
+model TaskTemplateItem {
+  id          String       @id @default(cuid())
+  templateId  String
+  template    TaskTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  title       String
+  offsetDays  Int          @default(0)
+  priority    TaskPriority @default(MEDIUM)
+  position    Int          @default(0)
+
+  @@index([templateId, position])
+}
+
+/// Invoices — generated for clients, can be downloaded as PDF.
+model Invoice {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  number      String        @unique
+  amount      Float
+  status      InvoiceStatus @default(DRAFT)
+  description String?
+  issuedAt    DateTime      @default(now())
+  dueDate     DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([clientId, status])
+}
+
+/// Facebook ad account linked to a client — for automatic lead/metric pulls.
+model FacebookAccount {
+  id            String   @id @default(cuid())
+  clientId      String   @unique
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pageId        String?
+  pageName      String?
+  adAccountId   String?
+  accessToken   String?
+  connectedAt   DateTime?
+  lastSyncAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+/// Daily ad metrics pulled from Facebook (live dashboard data).
+model AdMetric {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  date        DateTime
+  platform    String   @default("Facebook")
+  spent       Float    @default(0)
+  reach       Int      @default(0)
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  leads       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@unique([clientId, date, platform])
+  @@index([clientId, date])
 }

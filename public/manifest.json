@@ -1,0 +1,20 @@
+{
+  "name": "mimi — marketing agency",
+  "short_name": "mimi",
+  "description": "Платформа для клиентов агентства mimi: дашборд, отчёты, чат и файлы.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0712",
+  "theme_color": "#3C1975",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

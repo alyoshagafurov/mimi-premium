@@ -4,6 +4,7 @@ import { Manrope, Outfit, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { DEFAULT_LANG, LANG_COOKIE, isLang } from '@/i18n/config';
+import { PWAInstaller } from '@/components/ui/PWAInstaller';
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],
@@ -31,6 +32,10 @@ export const metadata: Metadata = {
   description:
     'Minimise the noise. Maximise the impact. Маркетинговое агентство полного цикла: стратегия, брендинг, таргетинг, дизайн.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+  manifest: '/manifest.json',
+  themeColor: '#3C1975',
+  appleWebApp: { title: 'mimi', capable: true, statusBarStyle: 'black-translucent' },
+  icons: { icon: '/icon.svg', apple: '/icon.svg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -41,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang={lang} className={`${manrope.variable} ${moderustic.variable} ${serif.variable}`}>
       <body className="font-sans antialiased">
         <Providers initialLang={lang}>{children}</Providers>
+        <PWAInstaller />
       </body>
     </html>
   );

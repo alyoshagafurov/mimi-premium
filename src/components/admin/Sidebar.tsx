@@ -6,27 +6,34 @@ import { signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from '@/components/ui/Logo';
+import { NotificationsBell } from '@/components/ui/NotificationsBell';
 import { cn } from '@/lib/utils';
 
 const ITEMS = [
   { href: '/admin', label: 'Дашборд', n: '01' },
   { href: '/admin/clients', label: 'Клиенты', n: '02' },
   { href: '/admin/leads', label: 'Сделки', n: '03' },
-  { href: '/admin/settings', label: 'Настройки', n: '04' },
+  { href: '/admin/calendar', label: 'Календарь', n: '04' },
+  { href: '/admin/analytics', label: 'Аналитика', n: '05' },
+  { href: '/admin/integrations', label: 'Интеграции', n: '06' },
+  { href: '/admin/settings', label: 'Настройки', n: '07' },
 ];
 
 export function Sidebar({ name }: { name: string }) {
   const pathname = usePathname();
   return (
     <aside className="glass-luxury sticky top-4 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-3xl p-7 lg:flex">
-      <div className="flex items-end justify-between">
+      <div className="flex items-center justify-between">
         <Logo size="md" />
-        <span className="rounded-full border border-brand-lime/30 bg-brand-lime/5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime">
-          admin os
-        </span>
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <span className="rounded-full border border-brand-lime/30 bg-brand-lime/5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime">
+            admin
+          </span>
+        </div>
       </div>
 
-      <nav className="mt-12 flex flex-1 flex-col gap-1">
+      <nav className="mt-10 flex flex-1 flex-col gap-1 overflow-y-auto">
         {ITEMS.map((it) => {
           const active = pathname === it.href || (it.href !== '/admin' && pathname.startsWith(it.href));
           return (
@@ -113,42 +120,44 @@ export function MobileTopbar({ name }: { name: string }) {
             admin
           </span>
         </div>
-        <button
-          type="button"
-          aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] transition-all duration-300 hover:border-brand-lime/50 hover:bg-brand-lime/[0.06]"
-        >
-          <span
-            className={cn(
-              'pointer-events-none absolute inset-0 rounded-full transition-all duration-500',
-              open ? 'shadow-[0_0_30px_-4px_rgba(212,236,76,0.55)] ring-1 ring-brand-lime/60' : 'shadow-none ring-0',
-            )}
-          />
-          <span className="relative block h-4 w-5">
-            <motion.span
-              animate={open ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <button
+            type="button"
+            aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] transition-all duration-300 hover:border-brand-lime/50 hover:bg-brand-lime/[0.06]"
+          >
+            <span
               className={cn(
-                'absolute left-0 top-0 block h-[1.5px] w-5 rounded-full transition-colors duration-300',
-                open ? 'bg-brand-lime' : 'bg-light/85 group-hover:bg-brand-lime',
+                'pointer-events-none absolute inset-0 rounded-full transition-all duration-500',
+                open ? 'shadow-[0_0_30px_-4px_rgba(212,236,76,0.55)] ring-1 ring-brand-lime/60' : 'shadow-none ring-0',
               )}
             />
-            <motion.span
-              animate={open ? { rotate: -45, y: -7 } : { rotate: 0, y: 0, width: 12 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              style={{ width: open ? 20 : 12 }}
-              className={cn(
-                'absolute bottom-0 right-0 block h-[1.5px] rounded-full transition-colors duration-300',
-                open ? 'bg-brand-lime' : 'bg-light/85 group-hover:bg-brand-lime',
-              )}
-            />
-          </span>
-        </button>
+            <span className="relative block h-4 w-5">
+              <motion.span
+                animate={open ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                className={cn(
+                  'absolute left-0 top-0 block h-[1.5px] w-5 rounded-full transition-colors duration-300',
+                  open ? 'bg-brand-lime' : 'bg-light/85 group-hover:bg-brand-lime',
+                )}
+              />
+              <motion.span
+                animate={open ? { rotate: -45, y: -7 } : { rotate: 0, y: 0, width: 12 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                style={{ width: open ? 20 : 12 }}
+                className={cn(
+                  'absolute bottom-0 right-0 block h-[1.5px] rounded-full transition-colors duration-300',
+                  open ? 'bg-brand-lime' : 'bg-light/85 group-hover:bg-brand-lime',
+                )}
+              />
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
       <AnimatePresence>
         {open && (
           <>
@@ -254,4 +263,3 @@ export function MobileTopbar({ name }: { name: string }) {
     </>
   );
 }
-

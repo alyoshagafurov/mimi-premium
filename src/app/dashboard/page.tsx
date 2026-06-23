@@ -44,6 +44,10 @@ export default async function DashboardPage() {
     );
   }
 
+  if (!user.client.briefDone) {
+    redirect('/dashboard/onboarding');
+  }
+
   const reports = user.client.reports;
   const current = reports.at(-1);
   const prev = reports.at(-2);
