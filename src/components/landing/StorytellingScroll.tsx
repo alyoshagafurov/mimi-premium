@@ -328,22 +328,11 @@ export function StorytellingScroll() {
                 filter: 'drop-shadow(0 0 60px rgba(212,236,76,0.18))',
               }}
             >
+              {/* dotless ı — quiet, clean watermark */}
               <span>m</span>
-              <span className="relative">
-                <span
-                  className="absolute -top-[0.36em] left-1/2 h-[0.2em] w-[0.2em] -translate-x-1/2 rounded-full"
-                  style={{ background: 'rgba(252,150,3,0.4)', boxShadow: '0 0 18px rgba(252,150,3,0.35)' }}
-                />
-                <span>i</span>
-              </span>
+              <span>ı</span>
               <span>m</span>
-              <span className="relative">
-                <span
-                  className="absolute -top-[0.36em] left-1/2 h-[0.2em] w-[0.2em] -translate-x-1/2 rounded-full"
-                  style={{ background: 'rgba(252,150,3,0.4)', boxShadow: '0 0 18px rgba(252,150,3,0.35)' }}
-                />
-                <span>i</span>
-              </span>
+              <span>ı</span>
             </div>
             {/* triple orbit + axis ticks + cardinal dots (counter-rotates on scroll) */}
             <svg

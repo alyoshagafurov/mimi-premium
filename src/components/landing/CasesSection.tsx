@@ -132,7 +132,7 @@ export function CasesSection() {
                     <span className="font-display text-xs font-medium text-brand-orange">{c.n}</span>
                     <span className="text-[10px] uppercase tracking-[0.2em] text-light/40">{c.niche}</span>
                   </div>
-                  <p className="mt-12 font-display text-7xl font-extrabold leading-none tracking-tight text-lime-grad md:text-8xl">
+                  <p className="mt-12 font-display text-[clamp(2.75rem,7vw,5rem)] font-extrabold leading-[0.95] tracking-[-0.02em] text-lime-grad">
                     {c.metric}
                   </p>
                   <p className="mt-3 text-[11px] uppercase tracking-[0.28em] text-light/55">

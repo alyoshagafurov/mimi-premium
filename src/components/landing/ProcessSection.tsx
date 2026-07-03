@@ -42,8 +42,8 @@ const ru = {
   stepLabel: 'Шаг',
   stageLabel: 'этап',
   steps: [
-    { title: 'Анализ', desc: 'Погружение в нишу, продукт, аудиторию и текущие связки.', detail: 'Аудит рекламных кабинетов, посадок и контента. Формируем карту гипотез и приоритеты для запуска.' },
-    { title: 'Стратегия', desc: 'План роста на 3–6 месяцев с понятными KPI.', detail: 'Дорожная карта с приоритетами, бюджетами и KPI по каждому каналу. Не презентация — рабочий документ.' },
+    { title: 'Анализ', desc: 'Изучаем рынок, продукт, конкурентов, плюсы и минусы текущего маркетинга — и составляем план решения.', detail: 'Аудит рекламных кабинетов, посадок и контента. Формируем карту гипотез и приоритеты для запуска.' },
+    { title: 'Стратегия', desc: 'Классический и digital-маркетинг на следующие 3–6 месяцев.', detail: 'Дорожная карта с приоритетами, бюджетами и KPI по каждому каналу. Не презентация — рабочий документ.' },
     { title: 'Продюсирование', desc: 'Превращаем стратегию в готовый к запуску контент и креативы.', detail: 'Сценарии, съёмки, монтаж, продающие креативы и посадочные. Собираем всё, что нужно для старта рекламы.' },
     { title: 'Запуск', desc: 'Креативы, посадки, кабинеты, аналитика — за 7–14 дней.', detail: 'Собираем всё в систему: рекламные кампании, UTM-разметку и дашборд аналитики.' },
     { title: 'Оптимизация', desc: 'Еженедельный разбор: убираем слабое, усиливаем работающее.', detail: 'A/B тесты креативов и аудиторий. Перераспределение бюджетов на основе данных, а не ощущений.' },
@@ -59,8 +59,8 @@ const en: typeof ru = {
   stepLabel: 'Step',
   stageLabel: 'stage',
   steps: [
-    { title: 'Analysis', desc: 'Diving into your niche, product, audience and current setups.', detail: 'Audit of ad accounts, landing pages and content. We build a hypothesis map and launch priorities.' },
-    { title: 'Strategy', desc: 'A 3–6 month growth plan with clear KPIs.', detail: 'A roadmap with priorities, budgets and KPIs per channel. Not a presentation — a working document.' },
+    { title: 'Analysis', desc: 'We study your market, product, competitors and the pros & cons of current marketing — and build a plan.', detail: 'Audit of ad accounts, landing pages and content. We build a hypothesis map and launch priorities.' },
+    { title: 'Strategy', desc: 'Classic and digital marketing for the next 3–6 months.', detail: 'A roadmap with priorities, budgets and KPIs per channel. Not a presentation — a working document.' },
     { title: 'Production', desc: 'We turn strategy into launch-ready content and creatives.', detail: 'Scripts, shooting, editing, selling creatives and landing pages. Everything needed to start advertising.' },
     { title: 'Launch', desc: 'Creatives, landings, accounts, analytics — in 7–14 days.', detail: 'We assemble it into a system: ad campaigns, UTM tagging and an analytics dashboard.' },
     { title: 'Optimisation', desc: 'Weekly review: we cut the weak, scale what works.', detail: 'A/B tests of creatives and audiences. Budget reallocation based on data, not feelings.' },
@@ -76,8 +76,8 @@ const tg: typeof ru = {
   stepLabel: 'Қадам',
   stageLabel: 'марҳила',
   steps: [
-    { title: 'Таҳлил', desc: 'Ғарқшавӣ дар ниша, маҳсулот, аудитория ва пайвастагиҳои ҷорӣ.', detail: 'Аудити кабинетҳои реклама, лендингҳо ва контент. Харитаи гипотезаҳо ва афзалиятҳоро барои оғоз месозем.' },
-    { title: 'Стратегия', desc: 'Нақшаи рушд барои 3–6 моҳ бо KPI-и фаҳмо.', detail: 'Нақшаи роҳ бо афзалиятҳо, буҷетҳо ва KPI барои ҳар канал. На презентатсия — ҳуҷҷати корӣ.' },
+    { title: 'Таҳлил', desc: 'Бозор, маҳсулот, рақибон, плюсу минусҳои маркетинги ҷориро меомӯзем — ва нақшаи ҳал тартиб медиҳем.', detail: 'Аудити кабинетҳои реклама, лендингҳо ва контент. Харитаи гипотезаҳо ва афзалиятҳоро барои оғоз месозем.' },
+    { title: 'Стратегия', desc: 'Маркетинги классикӣ ва рақамӣ барои 3–6 моҳи оянда.', detail: 'Нақшаи роҳ бо афзалиятҳо, буҷетҳо ва KPI барои ҳар канал. На презентатсия — ҳуҷҷати корӣ.' },
     { title: 'Продюсерӣ', desc: 'Стратегияро ба контент ва креативҳои омода ба оғоз табдил медиҳем.', detail: 'Сенарияҳо, наворбардорӣ, монтаж, креативҳои фурӯшгар ва лендингҳо. Ҳама чизи барои оғози реклама лозимро ҷамъ мекунем.' },
     { title: 'Оғоз', desc: 'Креативҳо, лендингҳо, кабинетҳо, аналитика — дар 7–14 рӯз.', detail: 'Ҳамаро ба система ҷамъ мекунем: маъракаҳои реклама, разметкаи UTM ва дашборди аналитика.' },
     { title: 'Оптимизатсия', desc: 'Таҳлили ҳарҳафтаина: сустро мебардорем, кориро тақвият медиҳем.', detail: 'Тестҳои A/B-и креативҳо ва аудиторияҳо. Азнавтақсимкунии буҷет дар асоси маълумот, на эҳсосот.' },
@@ -252,7 +252,7 @@ export function ProcessSection() {
             </Reveal>
           </div>
           <Reveal delay={0.12}>
-            <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
+            <p className="max-w-md text-base leading-relaxed text-light/55 lg:ml-auto lg:text-right">
               {t.subtitle}
             </p>
           </Reveal>

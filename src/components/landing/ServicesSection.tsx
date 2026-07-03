@@ -43,16 +43,16 @@ const ru = {
     { title: 'Контент-съёмка', sub: 'Reels · съёмка · монтаж', description: 'Премиальная продакшн-команда. Снимаем продающий контент, который работает на продажи и формирует образ бренда.', benefits: ['Сценарии под платформы', 'In-house продакшн', 'Контент направления на месяц для СММ'] },
     { title: 'Маркетинговая стратегия', sub: 'Система роста бизнеса', description: 'Глубокая диагностика, позиционирование и дорожная карта на 3–12 месяцев. Стратегия, как инструмент для продвижения, а не презентация.', benefits: ['Анализ ниши и конкурентов', 'Воронка под бизнес-модель', 'Классический и digital маркетинг'] },
     { title: 'Брендинг', sub: 'Позиционирование и визуал', description: 'Собираем айдентику, тон голоса и визуальные коды. Бренд, который выделяется и продаёт без лишних слов.', benefits: ['Logo & визуальная система', 'Brandbook + дизайн мерча', 'Tone of voice'] },
-    { title: 'Воронки и автоматизация', sub: 'Воронки · лидогенерация', description: 'Строим лидген-машины: от первого касания до повторных продаж. Воронки, чат-боты, прогрев и сегментация — всё связано.', benefits: ['Построение воронки продаж', 'Чат-боты и автоворонки', 'Сегментация и реактивация'] },
+    { title: 'Графический дизайн', sub: 'Дизайн · креативы', description: 'Делаем дизайны — как продающие, так и просто красивые картинки. Всё под задачу бренда.', benefits: ['Креативы', 'Инфографика', 'Визитки, брошюры и т.д.'] },
     { title: 'Разработка сайтов', sub: 'Landing · premium websites', description: 'Сайты, которые конвертируют. От продающего лендинга до digital-флагмана бренда — с анимацией и быстрой загрузкой.', benefits: ['Next.js · современный стек', 'Score 95+ по Lighthouse', 'Анимация уровня премиум'] },
-    { title: 'Мастер-классы по продажам', sub: 'Обучение отдела продаж', description: 'Прокачиваем отдел продаж: скрипты, работа с возражениями, дожим и контроль. Чтобы заявки от маркетинга превращались в деньги.', benefits: ['Скрипты и работа с возражениями', 'Разбор реальных звонков', 'Контроль и регламенты продаж'] },
+    { title: 'Обучение системе продаж', sub: 'Отдел продаж под ключ', description: 'Прокачиваем отдел продаж: скрипты, работа с возражениями, дожим и контроль. Чтобы заявки от маркетинга превращались в деньги.', benefits: ['Скрипты и работа с возражениями', 'Разбор реальных звонков', 'Контроль и регламенты продаж'] },
   ] as ServiceCopy[],
   alacarte: {
     eyebrow: 'Отдельные услуги',
     pre: 'Заказать',
     emphasis: 'поштучно.',
     sub: 'Нужно что-то одно, без пакета? Берём отдельными задачами.',
-    items: ['Создание сайтов', 'Создание брендбуков', 'Создание скриптов продаж', 'Дизайн: баннеры, визитки и др.', 'Мастер-классы по продажам'],
+    items: ['Создание сайтов', 'Создание брендбуков', 'Создание скриптов продаж', 'Дизайн: баннеры, визитки и др.', 'Обучение системе продаж'],
   },
 };
 const en: typeof ru = {
@@ -66,16 +66,16 @@ const en: typeof ru = {
     { title: 'Content production', sub: 'Reels · shooting · editing', description: 'A premium production team. We shoot selling content that drives sales and builds the brand image.', benefits: ['Platform-specific scripts', 'In-house production', 'Monthly content plan for SMM'] },
     { title: 'Marketing strategy', sub: 'Business growth system', description: 'Deep diagnostics, positioning and a 3–12 month roadmap. Strategy as a tool for growth, not a presentation.', benefits: ['Niche & competitor analysis', 'Funnel for your business model', 'Classic & digital marketing'] },
     { title: 'Branding', sub: 'Positioning & visuals', description: 'We build the identity, tone of voice and visual codes. A brand that stands out and sells without extra words.', benefits: ['Logo & visual system', 'Brandbook + merch design', 'Tone of voice'] },
-    { title: 'Funnels & automation', sub: 'Funnels · lead generation', description: 'We build lead-gen machines: from first touch to repeat sales. Funnels, chatbots, nurturing and segmentation — all connected.', benefits: ['Sales funnel build', 'Chatbots & auto-funnels', 'Segmentation & reactivation'] },
+    { title: 'Graphic design', sub: 'Design · creatives', description: 'We craft designs — both selling and simply beautiful visuals. Everything tuned to the brand.', benefits: ['Creatives', 'Infographics', 'Business cards, brochures, etc.'] },
     { title: 'Web development', sub: 'Landing · premium websites', description: 'Websites that convert. From a selling landing page to a brand’s digital flagship — with animation and fast loading.', benefits: ['Next.js · modern stack', 'Lighthouse score 95+', 'Premium-level animation'] },
-    { title: 'Sales workshops', sub: 'Sales team training', description: 'We level up your sales team: scripts, objection handling, closing and control. So marketing leads turn into money.', benefits: ['Scripts & objection handling', 'Real call reviews', 'Sales control & playbooks'] },
+    { title: 'Sales system training', sub: 'Sales team, end-to-end', description: 'We level up your sales team: scripts, objection handling, closing and control. So marketing leads turn into money.', benefits: ['Scripts & objection handling', 'Real call reviews', 'Sales control & playbooks'] },
   ] as ServiceCopy[],
   alacarte: {
     eyebrow: 'À la carte',
     pre: 'Order',
     emphasis: 'piece by piece.',
     sub: 'Need just one thing, without a package? We take it as a standalone task.',
-    items: ['Website creation', 'Brandbook creation', 'Sales script creation', 'Design: banners, cards, etc.', 'Sales workshops'],
+    items: ['Website creation', 'Brandbook creation', 'Sales script creation', 'Design: banners, cards, etc.', 'Sales system training'],
   },
 };
 const tg: typeof ru = {
@@ -89,16 +89,16 @@ const tg: typeof ru = {
     { title: 'Гирифтани контент', sub: 'Reels · наворбардорӣ · монтаж', description: 'Дастаи продакшни сатҳи баланд. Контенти фурӯшгареро наворбардорӣ мекунем, ки фурӯшро зиёд карда, симои брендро месозад.', benefits: ['Сенарияҳо барои платформаҳо', 'Продакшни дохилӣ', 'Нақшаи контент барои СММ дар як моҳ'] },
     { title: 'Стратегияи маркетингӣ', sub: 'Системаи рушди бизнес', description: 'Ташхиси амиқ, мавқеъгузорӣ ва нақшаи роҳ барои 3–12 моҳ. Стратегия ҳамчун воситаи пешбарӣ, на презентатсия.', benefits: ['Таҳлили ниша ва рақибон', 'Воронка барои модели бизнес', 'Маркетинги классикӣ ва рақамӣ'] },
     { title: 'Брендинг', sub: 'Мавқеъгузорӣ ва визуал', description: 'Айдентика, оҳанги овоз ва кодҳои визуалиро месозем. Бренде, ки фарқ мекунад ва бе суханони зиёдатӣ мефурӯшад.', benefits: ['Лого ва системаи визуалӣ', 'Брендбук + дизайни мерч', 'Оҳанги овоз'] },
-    { title: 'Воронкаҳо ва автоматизатсия', sub: 'Воронкаҳо · лидгенератсия', description: 'Мошинҳои лидгенро месозем: аз тамоси аввал то фурӯшҳои такрорӣ. Воронкаҳо, чат-ботҳо, гармкунӣ ва сегментатсия — ҳама пайваст.', benefits: ['Сохтани воронкаи фурӯш', 'Чат-ботҳо ва автоворонкаҳо', 'Сегментатсия ва реактиватсия'] },
+    { title: 'Дизайни графикӣ', sub: 'Дизайн · креативҳо', description: 'Дизайнҳо месозем — ҳам фурӯшгар ва ҳам танҳо тасвирҳои зебо. Ҳама мувофиқи вазифаи бренд.', benefits: ['Креативҳо', 'Инфографика', 'Визиткаҳо, брошюраҳо ва ғ.'] },
     { title: 'Сохтани сайтҳо', sub: 'Landing · premium websites', description: 'Сайтҳое, ки конверсия медиҳанд. Аз лендинги фурӯшгар то парчами рақамии бренд — бо анимация ва боркунии тез.', benefits: ['Next.js · стеки муосир', 'Score 95+ дар Lighthouse', 'Анимацияи сатҳи премиум'] },
-    { title: 'Мастер-классҳои фурӯш', sub: 'Омӯзиши шуъбаи фурӯш', description: 'Шуъбаи фурӯшро тақвият медиҳем: скриптҳо, кор бо эътирозҳо, ниҳоӣ ва назорат. То заявкаҳои маркетинг ба пул табдил ёбанд.', benefits: ['Скриптҳо ва кор бо эътирозҳо', 'Таҳлили зангҳои воқеӣ', 'Назорат ва регламенти фурӯш'] },
+    { title: 'Омӯзиши системаи фурӯш', sub: 'Шуъбаи фурӯш пурра', description: 'Шуъбаи фурӯшро тақвият медиҳем: скриптҳо, кор бо эътирозҳо, ниҳоӣ ва назорат. То заявкаҳои маркетинг ба пул табдил ёбанд.', benefits: ['Скриптҳо ва кор бо эътирозҳо', 'Таҳлили зангҳои воқеӣ', 'Назорат ва регламенти фурӯш'] },
   ] as ServiceCopy[],
   alacarte: {
     eyebrow: 'Хидматҳои алоҳида',
     pre: 'Фармоиш',
     emphasis: 'донагӣ.',
     sub: 'Танҳо як чиз лозим аст, бе баста? Ҳамчун вазифаи алоҳида қабул мекунем.',
-    items: ['Сохтани сайтҳо', 'Сохтани брендбукҳо', 'Сохтани скриптҳои фурӯш', 'Дизайн: баннерҳо, визиткаҳо ва ғ.', 'Мастер-классҳои фурӯш'],
+    items: ['Сохтани сайтҳо', 'Сохтани брендбукҳо', 'Сохтани скриптҳои фурӯш', 'Дизайн: баннерҳо, визиткаҳо ва ғ.', 'Омӯзиши системаи фурӯш'],
   },
 };
 const COPY: Record<Lang, typeof ru> = { ru, en, tg };
@@ -153,13 +153,16 @@ function Visual({ kind }: { kind: Service['visual'] }) {
         </svg>
       );
     case 'funnel':
+      // Graphic design — layout canvas with shapes & type blocks
       return (
         <svg viewBox="0 0 200 200" className="h-full w-full">
-          <path d="M 30 50 L 170 50 L 130 110 L 130 160 L 70 160 L 70 110 Z" fill="none" stroke="rgba(212,236,76,0.4)" strokeWidth="1.2" />
-          <line x1="30" y1="75" x2="170" y2="75" stroke="rgba(212,236,76,0.2)" strokeWidth="0.6" strokeDasharray="3 4" />
-          <line x1="50" y1="95" x2="150" y2="95" stroke="rgba(212,236,76,0.25)" strokeWidth="0.6" strokeDasharray="3 4" />
-          <circle cx="100" cy="160" r="6" fill="#FC9603" />
-          <circle cx="100" cy="160" r="11" fill="none" stroke="#FC9603" strokeWidth="0.8" opacity="0.5" />
+          <rect x="34" y="40" width="132" height="120" rx="8" fill="none" stroke="rgba(212,236,76,0.35)" strokeWidth="1.2" />
+          <circle cx="64" cy="74" r="16" fill="rgba(212,236,76,0.10)" stroke="rgba(212,236,76,0.5)" strokeWidth="1" />
+          <path d="M 96 90 L 116 62 L 136 90 Z" fill="none" stroke="#FC9603" strokeWidth="1.2" strokeLinejoin="round" />
+          <rect x="48" y="112" width="60" height="7" rx="3.5" fill="rgba(212,236,76,0.5)" />
+          <rect x="48" y="126" width="104" height="5" rx="2.5" fill="rgba(245,241,250,0.2)" />
+          <rect x="48" y="138" width="84" height="5" rx="2.5" fill="rgba(245,241,250,0.15)" />
+          <circle cx="150" cy="56" r="3" fill="#FC9603" />
         </svg>
       );
     case 'web':

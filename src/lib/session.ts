@@ -18,6 +18,20 @@ export async function getSafeSession(): Promise<Session | null> {
   try {
     return await getServerSession(authOptions);
   } catch (err) {
+    // Re-throw Next.js control-flow signals — these are NOT real errors:
+    //   • DYNAMIC_SERVER_USAGE — cookies()/headers() bailing out of static render
+    //   • NEXT_REDIRECT / NEXT_NOT_FOUND — redirect()/notFound()
+    // Swallowing them would break dynamic rendering / navigation.
+    const digest = (err as { digest?: string })?.digest;
+    if (
+      typeof digest === 'string' &&
+      (digest === 'DYNAMIC_SERVER_USAGE' ||
+        digest.startsWith('NEXT_REDIRECT') ||
+        digest.startsWith('NEXT_HTTP_ERROR_FALLBACK') ||
+        digest === 'NEXT_NOT_FOUND')
+    ) {
+      throw err;
+    }
     console.error('[session] failed to read session, treating as anonymous:', err);
     return null;
   }

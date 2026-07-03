@@ -315,11 +315,11 @@ export function VideoHero() {
             <div className="relative flex items-baseline font-display text-[6.5rem] font-extrabold leading-none tracking-[-0.06em] text-brand-lime md:text-[8.5rem]"
               style={{ filter: 'drop-shadow(0 0 26px rgba(212,236,76,0.42))' }}
             >
-              {/* m  i  m  i — dots above each 'i' */}
+              {/* m ı m ı — dotless i for a clean, quiet wordmark */}
               <span>m</span>
-              <span>i</span>
+              <span>ı</span>
               <span>m</span>
-              <span>i</span>
+              <span>ı</span>
             </div>
           </div>
         </motion.div>

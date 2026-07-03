@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { Manrope, Outfit, Instrument_Serif } from 'next/font/google';
 import './globals.css';
@@ -33,9 +33,15 @@ export const metadata: Metadata = {
     'Minimise the noise. Maximise the impact. Маркетинговое агентство полного цикла: стратегия, брендинг, таргетинг, дизайн.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   manifest: '/manifest.json',
-  themeColor: '#3C1975',
   appleWebApp: { title: 'mimi', capable: true, statusBarStyle: 'black-translucent' },
   icons: { icon: '/icon.svg', apple: '/icon.svg' },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#3C1975',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
