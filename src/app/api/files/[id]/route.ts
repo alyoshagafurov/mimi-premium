@@ -35,6 +35,15 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     const c = await prisma.client.findUnique({ where: { ownerId: me.id } });
     if (!c || c.id !== file.clientId) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
+  // Remove the underlying Blob object if the file lives in Vercel Blob.
+  if (process.env.BLOB_READ_WRITE_TOKEN && file.url.startsWith('http')) {
+    try {
+      const { del } = await import('@vercel/blob');
+      await del(file.url);
+    } catch (err) {
+      console.error('[files] blob delete failed', err);
+    }
+  }
   await prisma.file.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
 }

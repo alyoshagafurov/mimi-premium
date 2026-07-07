@@ -95,8 +95,21 @@ export async function POST(req: Request) {
   if (!clientId) return NextResponse.json({ error: 'no_client' }, { status: 400 });
 
   const safeName = sanitizeName(file.name);
-  const buf = Buffer.from(await file.arrayBuffer());
-  const dataUrl = `data:${file.type || 'application/octet-stream'};base64,${buf.toString('base64')}`;
+
+  // Prefer Vercel Blob (scalable, off-DB) when configured; else fall back to a
+  // base64 data URL stored in Postgres (fine for small files / early stage).
+  let storedUrl: string;
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = await import('@vercel/blob');
+    const blob = await put(`files/${clientId}/${Date.now()}-${safeName}`, file, {
+      access: 'public',
+      addRandomSuffix: true,
+    });
+    storedUrl = blob.url;
+  } else {
+    const buf = Buffer.from(await file.arrayBuffer());
+    storedUrl = `data:${file.type || 'application/octet-stream'};base64,${buf.toString('base64')}`;
+  }
 
   const created = await prisma.file.create({
     data: {
@@ -105,7 +118,7 @@ export async function POST(req: Request) {
       name: safeName,
       size: file.size,
       mime: file.type || null,
-      url: dataUrl,
+      url: storedUrl,
       kind: kind as any,
     },
   });

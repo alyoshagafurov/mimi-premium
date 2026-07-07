@@ -113,6 +113,20 @@ model User {
   sentMessages    Message[]         @relation("MessageSender")
   uploadedFiles   File[]            @relation("FileUploader")
   calendarEvents  CalendarEvent[]   @relation("EventOwner")
+  resetTokens     PasswordResetToken[]
+}
+
+/// One-time token for password reset, delivered by email.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Client {

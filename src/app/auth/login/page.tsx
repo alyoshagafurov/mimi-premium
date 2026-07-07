@@ -20,6 +20,7 @@ const ru = {
   successLogin: 'Добро пожаловать обратно',
   home: '← На главную',
   register: 'Создать аккаунт',
+  forgot: 'Забыли пароль?',
 };
 const en: typeof ru = {
   cabinet: 'personal account',
@@ -31,6 +32,7 @@ const en: typeof ru = {
   successLogin: 'Welcome back',
   home: '← Home',
   register: 'Create account',
+  forgot: 'Forgot password?',
 };
 const tg: typeof ru = {
   cabinet: 'кабинети шахсӣ',
@@ -42,6 +44,7 @@ const tg: typeof ru = {
   successLogin: 'Хуш омадед',
   home: '← Ба саҳифаи асосӣ',
   register: 'Сохтани аккаунт',
+  forgot: 'Паролро фаромӯш кардед?',
 };
 const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
@@ -117,6 +120,9 @@ function LoginInner() {
         <div className="mt-6 flex items-center justify-between text-xs text-muted">
           <Link href="/" className="transition hover:text-gold">{t.home}</Link>
           <Link href="/auth/register" className="transition hover:text-gold">{t.register}</Link>
+        </div>
+        <div className="mt-3 text-center">
+          <Link href="/auth/forgot" className="text-xs text-muted transition hover:text-gold">{t.forgot}</Link>
         </div>
       </motion.div>
     </main>

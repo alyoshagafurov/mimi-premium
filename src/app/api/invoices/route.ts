@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       title: `Новый счёт ${number}`,
       body: `${body.amount} сомони · ${body.description ?? ''}`,
       link: '/dashboard/invoices',
+      email: true,
     });
   }
   return NextResponse.json(inv);

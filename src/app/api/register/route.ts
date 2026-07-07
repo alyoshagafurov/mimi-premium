@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { clientIp } from '@/lib/request';
+import { captureError } from '@/lib/monitoring';
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -17,7 +18,7 @@ const schema = z.object({
 export async function POST(req: Request) {
   // Throttle: max 5 registrations per IP per 10 minutes
   const ip = clientIp(req);
-  const limited = rateLimit(`register:${ip}`, 5, 10 * 60 * 1000);
+  const limited = await rateLimit(`register:${ip}`, 5, 10 * 60 * 1000);
   if (!limited.ok) {
     return NextResponse.json({ error: 'Слишком много попыток. Попробуйте позже.' }, { status: 429 });
   }
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
     if (e?.name === 'ZodError') {
       return NextResponse.json({ error: 'Проверьте корректность полей' }, { status: 400 });
     }
-    console.error('[register] error:', e?.message);
+    captureError(e, { where: 'register' });
     return NextResponse.json({ error: 'Не удалось зарегистрироваться' }, { status: 400 });
   }
 }

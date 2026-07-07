@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { notifyAdmins } from '@/lib/notify';
 import { rateLimit } from '@/lib/rate-limit';
 import { clientIp } from '@/lib/request';
+import { captureError } from '@/lib/monitoring';
 
 const schema = z.object({
   name: z.string().min(2).max(120),
@@ -16,7 +17,7 @@ const schema = z.object({
 export async function POST(req: Request) {
   // Throttle: max 5 submissions per IP per 5 minutes
   const ip = clientIp(req);
-  if (!rateLimit(`leads:${ip}`, 5, 5 * 60 * 1000).ok) {
+  if (!(await rateLimit(`leads:${ip}`, 5, 5 * 60 * 1000)).ok) {
     return NextResponse.json({ error: 'Слишком много заявок. Попробуйте позже.' }, { status: 429 });
   }
 
@@ -36,15 +37,16 @@ export async function POST(req: Request) {
     await notifyAdmins({
       kind: 'LEAD',
       title: 'Новая заявка с лендинга',
-      body: `${data.name} · ${data.phone}`,
+      body: `${data.name} · ${data.phone}${data.email ? ` · ${data.email}` : ''}`,
       link: `/admin/leads`,
+      email: true,
     });
     return NextResponse.json({ id: deal.id });
   } catch (e: any) {
     if (e?.name === 'ZodError') {
       return NextResponse.json({ error: 'Проверьте корректность полей' }, { status: 400 });
     }
-    console.error('[leads] error:', e?.message);
+    captureError(e, { where: 'leads' });
     return NextResponse.json({ error: 'Не удалось отправить заявку' }, { status: 400 });
   }
 }

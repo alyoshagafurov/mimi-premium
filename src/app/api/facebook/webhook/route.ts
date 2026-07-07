@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notifyAdmins } from '@/lib/notify';
+import { fetchLead } from '@/lib/facebook';
 
 // Facebook Lead Ads webhook verification (GET) — Facebook calls this first
 export async function GET(req: Request) {
@@ -27,14 +28,26 @@ export async function POST(req: Request) {
         const acc = await prisma.facebookAccount.findFirst({ where: { pageId } });
         if (!acc) continue;
 
-        // For full lead data we'd need to call Graph API with the access token.
-        // Stub: create a Deal with what we have.
+        // Fetch the full lead via Graph API when we have a token; else use the
+        // limited fields Facebook included in the webhook payload.
+        let name = v.full_name as string | undefined;
+        let phone = v.phone_number as string | undefined;
+        let email = v.email as string | undefined;
+        if (acc.accessToken && v.leadgen_id) {
+          const full = await fetchLead(String(v.leadgen_id), acc.accessToken);
+          if (full) {
+            name = full.fullName ?? name;
+            phone = full.phone ?? phone;
+            email = full.email ?? email;
+          }
+        }
+
         const deal = await prisma.deal.create({
           data: {
-            title: 'Facebook Lead',
-            contactName: v.full_name ?? 'Facebook lead',
-            phone: v.phone_number ?? null,
-            email: v.email ?? null,
+            title: name ?? 'Facebook Lead',
+            contactName: name ?? 'Facebook lead',
+            phone: phone ?? null,
+            email: email ?? null,
             source: 'Facebook',
             stage: 'NEW',
             clientId: acc.clientId,
@@ -43,8 +56,9 @@ export async function POST(req: Request) {
         await notifyAdmins({
           kind: 'LEAD',
           title: 'Лид из Facebook',
-          body: `Лид #${deal.id.slice(0, 8)}`,
+          body: name ? `${name}${phone ? ` · ${phone}` : ''}` : `Лид #${deal.id.slice(0, 8)}`,
           link: '/admin/leads',
+          email: true,
         });
       }
     }

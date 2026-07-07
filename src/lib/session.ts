@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { Session } from 'next-auth';
+import { captureError } from '@/lib/monitoring';
 
 /**
  * Defensive wrapper around getServerSession.
@@ -32,7 +33,7 @@ export async function getSafeSession(): Promise<Session | null> {
     ) {
       throw err;
     }
-    console.error('[session] failed to read session, treating as anonymous:', err);
+    captureError(err, { where: 'getSafeSession' });
     return null;
   }
 }

@@ -30,6 +30,22 @@ export function IntegrationsClient({
   const [adAccountId, setAdAccountId] = useState('');
   const [accessToken, setAccessToken] = useState('');
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncNow = async () => {
+    setSyncing(true);
+    try {
+      const r = await fetch('/api/facebook/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const d = await r.json();
+      if (!r.ok) throw new Error();
+      toast.success(`Синхронизировано: ${d.accounts} аккаунтов, ${d.daysSynced} дней`);
+      router.refresh();
+    } catch {
+      toast.error('Не удалось синхронизировать');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const save = async () => {
     if (!clientId) {
@@ -66,9 +82,14 @@ export function IntegrationsClient({
       />
 
       <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 lg:p-7">
-        <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/15 text-sky-300">f</span>
-          <h2 className="font-display text-lg font-bold text-light">Facebook / Instagram</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/15 text-sky-300">f</span>
+            <h2 className="font-display text-lg font-bold text-light">Facebook / Instagram</h2>
+          </div>
+          <button onClick={syncNow} disabled={syncing} className="btn-ghost !py-2 !text-[11px] disabled:opacity-50">
+            {syncing ? 'Синхронизация…' : 'Синхронизировать метрики'}
+          </button>
         </div>
         <p className="mt-2 text-sm text-light/55">
           После заполнения Page ID, Ad Account ID и Access Token лиды и метрики из Facebook будут автоматически попадать в кабинет клиента. Webhook URL для Facebook App:

@@ -19,6 +19,8 @@ const ru = {
   dashboard: 'Дашборд',
   allContacts: 'Все контакты',
   madeWith: 'Сделано с лаймовой пылью.',
+  privacy: 'Конфиденциальность',
+  terms: 'Оферта',
 };
 const en: typeof ru = {
   tagline: 'Marketing as a system — not an experiment.',
@@ -34,6 +36,8 @@ const en: typeof ru = {
   dashboard: 'Dashboard',
   allContacts: 'All contacts',
   madeWith: 'Made with lime dust.',
+  privacy: 'Privacy',
+  terms: 'Terms',
 };
 const tg: typeof ru = {
   tagline: 'Маркетинг ҳамчун система — на ҳамчун таҷриба.',
@@ -49,6 +53,8 @@ const tg: typeof ru = {
   dashboard: 'Кабинет',
   allContacts: 'Ҳамаи тамосҳо',
   madeWith: 'Бо чанги лиму сохта шудааст.',
+  privacy: 'Махфият',
+  terms: 'Оферта',
 };
 const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
@@ -92,7 +98,11 @@ export function Footer() {
       </div>
       <div className="mx-auto mt-14 flex max-w-[1500px] flex-col items-center justify-between gap-3 border-t border-white/[0.06] pt-8 text-[11px] uppercase tracking-[0.18em] text-light/40 md:flex-row">
         <span>© {year} mimi · minimise marketing agency</span>
-        <span>{t.madeWith}</span>
+        <div className="flex items-center gap-5">
+          <Link href="/privacy" className="transition-colors hover:text-brand-lime">{t.privacy}</Link>
+          <Link href="/terms" className="transition-colors hover:text-brand-lime">{t.terms}</Link>
+          <span className="hidden md:inline">{t.madeWith}</span>
+        </div>
       </div>
     </footer>
   );
