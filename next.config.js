@@ -28,14 +28,28 @@ const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
 ];
 
+// Long-lived immutable cache for static media in /public (webp/svg/png/…).
+// These filenames are stable; bump the file name if content ever changes.
+const longCache = [
+  { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+];
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  compress: true,
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [{ protocol: 'https', hostname: '**' }],
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      {
+        source: '/:file(.*\\.(?:webp|png|jpg|jpeg|gif|svg|ico|woff2))',
+        headers: longCache,
+      },
+    ];
   },
 };
 

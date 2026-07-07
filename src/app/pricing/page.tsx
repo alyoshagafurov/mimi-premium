@@ -202,9 +202,9 @@ export default function PricingPage() {
                   </span>
                 )}
                 <div>
-                  <h3 className="font-display text-3xl font-extrabold tracking-tight text-brand-lime">
+                  <h2 className="font-display text-3xl font-extrabold tracking-tight text-brand-lime">
                     {meta.name}
-                  </h3>
+                  </h2>
                   <p className="mt-1 text-sm text-muted">{plan.tagline}</p>
                   <div className="mt-6">
                     <div className="flex items-baseline gap-1.5">

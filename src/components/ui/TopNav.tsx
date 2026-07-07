@@ -104,7 +104,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
           <Logo size="md" />
 
           {/* Desktop nav */}
-          <nav className="hidden items-center gap-9 text-[12px] uppercase tracking-[0.2em] text-light/65 md:flex">
+          <nav aria-label="Основная навигация" className="hidden items-center gap-9 text-[12px] uppercase tracking-[0.2em] text-light/65 md:flex">
             <Link href="/" className="transition-colors hover:text-brand-lime">{t.nav.home}</Link>
             <Link href="/#services" className="transition-colors hover:text-brand-lime">{t.nav.services}</Link>
             <Link href="/#cases" className="transition-colors hover:text-brand-lime">{t.nav.cases}</Link>
@@ -214,7 +214,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
               <div className="relative mx-6 mt-5 h-px bg-gradient-to-r from-brand-lime/40 via-white/[0.06] to-transparent" />
 
               {/* Nav list */}
-              <nav className="relative mt-6 flex-1 overflow-y-auto px-6 pb-6">
+              <nav aria-label="Мобильное меню" className="relative mt-6 flex-1 overflow-y-auto px-6 pb-6">
                 <ul className="space-y-1">
                   {NAV.map((it, i) => (
                     <motion.li

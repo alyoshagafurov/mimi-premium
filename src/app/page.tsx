@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { SITE_URL, SITE_NAME } from '@/lib/seo';
+import { FaqJsonLd } from '@/components/seo/JsonLd';
 import { LandingClient } from './LandingClient';
 
 const HOME_TITLE = 'Маркетинговое агентство в Душанбе — mimi (mimitj)';
@@ -29,5 +30,10 @@ export default async function Home() {
     const role = (session.user as any).role;
     redirect(role === 'ADMIN' ? '/admin' : '/dashboard');
   }
-  return <LandingClient />;
+  return (
+    <>
+      <FaqJsonLd />
+      <LandingClient />
+    </>
+  );
 }

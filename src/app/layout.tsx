@@ -73,6 +73,13 @@ export const metadata: Metadata = {
   verification: process.env.GOOGLE_SITE_VERIFICATION
     ? { google: process.env.GOOGLE_SITE_VERIFICATION }
     : undefined,
+  // Legacy local-geo hints (used by some local search engines/directories).
+  other: {
+    'geo.region': 'TJ-DU',
+    'geo.placename': 'Душанбе',
+    'geo.position': '38.5598;68.787',
+    ICBM: '38.5598, 68.787',
+  },
 };
 
 export const viewport: Viewport = {

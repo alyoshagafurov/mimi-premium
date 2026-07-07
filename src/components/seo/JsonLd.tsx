@@ -1,4 +1,4 @@
-import { SITE_URL, SITE_NAME, SITE_LEGAL_NAME, DEFAULT_DESCRIPTION, BRAND } from '@/lib/seo';
+import { SITE_URL, SITE_NAME, SITE_LEGAL_NAME, DEFAULT_DESCRIPTION, BRAND, AREA_SERVED, SERVICES, FAQ_ITEMS } from '@/lib/seo';
 
 /**
  * Site-wide JSON-LD structured data (rendered once in the root layout).
@@ -25,14 +25,21 @@ export function SiteJsonLd() {
         description: DEFAULT_DESCRIPTION,
         email: BRAND.email,
         telephone: BRAND.phoneE164,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: BRAND.phoneE164,
+          contactType: 'sales',
+          areaServed: BRAND.countryCode,
+          availableLanguage: ['ru', 'tg', 'en'],
+        },
         areaServed: [
-          { '@type': 'City', name: BRAND.city },
+          ...AREA_SERVED.map((name) => ({ '@type': 'City', name })),
           { '@type': 'Country', name: BRAND.region },
         ],
         sameAs: [BRAND.instagram, BRAND.whatsapp],
       },
       {
-        '@type': 'LocalBusiness',
+        '@type': ['LocalBusiness', 'ProfessionalService', 'MarketingAgency'],
         '@id': `${SITE_URL}/#localbusiness`,
         name: SITE_NAME,
         image: `${SITE_URL}/opengraph-image`,
@@ -40,16 +47,31 @@ export function SiteJsonLd() {
         telephone: BRAND.phoneE164,
         email: BRAND.email,
         priceRange: '$$',
+        currenciesAccepted: 'TJS',
         description: DEFAULT_DESCRIPTION,
         address: {
           '@type': 'PostalAddress',
           addressLocality: BRAND.city,
+          addressRegion: BRAND.region,
           addressCountry: BRAND.countryCode,
         },
+        geo: {
+          '@type': 'GeoCoordinates',
+          latitude: BRAND.geo.lat,
+          longitude: BRAND.geo.lng,
+        },
         areaServed: [
-          { '@type': 'City', name: BRAND.city },
+          ...AREA_SERVED.map((name) => ({ '@type': 'City', name })),
           { '@type': 'Country', name: BRAND.region },
         ],
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: 'Услуги маркетингового агентства',
+          itemListElement: SERVICES.map((s) => ({
+            '@type': 'Offer',
+            itemOffered: { '@type': 'Service', name: s, areaServed: BRAND.city },
+          })),
+        },
         sameAs: [BRAND.instagram, BRAND.whatsapp],
         parentOrganization: { '@id': `${SITE_URL}/#organization` },
       },
@@ -70,6 +92,26 @@ export function SiteJsonLd() {
       type="application/ld+json"
       // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
+    />
+  );
+}
+
+/** FAQPage JSON-LD — mirrors the visible FAQ section (Russian default content). */
+export function FaqJsonLd() {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ_ITEMS.map((it) => ({
+      '@type': 'Question',
+      name: it.q,
+      acceptedAnswer: { '@type': 'Answer', text: it.a },
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   );
 }

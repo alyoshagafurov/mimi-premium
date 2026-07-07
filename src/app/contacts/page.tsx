@@ -157,13 +157,14 @@ export default function ContactsPage() {
                 </div>
 
                 <div className="flex flex-col items-center justify-end gap-2">
-                  <div className="rounded-2xl border-4 border-brand-purple bg-white p-3">
+                  <div className="rounded-2xl border-4 border-brand-purple bg-white p-3" role="img" aria-label="QR-код: mimi в Instagram">
                     <QRCodeSVG
                       value={BRAND_INSTAGRAM}
                       size={140}
                       bgColor="#FFFFFF"
                       fgColor="#3C1975"
                       level="M"
+                      title="QR-код: mimi в Instagram"
                     />
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-[0.3em]">scan instagram</span>
@@ -189,9 +190,9 @@ export default function ContactsPage() {
           transition={{ duration: 0.7 }}
           className="mt-20 w-full max-w-3xl"
         >
-          <p className="text-center font-display text-xs uppercase tracking-[0.4em] text-brand-orange">
+          <h2 className="text-center font-display text-xs uppercase tracking-[0.4em] text-brand-orange">
             {t.valuesTitle}
-          </p>
+          </h2>
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {t.values.map((v, i) => (
               <div
