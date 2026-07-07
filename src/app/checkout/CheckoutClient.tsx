@@ -11,19 +11,19 @@ import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
 
 const PLAN_DESC_RU: Record<string, string> = {
-  START: 'Мини-стратегия, таргет + аналитика, 4 Reels, до 8 креативов, отчётность',
-  GROWTH: 'Стратегия, таргет + аналитика, 15 креативов, 4 Reels, брендинг, воронка, консультации продаж',
-  PREMIUM: 'Полная стратегия, брендинг, глубокая аналитика, 8 Reels, 15 креативов, SMM, сайт, сопровождение',
+  START: 'Таргет + аналитика, отчёты в Excel, до 8 креативов, 4 продающих Reels',
+  GROWTH: 'Стратегия + анализ конкурентов, до 10 креативов, 5 Reels, брендинг + мерч, воронка, консультации продаж',
+  PREMIUM: 'Стратегия + рост-план, брендинг, глубокая аналитика, до 15 креативов, 8–10 Reels, сайт в подарок, сопровождение',
 };
 const PLAN_DESC_EN: Record<string, string> = {
-  START: 'Mini-strategy, targeting + analytics, 4 Reels, up to 8 creatives, reporting',
-  GROWTH: 'Strategy, targeting + analytics, 15 creatives, 4 Reels, branding, funnel, sales consulting',
-  PREMIUM: 'Full strategy, branding, deep analytics, 8 Reels, 15 creatives, SMM, website, ongoing support',
+  START: 'Targeting + analytics, Excel reports, up to 8 creatives, 4 selling Reels',
+  GROWTH: 'Strategy + competitor analysis, up to 10 creatives, 5 Reels, branding + merch, funnel, sales consulting',
+  PREMIUM: 'Strategy + growth plan, branding, deep analytics, up to 15 creatives, 8–10 Reels, website gift, ongoing support',
 };
 const PLAN_DESC_TG: Record<string, string> = {
-  START: 'Мини-стратегия, таргет + аналитика, 4 Reels, то 8 креатив, ҳисобот',
-  GROWTH: 'Стратегия, таргет + аналитика, 15 креатив, 4 Reels, брендинг, воронка, маслиҳати фурӯш',
-  PREMIUM: 'Стратегияи пурра, брендинг, аналитикаи амиқ, 8 Reels, 15 креатив, SMM, сайт, ҳамроҳӣ',
+  START: 'Таргет + аналитика, ҳисобот дар Excel, то 8 креатив, 4 Reels-и фурӯшанда',
+  GROWTH: 'Стратегия + таҳлили рақибон, то 10 креатив, 5 Reels, брендинг + мерч, воронка, маслиҳати фурӯш',
+  PREMIUM: 'Стратегия + рост-план, брендинг, аналитикаи амиқ, то 15 креатив, 8–10 Reels, сайт тӯҳфа, ҳамроҳӣ',
 };
 
 const ru = {

@@ -16,10 +16,10 @@ export const formatPct = (n: number, withSign = false) =>
   `${withSign && n > 0 ? '+' : ''}${Math.round(n)}%`;
 
 /**
- * Tariff names per brandbook brochure:
- *   START   → PRO       5 000 сомони / мес
- *   GROWTH  → STANDART  8 000 сомони / мес
- *   PREMIUM → ELITE     12 000 сомони / мес
+ * Tariff names per brandbook brochure (сомони):
+ *   START   → PRO       5 000 / мес
+ *   GROWTH  → STANDART  1-й мес 9 000, далее 8 000
+ *   PREMIUM → ELITE     1-й мес 12 000, далее 10 000
  * Enum stored unchanged in DB to keep schema stable.
  */
 export const tariffLabel = (t: string) => {
@@ -31,22 +31,22 @@ export const tariffLabel = (t: string) => {
   }
 };
 
-/** Monthly price in somoni (used by checkout). */
+/** First-month price in somoni (used by checkout). */
 export const tariffPrice = (t: string) => {
   switch (t) {
     case 'START': return 5000;
-    case 'GROWTH': return 8000;
+    case 'GROWTH': return 9000;
     case 'PREMIUM': return 12000;
     default: return 0;
   }
 };
 
-/** Recurring monthly price (flat — same as first month). */
+/** Recurring monthly price (from the second month). */
 export const tariffRecurring = (t: string) => {
   switch (t) {
     case 'START': return 5000;
     case 'GROWTH': return 8000;
-    case 'PREMIUM': return 12000;
+    case 'PREMIUM': return 10000;
     default: return 0;
   }
 };

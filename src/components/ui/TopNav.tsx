@@ -125,9 +125,9 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
             ) : (
               <>
                 <Link href="/auth/login" className="transition-colors hover:text-brand-lime">{t.login}</Link>
-                <Link href="/#cta" className="btn-lime !px-5 !py-2 !text-[11px]">
+                <a href="https://wa.me/992070217755" target="_blank" rel="noreferrer" className="btn-lime !px-5 !py-2 !text-[11px]">
                   {t.cta}
-                </Link>
+                </a>
               </>
             )}
             <LangSwitcher />
@@ -282,13 +282,15 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                     </>
                   ) : (
                     <>
-                      <Link
-                        href="/#cta"
+                      <a
+                        href="https://wa.me/992070217755"
+                        target="_blank"
+                        rel="noreferrer"
                         onClick={() => setOpen(false)}
                         className="btn-lime w-full !py-3 !text-[11px]"
                       >
                         {t.cta}
-                      </Link>
+                      </a>
                       <Link
                         href="/auth/login"
                         onClick={() => setOpen(false)}

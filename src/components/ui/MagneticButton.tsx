@@ -74,6 +74,14 @@ export function MagneticButton({
   );
 
   if (href) {
+    // External links (WhatsApp, Instagram, …) open in a new tab.
+    if (/^https?:\/\//.test(href)) {
+      return (
+        <a href={href} target="_blank" rel="noreferrer noopener" className="inline-block">
+          {inner}
+        </a>
+      );
+    }
     return (
       <Link href={href} className="inline-block">
         {inner}

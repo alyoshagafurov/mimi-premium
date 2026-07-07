@@ -12,7 +12,7 @@ import type { Lang } from '@/i18n/config';
 type PlanCopy = { audience: string; bullets: string[] };
 const PLAN_META = [
   { name: 'PRO', price: '5 000', href: '/pricing' },
-  { name: 'STANDART', price: '8 000', featured: true, href: '/pricing' },
+  { name: 'STANDART', price: '9 000', featured: true, href: '/pricing' },
   { name: 'ELITE', price: '12 000', href: '/pricing' },
 ];
 
@@ -20,45 +20,42 @@ const ru = {
   eyebrow: 'Тарифы',
   titlePre: 'Три формата',
   titleEmphasis: 'роста.',
-  subtitle: 'Цены — из брендбука. Подгоняем под цели, бюджет и нишу.',
-  sub: 'сомони / мес',
+  sub: 'сомони · первый месяц',
   hit: 'Хит',
   details: 'Подробнее',
   compare: 'Полное сравнение тарифов',
   plans: [
-    { audience: 'Стартапы и новый бизнес', bullets: ['Мини-стратегия', 'Таргет + аналитика', '4 Reels · до 8 креативов'] },
-    { audience: 'Бизнес, готовый к росту', bullets: ['Стратегия + аналитика', '15 креативов · 4 Reels', 'Брендинг + воронка', 'Консультации продаж'] },
-    { audience: 'Управляемый рост, не эксперимент', bullets: ['Полная стратегия + брендинг', '8 Reels · 15 креативов', 'Контент для SMM', 'Сайт в подарок'] },
+    { audience: 'Стартапы и новый бизнес', bullets: ['Таргет + аналитика', 'Отчёты в Excel', 'До 8 креативов', '4 продающих Reels'] },
+    { audience: 'Малый и средний бизнес', bullets: ['Стратегия + анализ конкурентов', 'До 10 креативов · Reels', 'Брендинг + дизайн мерча', 'Воронка + консультации продаж'] },
+    { audience: 'Готовы к масштабированию', bullets: ['Стратегия + рост-план', 'Брендинг + глубокая аналитика', '8–10 Reels · до 15 креативов', 'Сайт в подарок'] },
   ] as PlanCopy[],
 };
 const en: typeof ru = {
   eyebrow: 'Plans',
   titlePre: 'Three formats',
   titleEmphasis: 'of growth.',
-  subtitle: 'Prices are from our brandbook. Tailored to goals, budget and niche.',
-  sub: 'somoni / mo',
+  sub: 'somoni · first month',
   hit: 'Popular',
   details: 'Details',
   compare: 'Full plan comparison',
   plans: [
-    { audience: 'Startups & new businesses', bullets: ['Mini-strategy', 'Targeting + analytics', '4 Reels · up to 8 creatives'] },
-    { audience: 'Business ready to grow', bullets: ['Strategy + analytics', '15 creatives · 4 Reels', 'Branding + funnel', 'Sales consulting'] },
-    { audience: 'Managed growth, not an experiment', bullets: ['Full strategy + branding', '8 Reels · 15 creatives', 'SMM content', 'Website included'] },
+    { audience: 'Startups & new businesses', bullets: ['Targeting + analytics', 'Reports in Excel', 'Up to 8 creatives', '4 selling Reels'] },
+    { audience: 'Small & medium business', bullets: ['Strategy + competitor analysis', 'Up to 10 creatives · Reels', 'Branding + merch design', 'Funnel + sales consulting'] },
+    { audience: 'Ready to scale', bullets: ['Strategy + growth plan', 'Branding + deep analytics', '8–10 Reels · up to 15 creatives', 'Website included'] },
   ] as PlanCopy[],
 };
 const tg: typeof ru = {
   eyebrow: 'Тарифҳо',
   titlePre: 'Се формати',
   titleEmphasis: 'рушд.',
-  subtitle: 'Нархҳо аз брендбук. Мутобиқ ба ҳадафҳо, буҷет ва ниша.',
-  sub: 'сомонӣ / моҳ',
+  sub: 'сомонӣ · моҳи аввал',
   hit: 'Ҳит',
   details: 'Муфассал',
   compare: 'Муқоисаи пурраи тарифҳо',
   plans: [
-    { audience: 'Стартапҳо ва бизнеси нав', bullets: ['Мини-стратегия', 'Таргет + аналитика', '4 Reels · то 8 креатив'] },
-    { audience: 'Бизнес, ки ба рушд тайёр аст', bullets: ['Стратегия + аналитика', '15 креатив · 4 Reels', 'Брендинг + воронка', 'Маслиҳати фурӯш'] },
-    { audience: 'Рушди идорашаванда, на озмоиш', bullets: ['Стратегияи пурра + брендинг', '8 Reels · 15 креатив', 'Контент барои SMM', 'Сайт тӯҳфа'] },
+    { audience: 'Стартапҳо ва бизнеси нав', bullets: ['Таргет + аналитика', 'Ҳисобот дар Excel', 'То 8 креатив', '4 Reels-и фурӯшанда'] },
+    { audience: 'Бизнеси хурд ва миёна', bullets: ['Стратегия + таҳлили рақибон', 'То 10 креатив · Reels', 'Брендинг + дизайни мерч', 'Воронка + маслиҳати фурӯш'] },
+    { audience: 'Ба масштабсозӣ тайёр', bullets: ['Стратегия + рост-план', 'Брендинг + аналитикаи амиқ', '8–10 Reels · то 15 креатив', 'Сайт тӯҳфа'] },
   ] as PlanCopy[],
 };
 const COPY: Record<Lang, typeof ru> = { ru, en, tg };
@@ -172,24 +169,17 @@ export function PricingTeaser() {
   return (
     <section id="pricing" className="relative w-full px-6 py-section lg:px-12">
       <div className="mx-auto max-w-[1500px]">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1fr] lg:items-end">
-          <div>
-            <Reveal>
-              <p className="text-[10px] uppercase tracking-[0.5em] text-brand-orange">{t.eyebrow}</p>
-            </Reveal>
-            <Reveal delay={0.06}>
-              <h2 className="mt-6 max-w-[14ch] font-display text-hero-sm font-extrabold">
-                {t.titlePre}{' '}
-                <span className="font-serif italic font-normal text-lime-grad">
-                  {t.titleEmphasis}
-                </span>
-              </h2>
-            </Reveal>
-          </div>
-          <Reveal delay={0.14}>
-            <p className="max-w-md text-base leading-relaxed text-light/55 lg:text-right">
-              {t.subtitle}
-            </p>
+        <div>
+          <Reveal>
+            <p className="text-[10px] uppercase tracking-[0.5em] text-brand-orange">{t.eyebrow}</p>
+          </Reveal>
+          <Reveal delay={0.06}>
+            <h2 className="mt-6 max-w-[14ch] font-display text-hero-sm font-extrabold">
+              {t.titlePre}{' '}
+              <span className="font-serif italic font-normal text-lime-grad">
+                {t.titleEmphasis}
+              </span>
+            </h2>
           </Reveal>
         </div>
 

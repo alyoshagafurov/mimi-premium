@@ -203,7 +203,7 @@ export function VideoHero() {
             transition={{ duration: 0.9, delay: 0.65 }}
             className="mt-10 flex flex-wrap items-center gap-4"
           >
-            <MagneticButton href="#cta" variant="lime" arrow>
+            <MagneticButton href="https://wa.me/992070217755" variant="lime" arrow>
               {t.ctaPrimary}
             </MagneticButton>
             <MagneticButton href="#cases" variant="ghost">

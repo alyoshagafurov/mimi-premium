@@ -30,7 +30,7 @@ const ru = {
   whatsapp: 'написать в WhatsApp →',
   items: [
     { q: 'Сколько занимает запуск?', a: '7–14 дней в зависимости от тарифа и готовности материалов. PRO — быстрее, ELITE — полная стратегия и брендинг до старта. Точный план даём на брифе.', tag: 'Сроки' },
-    { q: 'Какие гарантии вы даёте?', a: 'Мы не обещаем «лиды в первый день». Обещаем прозрачность: вы видите все цифры в личном кабинете и каждую неделю получаете разбор гипотез и итераций.', tag: 'Гарантии' },
+    { q: 'Какие гарантии вы даёте?', a: 'Мы не обещаем «лиды в первый день». Обещаем прозрачность: вы видите все цифры в личном кабинете. И остаётесь постоянно на связи с маркетинговой командой.', tag: 'Гарантии' },
     { q: 'Можно начать с одного направления?', a: 'Да. PRO включает только таргет + аналитику. STANDART и ELITE — система, где работают все каналы вместе и усиливают друг друга.', tag: 'Форматы' },
     { q: 'Кому вы НЕ подходите?', a: 'Тем, кто хочет «магический рост» без перестройки воронки и контента. Мы строим систему — это требует включённости с обеих сторон и горизонта 3+ месяца.', tag: 'Ожидания' },
     { q: 'Что внутри личного кабинета?', a: 'Дашборд с KPI, ROMI, воронкой, лидами и активными кампаниями. Обновляется по мере поступления метрик. Доступ — после оплаты тарифа.', tag: 'Продукт' },
@@ -45,7 +45,7 @@ const en: typeof ru = {
   whatsapp: 'message on WhatsApp →',
   items: [
     { q: 'How long does launch take?', a: '7–14 days depending on the plan and readiness of materials. PRO — faster, ELITE — full strategy and branding before launch. We give an exact plan at the brief.', tag: 'Timing' },
-    { q: 'What guarantees do you give?', a: 'We don’t promise «leads on day one». We promise transparency: you see all the numbers in your dashboard and get a weekly review of hypotheses and iterations.', tag: 'Guarantees' },
+    { q: 'What guarantees do you give?', a: 'We don’t promise «leads on day one». We promise transparency: you see all the numbers in your dashboard — and stay in constant touch with the marketing team.', tag: 'Guarantees' },
     { q: 'Can we start with one direction?', a: 'Yes. PRO includes only targeting + analytics. STANDART and ELITE — a system where all channels work together and reinforce each other.', tag: 'Formats' },
     { q: 'Who are you NOT a fit for?', a: 'Those who want «magic growth» without rebuilding the funnel and content. We build a system — that requires involvement from both sides and a 3+ month horizon.', tag: 'Expectations' },
     { q: 'What’s inside the dashboard?', a: 'A dashboard with KPIs, ROMI, funnel, leads and active campaigns. Updated as metrics come in. Access — after paying for a plan.', tag: 'Product' },
@@ -60,7 +60,7 @@ const tg: typeof ru = {
   whatsapp: 'навиштан дар WhatsApp →',
   items: [
     { q: 'Оғоз чӣ қадар вақт мегирад?', a: '7–14 рӯз вобаста ба тариф ва омодагии маводҳо. PRO — тезтар, ELITE — стратегияи пурра ва брендинг то оғоз. Нақшаи дақиқро дар бриф медиҳем.', tag: 'Мӯҳлат' },
-    { q: 'Шумо чӣ кафолат медиҳед?', a: 'Мо «лид дар рӯзи аввал»-ро ваъда намедиҳем. Шаффофиятро ваъда медиҳем: шумо ҳамаи рақамҳоро дар кабинети шахсӣ мебинед ва ҳар ҳафта таҳлили гипотезаҳо ва итератсияҳоро мегиред.', tag: 'Кафолат' },
+    { q: 'Шумо чӣ кафолат медиҳед?', a: 'Мо «лид дар рӯзи аввал»-ро ваъда намедиҳем. Шаффофиятро ваъда медиҳем: шумо ҳамаи рақамҳоро дар кабинети шахсӣ мебинед. Ва доимо бо дастаи маркетинг дар алоқа мемонед.', tag: 'Кафолат' },
     { q: 'Бо як самт оғоз кардан мумкин аст?', a: 'Бале. PRO танҳо таргет + аналитикаро дар бар мегирад. STANDART ва ELITE — система, ки дар он ҳамаи каналҳо якҷоя кор карда, ҳамдигарро тақвият медиҳанд.', tag: 'Форматҳо' },
     { q: 'Шумо ба КӢ мувофиқ НЕСТЕД?', a: 'Ба онҳое, ки «рушди ҷодугарона»-ро бе аз нав сохтани воронка ва контент мехоҳанд. Мо системаро месозем — ин иштироки ҳарду тараф ва уфуқи 3+ моҳро талаб мекунад.', tag: 'Интизориҳо' },
     { q: 'Дар дохили кабинети шахсӣ чӣ ҳаст?', a: 'Дашборд бо KPI, ROMI, воронка, лидҳо ва маъракаҳои фаъол. Бо воридшавии метрикаҳо нав мешавад. Дастрасӣ — пас аз пардохти тариф.', tag: 'Маҳсулот' },
