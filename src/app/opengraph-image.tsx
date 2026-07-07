@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 // Node runtime for portability (Railway / any self-hosted Node server).
 export const runtime = 'nodejs';
-export const alt = 'mimi — minimise marketing agency';
+export const alt = 'mimi — маркетинговое агентство в Душанбе и Таджикистане';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -33,7 +33,7 @@ export default function OgImage() {
           </div>
         </div>
         <div style={{ display: 'flex', fontSize: 26, color: 'rgba(245,241,250,0.6)' }}>
-          Системный маркетинг в Таджикистане
+          Маркетинговое агентство в Душанбе · таргет · SMM · брендинг · Meta Ads
         </div>
       </div>
     ),

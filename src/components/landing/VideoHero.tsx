@@ -236,9 +236,13 @@ export function VideoHero() {
           {/* Ornament — central-asian pattern framing the wordmark */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <motion.img
-              src="/ornament.png"
+              src="/ornament.webp"
               alt=""
               aria-hidden
+              width={1024}
+              height={1024}
+              loading="eager"
+              decoding="async"
               initial={{ rotate: 0 }}
               animate={{ rotate: 360 }}
               transition={{ duration: 240, repeat: Infinity, ease: 'linear' }}

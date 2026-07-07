@@ -5,6 +5,8 @@ import './globals.css';
 import { Providers } from './providers';
 import { DEFAULT_LANG, LANG_COOKIE, isLang } from '@/i18n/config';
 import { PWAInstaller } from '@/components/ui/PWAInstaller';
+import { SiteJsonLd } from '@/components/seo/JsonLd';
+import { SITE_URL, SITE_NAME, DEFAULT_TITLE, DEFAULT_DESCRIPTION, CORE_KEYWORDS } from '@/lib/seo';
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],
@@ -28,13 +30,49 @@ const serif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: 'mimi — minimise marketing agency',
-  description:
-    'Minimise the noise. Maximise the impact. Маркетинговое агентство полного цикла: стратегия, брендинг, таргетинг, дизайн.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: DEFAULT_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: CORE_KEYWORDS,
+  category: 'marketing',
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
   manifest: '/manifest.json',
+  alternates: { canonical: '/' },
+  formatDetection: { telephone: true, email: true, address: true },
   appleWebApp: { title: 'mimi', capable: true, statusBarStyle: 'black-translucent' },
-  icons: { icon: '/icon.svg', apple: '/icon.svg' },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'ru_RU',
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export const viewport: Viewport = {
@@ -51,6 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang={lang} className={`${manrope.variable} ${moderustic.variable} ${serif.variable}`}>
       <body className="font-sans antialiased">
+        <SiteJsonLd />
         <Providers initialLang={lang}>{children}</Providers>
         <PWAInstaller />
       </body>

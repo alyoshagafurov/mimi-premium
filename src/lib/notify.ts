@@ -2,7 +2,7 @@ import { prisma } from './prisma';
 import type { NotificationKind } from '@prisma/client';
 import { sendEmail, emailLayout } from './email';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mimi-agency-v2.vercel.app';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mimitj.agency';
 
 type NotifyArgs = {
   userId: string;

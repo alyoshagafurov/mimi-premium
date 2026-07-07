@@ -10,7 +10,7 @@ import type { Lang } from '@/i18n/config';
 const BRAND_PHONE = process.env.NEXT_PUBLIC_BRAND_PHONE ?? '+992 07 021 77 55';
 const BRAND_INSTAGRAM = process.env.NEXT_PUBLIC_BRAND_INSTAGRAM ?? 'https://instagram.com/mimi.agency.tj';
 const BRAND_INSTAGRAM_HANDLE = 'mimi.agency.tj';
-const BRAND_WEB = process.env.NEXT_PUBLIC_BRAND_WEB ?? 'mimi.agency.tj.com';
+const BRAND_WEB = process.env.NEXT_PUBLIC_BRAND_WEB ?? 'mimitj.agency';
 const BRAND_EMAIL = process.env.NEXT_PUBLIC_BRAND_EMAIL ?? 'hello@mimi.agency.tj';
 
 type ValueCopy = { title: string; body: string; wide?: boolean };

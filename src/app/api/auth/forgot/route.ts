@@ -6,7 +6,7 @@ import { sendEmail, emailLayout } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
 import { clientIp } from '@/lib/request';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mimi-agency-v2.vercel.app';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mimitj.agency';
 const schema = z.object({ email: z.string().email() });
 
 export async function POST(req: Request) {
