@@ -430,3 +430,176 @@ model AdMetric {
   @@unique([clientId, date, platform])
   @@index([clientId, date])
 }
+
+// ─────────────────────────────────────────────────────────────
+// CMS — public-facing content managed from the admin panel
+// ─────────────────────────────────────────────────────────────
+
+/// Portfolio case study (public /cases/[slug]).
+model Case {
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  category       String
+  clientName     String
+  description    String              // short summary / excerpt
+  task           String   @default("")
+  solution       String   @default("")
+  result         String   @default("")
+  achievements   String[]            // list of wins
+  coverImage     String?
+  images         String[]
+  date           DateTime @default(now())
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  published      Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([published, date])
+  @@index([category])
+}
+
+/// Client testimonial (published on landing / about).
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  company   String?
+  position  String?
+  photo     String?
+  rating    Int      @default(5)
+  text      String
+  date      DateTime @default(now())
+  published Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/// Blog post (public /blog/[slug]).
+model BlogPost {
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  category       String
+  cover          String?
+  excerpt        String?
+  content        String   @default("")   // Markdown
+  author         String   @default("mimi")
+  date           DateTime @default(now())
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  published      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([published, date])
+  @@index([category])
+}
+
+/// Team member.
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  position  String
+  photo     String?
+  bio       String?
+  socials   Json?              // { instagram, telegram, linkedin, website }
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/// Client logo (brands we worked with).
+model ClientLogo {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String?
+  url       String?
+  category  String?
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/// FAQ entry (DB-managed).
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/// Company statistic / achievement counter.
+model CompanyStat {
+  id        String   @id @default(cuid())
+  label     String
+  value     String            // "150+", "4.8", "20M" — kept as string for formatting
+  suffix    String?
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/// Partner brand.
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String?
+  url       String?
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/// Certificate.
+model Certificate {
+  id        String    @id @default(cuid())
+  title     String
+  image     String?
+  issuer    String?
+  date      DateTime?
+  published Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/// Award / recognition.
+model Award {
+  id        String    @id @default(cuid())
+  title     String
+  image     String?
+  issuer    String?
+  date      DateTime?
+  published Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+}

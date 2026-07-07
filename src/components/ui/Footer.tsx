@@ -12,6 +12,7 @@ const ru = {
   colContact: 'Связь',
   services: 'Услуги',
   cases: 'Кейсы',
+  blog: 'Блог',
   process: 'Процесс',
   pricing: 'Тарифы',
   login: 'Вход',
@@ -29,6 +30,7 @@ const en: typeof ru = {
   colContact: 'Contact',
   services: 'Services',
   cases: 'Cases',
+  blog: 'Blog',
   process: 'Process',
   pricing: 'Pricing',
   login: 'Sign in',
@@ -46,6 +48,7 @@ const tg: typeof ru = {
   colContact: 'Тамос',
   services: 'Хидматҳо',
   cases: 'Кейсҳо',
+  blog: 'Блог',
   process: 'Раванд',
   pricing: 'Тарифҳо',
   login: 'Воридшавӣ',
@@ -74,7 +77,8 @@ export function Footer() {
           <p className="text-[10px] uppercase tracking-[0.32em] text-brand-orange">{t.colAgency}</p>
           <ul className="mt-4 space-y-3 text-sm text-light/75">
             <li><Link href="/#services" className="transition-colors hover:text-brand-lime">{t.services}</Link></li>
-            <li><Link href="/#cases" className="transition-colors hover:text-brand-lime">{t.cases}</Link></li>
+            <li><Link href="/cases" className="transition-colors hover:text-brand-lime">{t.cases}</Link></li>
+            <li><Link href="/blog" className="transition-colors hover:text-brand-lime">{t.blog}</Link></li>
             <li><Link href="/#process" className="transition-colors hover:text-brand-lime">{t.process}</Link></li>
             <li><Link href="/pricing" className="transition-colors hover:text-brand-lime">{t.pricing}</Link></li>
           </ul>

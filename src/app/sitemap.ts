@@ -1,19 +1,33 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/seo';
+import { prisma } from '@/lib/prisma';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const routes: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
-    { path: '', priority: 1.0, changeFrequency: 'weekly' },
-    { path: '/pricing', priority: 0.9, changeFrequency: 'monthly' },
-    { path: '/contacts', priority: 0.8, changeFrequency: 'monthly' },
-    { path: '/privacy', priority: 0.3, changeFrequency: 'yearly' },
-    { path: '/terms', priority: 0.3, changeFrequency: 'yearly' },
+
+  const staticRoutes: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}`, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${SITE_URL}/cases`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${SITE_URL}/pricing`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/contacts`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];
-  return routes.map((r) => ({
-    url: `${SITE_URL}${r.path}`,
-    lastModified: now,
-    changeFrequency: r.changeFrequency,
-    priority: r.priority,
-  }));
+
+  let dynamic: MetadataRoute.Sitemap = [];
+  try {
+    const [cases, posts] = await Promise.all([
+      prisma.case.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }),
+      prisma.blogPost.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }),
+    ]);
+    dynamic = [
+      ...cases.map((c) => ({ url: `${SITE_URL}/cases/${c.slug}`, lastModified: c.updatedAt, changeFrequency: 'monthly' as const, priority: 0.8 })),
+      ...posts.map((p) => ({ url: `${SITE_URL}/blog/${p.slug}`, lastModified: p.updatedAt, changeFrequency: 'monthly' as const, priority: 0.7 })),
+    ];
+  } catch {
+    // DB unreachable at build/request — still return static routes.
+  }
+
+  return [...staticRoutes, ...dynamic];
 }

@@ -13,10 +13,13 @@ const ITEMS = [
   { href: '/admin', label: 'Дашборд', n: '01' },
   { href: '/admin/clients', label: 'Клиенты', n: '02' },
   { href: '/admin/leads', label: 'Сделки', n: '03' },
-  { href: '/admin/calendar', label: 'Календарь', n: '04' },
-  { href: '/admin/analytics', label: 'Аналитика', n: '05' },
-  { href: '/admin/integrations', label: 'Интеграции', n: '06' },
-  { href: '/admin/settings', label: 'Настройки', n: '07' },
+  { href: '/admin/content', label: 'Контент', n: '04' },
+  { href: '/admin/cases', label: 'Кейсы', n: '05' },
+  { href: '/admin/blog', label: 'Блог', n: '06' },
+  { href: '/admin/calendar', label: 'Календарь', n: '07' },
+  { href: '/admin/analytics', label: 'Аналитика', n: '08' },
+  { href: '/admin/integrations', label: 'Интеграции', n: '09' },
+  { href: '/admin/settings', label: 'Настройки', n: '10' },
 ];
 
 export function Sidebar({ name }: { name: string }) {
