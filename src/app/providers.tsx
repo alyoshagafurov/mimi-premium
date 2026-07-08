@@ -14,17 +14,17 @@ export function Providers({ children, initialLang }: { children: React.ReactNode
         toastOptions={{
           duration: 3500,
           style: {
-            background: 'rgba(19,19,19,0.95)',
-            color: '#f5f5f5',
-            border: '1px solid rgba(201,169,110,0.3)',
+            background: 'rgba(10,7,18,0.94)',
+            color: '#F5F1FA',
+            border: '1px solid rgba(212,236,76,0.28)',
             backdropFilter: 'blur(20px)',
             padding: '14px 18px',
             fontSize: '13px',
-            borderRadius: '12px',
-            boxShadow: '0 20px 60px -20px rgba(0,0,0,0.7)',
+            borderRadius: '14px',
+            boxShadow: '0 24px 60px -20px rgba(0,0,0,0.75)',
           },
-          success: { iconTheme: { primary: '#C9A96E', secondary: '#131313' } },
-          error: { iconTheme: { primary: '#ef4444', secondary: '#131313' } },
+          success: { iconTheme: { primary: '#D4EC4C', secondary: '#0A0712' } },
+          error: { iconTheme: { primary: '#fb7185', secondary: '#0A0712' } },
         }}
       />
     </SessionProvider>

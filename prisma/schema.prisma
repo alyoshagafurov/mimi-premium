@@ -589,6 +589,19 @@ model Certificate {
   @@index([published, sortOrder])
 }
 
+/// Media Library asset — central store for all CMS-uploaded images.
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String
+  name      String
+  folder    String   @default("Общее")
+  mime      String?
+  size      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([folder, createdAt])
+}
+
 /// Award / recognition.
 model Award {
   id        String    @id @default(cuid())

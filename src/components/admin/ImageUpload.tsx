@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { MediaPicker } from './MediaPicker';
 
 async function upload(file: File): Promise<string | null> {
   if (file.size > 5 * 1024 * 1024) {
@@ -31,9 +32,11 @@ export function ImageUpload({
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [picker, setPicker] = useState(false);
 
   return (
     <div>
+      {picker && <MediaPicker onPick={(url) => onChange(url)} onClose={() => setPicker(false)} />}
       <label className="label-soft">{label}</label>
       <div className="mt-1 flex items-center gap-4">
         {value ? (
@@ -59,9 +62,12 @@ export function ImageUpload({
             if (ref.current) ref.current.value = '';
           }}
         />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => ref.current?.click()} disabled={busy} className="btn-ghost !py-2 !text-[11px] disabled:opacity-50">
             {busy ? 'Загрузка…' : value ? 'Заменить' : 'Загрузить'}
+          </button>
+          <button type="button" onClick={() => setPicker(true)} className="btn-ghost !py-2 !text-[11px]">
+            Библиотека
           </button>
           {value && (
             <button type="button" onClick={() => onChange(null)} className="text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-rose-400">

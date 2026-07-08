@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -32,7 +32,33 @@ export function CollectionManager({ collection, initialItems }: { collection: Co
   const router = useRouter();
   const [editing, setEditing] = useState<Item | null>(null);
   const [saving, setSaving] = useState(false);
+  const [items, setItems] = useState<Item[]>(initialItems);
+  const [q, setQ] = useState('');
+  const dragId = useRef<string | null>(null);
   const base = `/api/admin/collections/${collection.key}`;
+
+  // Re-sync from the server after create / edit / delete (router.refresh).
+  useEffect(() => { setItems(initialItems); }, [initialItems]);
+
+  const filtered = q
+    ? items.filter((it) => String(it[collection.titleField] ?? '').toLowerCase().includes(q.toLowerCase()))
+    : items;
+
+  const onDrop = async (targetId: string) => {
+    const from = dragId.current;
+    dragId.current = null;
+    if (!from || from === targetId) return;
+    const next = [...items];
+    const fi = next.findIndex((x) => x.id === from);
+    const ti = next.findIndex((x) => x.id === targetId);
+    if (fi < 0 || ti < 0) return;
+    const [moved] = next.splice(fi, 1);
+    next.splice(ti, 0, moved);
+    setItems(next);
+    try {
+      await fetch(`${base}/reorder`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: next.map((x) => x.id) }) });
+    } catch { /* optimistic */ }
+  };
 
   const openNew = () => setEditing(emptyForm(collection));
   const openEdit = (it: Item) => {
@@ -108,10 +134,23 @@ export function CollectionManager({ collection, initialItems }: { collection: Co
         action={<button onClick={openNew} className="btn-lime">+ {collection.singular}</button>}
       />
 
+      <div className="flex items-center justify-between gap-3">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск…" className="input-glass sm:max-w-xs" />
+        <span className="text-[11px] text-light/40">Перетаскивайте ⠿ для сортировки</span>
+      </div>
+
       <div className="grid gap-3">
-        {initialItems.map((it) => (
-          <div key={it.id} className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+        {filtered.map((it) => (
+          <div
+            key={it.id}
+            draggable={!q}
+            onDragStart={() => { dragId.current = it.id; }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => onDrop(it.id)}
+            className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+          >
             <div className="flex min-w-0 items-center gap-3">
+              <span className="cursor-grab select-none text-light/25 active:cursor-grabbing" title="Перетащить">⠿</span>
               {(it.photo || it.logo || it.image) && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={it.photo || it.logo || it.image} alt="" className="h-10 w-10 rounded-lg border border-white/10 object-cover" />
@@ -128,7 +167,7 @@ export function CollectionManager({ collection, initialItems }: { collection: Co
             </div>
           </div>
         ))}
-        {!initialItems.length && <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-10 text-center text-light/45">Пока пусто.</div>}
+        {!filtered.length && <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-10 text-center text-light/45">{items.length ? 'Ничего не найдено.' : 'Пока пусто.'}</div>}
       </div>
 
       <AnimatePresence>

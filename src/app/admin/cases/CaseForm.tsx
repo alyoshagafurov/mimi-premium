@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { ImageUpload, GalleryUpload } from '@/components/admin/ImageUpload';
+import { useDraft } from '@/lib/useDraft';
 
 export type CaseInput = {
   id?: string;
@@ -35,10 +36,10 @@ const EMPTY: CaseInput = {
 
 export function CaseForm({ initial }: { initial?: Partial<CaseInput> }) {
   const router = useRouter();
-  const [f, setF] = useState<CaseInput>({ ...EMPTY, ...initial });
+  const isEdit = !!initial?.id;
+  const [f, setF, draft] = useDraft<CaseInput>('draft:case:new', { ...EMPTY, ...initial }, !isEdit);
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof CaseInput>(k: K, v: CaseInput[K]) => setF((p) => ({ ...p, [k]: v }));
-  const isEdit = !!f.id;
 
   const save = async () => {
     if (!f.title.trim()) return toast.error('Введите название');
@@ -50,6 +51,7 @@ export function CaseForm({ initial }: { initial?: Partial<CaseInput> }) {
         body: JSON.stringify(f),
       });
       if (!res.ok) throw new Error();
+      draft.clear();
       toast.success(isEdit ? 'Кейс сохранён' : 'Кейс создан');
       router.push('/admin/cases');
       router.refresh();
@@ -74,6 +76,13 @@ export function CaseForm({ initial }: { initial?: Partial<CaseInput> }) {
           </button>
         </div>
       </div>
+
+      {draft.restored && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-orange/25 bg-brand-orange/[0.05] px-4 py-3 text-sm text-light/70">
+          <span>Восстановлен несохранённый черновик (автосохранение).</span>
+          <button onClick={() => { draft.clear(); setF({ ...EMPTY }); }} className="ml-auto text-[11px] uppercase tracking-[0.14em] text-brand-orange hover:opacity-70">Начать заново</button>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4 rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6">

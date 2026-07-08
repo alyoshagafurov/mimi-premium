@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import { useDraft } from '@/lib/useDraft';
 
 export type BlogInput = {
   id?: string;
@@ -29,10 +30,10 @@ const EMPTY: BlogInput = {
 
 export function BlogForm({ initial }: { initial?: Partial<BlogInput> }) {
   const router = useRouter();
-  const [f, setF] = useState<BlogInput>({ ...EMPTY, ...initial });
+  const isEdit = !!initial?.id;
+  const [f, setF, draft] = useDraft<BlogInput>('draft:blog:new', { ...EMPTY, ...initial }, !isEdit);
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof BlogInput>(k: K, v: BlogInput[K]) => setF((p) => ({ ...p, [k]: v }));
-  const isEdit = !!f.id;
 
   const save = async () => {
     if (!f.title.trim()) return toast.error('Введите заголовок');
@@ -44,6 +45,7 @@ export function BlogForm({ initial }: { initial?: Partial<BlogInput> }) {
         body: JSON.stringify(f),
       });
       if (!res.ok) throw new Error();
+      draft.clear();
       toast.success(isEdit ? 'Статья сохранена' : 'Статья создана');
       router.push('/admin/blog');
       router.refresh();
@@ -65,6 +67,13 @@ export function BlogForm({ initial }: { initial?: Partial<BlogInput> }) {
           <button onClick={save} disabled={saving} className="btn-lime disabled:opacity-60">{saving ? 'Сохраняем…' : 'Сохранить'}</button>
         </div>
       </div>
+
+      {draft.restored && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-orange/25 bg-brand-orange/[0.05] px-4 py-3 text-sm text-light/70">
+          <span>Восстановлен несохранённый черновик (автосохранение).</span>
+          <button onClick={() => { draft.clear(); setF({ ...EMPTY }); }} className="ml-auto text-[11px] uppercase tracking-[0.14em] text-brand-orange hover:opacity-70">Начать заново</button>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-4 rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6">

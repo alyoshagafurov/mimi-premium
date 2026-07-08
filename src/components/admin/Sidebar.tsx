@@ -16,10 +16,11 @@ const ITEMS = [
   { href: '/admin/content', label: 'Контент', n: '04' },
   { href: '/admin/cases', label: 'Кейсы', n: '05' },
   { href: '/admin/blog', label: 'Блог', n: '06' },
-  { href: '/admin/calendar', label: 'Календарь', n: '07' },
-  { href: '/admin/analytics', label: 'Аналитика', n: '08' },
-  { href: '/admin/integrations', label: 'Интеграции', n: '09' },
-  { href: '/admin/settings', label: 'Настройки', n: '10' },
+  { href: '/admin/media', label: 'Медиатека', n: '07' },
+  { href: '/admin/calendar', label: 'Календарь', n: '08' },
+  { href: '/admin/analytics', label: 'Аналитика', n: '09' },
+  { href: '/admin/integrations', label: 'Интеграции', n: '10' },
+  { href: '/admin/settings', label: 'Настройки', n: '11' },
 ];
 
 export function Sidebar({ name }: { name: string }) {
