@@ -17,6 +17,11 @@ import { PricingTeaser } from '@/components/landing/PricingTeaser';
 import { GuaranteesSection } from '@/components/landing/GuaranteesSection';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { FinalCTA } from '@/components/landing/FinalCTA';
+import {
+  CmsStats, CmsClients, CmsTeam, CmsCases, CmsTestimonials,
+  CmsBlog, CmsPartners, CmsCertificates, CmsAwards,
+  type CmsData,
+} from '@/components/landing/CmsSections';
 
 /**
  * mimi landing — every section has its own scroll signature.
@@ -33,11 +38,11 @@ import { FinalCTA } from '@/components/landing/FinalCTA';
  *   FAQ            accordion
  *   Final CTA      form + headline reveal
  */
-export function LandingClient() {
+export function LandingClient({ cms }: { cms: CmsData }) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     document.fonts?.ready?.then(() => ScrollTrigger.refresh());
-  }, []);
+  }, [cms]);
 
   return (
     <div className="relative">
@@ -46,14 +51,23 @@ export function LandingClient() {
         <VideoHero />
         <StorytellingScroll />
         <TrustSection />
+        <CmsStats items={cms.stats} />
         <ChannelsSection />
+        <CmsClients items={cms.clients} />
         <ServicesSection />
         <AboutSection />
+        <CmsTeam items={cms.team} />
         <CasesSection />
+        <CmsCases items={cms.cases} />
+        <CmsTestimonials items={cms.testimonials} />
         <ProcessSection />
         <PricingTeaser />
         <GuaranteesSection />
-        <FAQSection />
+        <FAQSection cmsFaqs={cms.faqs} />
+        <CmsBlog items={cms.posts} />
+        <CmsPartners items={cms.partners} />
+        <CmsCertificates items={cms.certificates} />
+        <CmsAwards items={cms.awards} />
         <FinalCTA />
       </main>
       <Footer />

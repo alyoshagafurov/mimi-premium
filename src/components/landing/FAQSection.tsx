@@ -19,7 +19,6 @@ import type { Lang } from '@/i18n/config';
 
 type Item = { n: string; q: string; a: string; tag: string };
 type ItemCopy = { q: string; a: string; tag: string };
-const ITEM_N = ['01', '02', '03', '04', '05'];
 
 const ru = {
   titlePre: 'Частые',
@@ -68,12 +67,17 @@ const tg: typeof ru = {
 };
 const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 
-export function FAQSection() {
+export function FAQSection({ cmsFaqs }: { cmsFaqs?: { question: string; answer: string }[] } = {}) {
   const t = useCopy(COPY);
-  const ITEMS: Item[] = t.items.map((it, i) => ({ ...it, n: ITEM_N[i] }));
+  // Prefer FAQ managed in the CMS; fall back to the built-in copy when none published.
+  const source: ItemCopy[] = cmsFaqs && cmsFaqs.length
+    ? cmsFaqs.map((f) => ({ q: f.question, a: f.answer, tag: 'FAQ' }))
+    : t.items;
+  const ITEMS: Item[] = source.map((it, i) => ({ ...it, n: String(i + 1).padStart(2, '0') }));
+  const total = String(ITEMS.length).padStart(2, '0');
   const [active, setActive] = useState(0);
   const [mobileOpen, setMobileOpen] = useState<number | null>(0);
-  const current = ITEMS[active];
+  const current = ITEMS[active] ?? ITEMS[0];
 
   return (
     <section id="faq" className="relative w-full px-6 py-section lg:px-12">
@@ -116,7 +120,7 @@ export function FAQSection() {
                     transition={{ duration: 0.3 }}
                     className="font-mono text-[11px] uppercase tracking-[0.32em] text-brand-orange"
                   >
-                    {current.n} / 05 · {current.tag}
+                    {current.n} / {total} · {current.tag}
                   </motion.span>
                 </AnimatePresence>
                 <span className="text-[10px] uppercase tracking-[0.28em] text-light/35">{t.answerLabel}</span>

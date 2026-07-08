@@ -251,18 +251,6 @@ export function VideoHero() {
             />
           </div>
 
-          {/* Floating accent gem — depth via mouse parallax */}
-          <div
-            ref={gem3Ref}
-            aria-hidden
-            className="absolute bottom-[6%] right-[14%] h-11 w-11 will-change-transform"
-            style={{
-              background: 'linear-gradient(135deg, rgba(130,103,200,0.85), rgba(60,25,117,0.45))',
-              clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-              filter: 'drop-shadow(0 0 18px rgba(91,60,163,0.5))',
-            }}
-          />
-
           {/* Orbital rings (slow rotation) */}
           <svg viewBox="0 0 400 400" className="absolute inset-0 h-full w-full">
             <defs>
@@ -319,11 +307,11 @@ export function VideoHero() {
             <div className="relative flex items-baseline font-display text-[6.5rem] font-extrabold leading-none tracking-[-0.06em] text-brand-lime md:text-[8.5rem]"
               style={{ filter: 'drop-shadow(0 0 26px rgba(212,236,76,0.42))' }}
             >
-              {/* m ı m ı — dotless i for a clean, quiet wordmark */}
+              {/* m i m i — dotted i in the hero wordmark */}
               <span>m</span>
-              <span>ı</span>
+              <span>i</span>
               <span>m</span>
-              <span>ı</span>
+              <span>i</span>
             </div>
           </div>
         </motion.div>
