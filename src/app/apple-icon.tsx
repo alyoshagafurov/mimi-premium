@@ -14,14 +14,14 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#3C1975',
+          background: 'linear-gradient(135deg, #4A2088, #301460)',
           color: '#D4EC4C',
-          fontSize: 128,
+          fontSize: 58,
           fontWeight: 900,
-          letterSpacing: -6,
+          letterSpacing: -3,
         }}
       >
-        m
+        mimi
       </div>
     ),
     { ...size },
