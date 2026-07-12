@@ -61,10 +61,10 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
 
   const NAV: NavItem[] = [
     { href: '/', label: t.nav.home, n: '01' },
-    { href: '/#services', label: t.nav.services, n: '02' },
-    { href: '/#cases', label: t.nav.cases, n: '03' },
+    { href: '/services', label: t.nav.services, n: '02' },
+    { href: '/cases', label: t.nav.cases, n: '03' },
     { href: '/pricing', label: t.nav.pricing, n: '04' },
-    { href: '/#faq', label: t.nav.faq, n: '05' },
+    { href: '/faq', label: t.nav.faq, n: '05' },
     { href: '/contacts', label: t.nav.contacts, n: '06' },
   ];
 
@@ -106,9 +106,10 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
           {/* Desktop nav */}
           <nav aria-label="Основная навигация" className="hidden items-center gap-9 text-[12px] uppercase tracking-[0.2em] text-light/65 md:flex">
             <Link href="/" className="transition-colors hover:text-brand-lime">{t.nav.home}</Link>
-            <Link href="/#services" className="transition-colors hover:text-brand-lime">{t.nav.services}</Link>
-            <Link href="/#cases" className="transition-colors hover:text-brand-lime">{t.nav.cases}</Link>
+            <Link href="/services" className="transition-colors hover:text-brand-lime">{t.nav.services}</Link>
+            <Link href="/cases" className="transition-colors hover:text-brand-lime">{t.nav.cases}</Link>
             <Link href="/pricing" className="transition-colors hover:text-brand-lime">{t.nav.pricing}</Link>
+            <Link href="/faq" className="transition-colors hover:text-brand-lime">{t.nav.faq}</Link>
             <Link href="/contacts" className="transition-colors hover:text-brand-lime">{t.nav.contacts}</Link>
             {session?.user ? (
               <>

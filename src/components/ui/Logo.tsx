@@ -2,8 +2,12 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 /**
- * mimi wordmark — clean lime "mımı" (dotless i, no dots over the stems).
- * Mirrors the brandbook lockup (lowercase, sentence-flush).
+ * mimi wordmark — lime "mimi" with two orange dots over the i-stems.
+ * Mirrors the hero lockup / brandbook photo (lime letters + orange dots).
+ *
+ * The i is built from a dotless stem (ı, U+0131) plus an absolutely-positioned
+ * orange dot, so the dot colour is independent of the lime letters. Dot metrics
+ * are em-based, so they scale with every size.
  */
 export function Logo({
   className,
@@ -23,14 +27,25 @@ export function Logo({
     xl: 'text-7xl md:text-[10rem]',
   } as const;
 
+  const dotI = (key: string) => (
+    <span key={key} className="relative inline-block">
+      ı
+      <span
+        aria-hidden
+        className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange"
+        style={{ width: '0.16em', height: '0.16em', bottom: '0.52em' }}
+      />
+    </span>
+  );
+
   return (
     <Link href={href} className={cn('group inline-flex flex-col items-start leading-none', className)}>
       <span className={cn('flex items-end font-display font-extrabold tracking-tight text-brand-lime', wordMap[size])}>
-        {/* m ı m ı — dotless i, no dots over the stems */}
+        {/* m i m i — lime letters, orange dots over the i-stems */}
         <span>m</span>
-        <span>ı</span>
+        {dotI('i1')}
         <span>m</span>
-        <span>ı</span>
+        {dotI('i2')}
       </span>
       {subtitle && (
         <span className="mt-1.5 font-display text-[10px] uppercase tracking-[0.32em] text-brand-orange md:text-xs">

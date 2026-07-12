@@ -206,7 +206,7 @@ export function VideoHero() {
             <MagneticButton href="https://wa.me/992070217755" variant="lime" arrow>
               {t.ctaPrimary}
             </MagneticButton>
-            <MagneticButton href="#cases" variant="ghost">
+            <MagneticButton href="/cases" variant="ghost">
               {t.ctaSecondary}
             </MagneticButton>
           </motion.div>
@@ -304,14 +304,20 @@ export function VideoHero() {
             className="absolute inset-0 flex items-center justify-center will-change-transform"
             style={{ transformStyle: 'preserve-3d' }}
           >
-            <div className="relative flex items-baseline font-display text-[6.5rem] font-extrabold leading-none tracking-[-0.06em] text-brand-lime md:text-[8.5rem]"
+            <div className="relative flex items-end font-display text-[6.5rem] font-extrabold leading-none tracking-[-0.06em] text-brand-lime md:text-[8.5rem]"
               style={{ filter: 'drop-shadow(0 0 26px rgba(212,236,76,0.42))' }}
             >
-              {/* m i m i — dotted i in the hero wordmark */}
+              {/* m i m i — lime letters with two orange dots over the i-stems */}
               <span>m</span>
-              <span>i</span>
+              <span className="relative inline-block">
+                ı
+                <span aria-hidden className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange" style={{ width: '0.16em', height: '0.16em', bottom: '0.52em' }} />
+              </span>
               <span>m</span>
-              <span>i</span>
+              <span className="relative inline-block">
+                ı
+                <span aria-hidden className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange" style={{ width: '0.16em', height: '0.16em', bottom: '0.52em' }} />
+              </span>
             </div>
           </div>
         </motion.div>
