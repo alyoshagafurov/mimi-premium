@@ -35,7 +35,7 @@ export function Logo({
       <span
         aria-hidden
         className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange"
-        style={{ width: '0.205em', height: '0.205em', bottom: '0.52em' }}
+        style={{ width: '0.185em', height: '0.185em', bottom: '0.43em' }}
       />
     </span>
   );
