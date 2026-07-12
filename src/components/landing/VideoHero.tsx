@@ -307,16 +307,18 @@ export function VideoHero() {
             <div className="relative flex items-end font-display text-[6.5rem] font-extrabold leading-none tracking-[-0.06em] text-brand-lime md:text-[8.5rem]"
               style={{ filter: 'drop-shadow(0 0 26px rgba(212,236,76,0.42))' }}
             >
-              {/* m i m i — lime letters with two orange dots over the i-stems */}
+              {/* m i m i — lime letters with two orange dots over the i-stems.
+                  letterSpacing:0 isolates the stem box from the wordmark tracking so
+                  the dot centres on the stem; metrics tuned to Outfit 800. */}
               <span>m</span>
-              <span className="relative inline-block">
+              <span className="relative inline-block" style={{ letterSpacing: 0 }}>
                 ı
-                <span aria-hidden className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange" style={{ width: '0.16em', height: '0.16em', bottom: '0.52em' }} />
+                <span aria-hidden className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange" style={{ width: '0.205em', height: '0.205em', bottom: '0.52em' }} />
               </span>
               <span>m</span>
-              <span className="relative inline-block">
+              <span className="relative inline-block" style={{ letterSpacing: 0 }}>
                 ı
-                <span aria-hidden className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange" style={{ width: '0.16em', height: '0.16em', bottom: '0.52em' }} />
+                <span aria-hidden className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange" style={{ width: '0.205em', height: '0.205em', bottom: '0.52em' }} />
               </span>
             </div>
           </div>

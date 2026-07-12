@@ -27,13 +27,15 @@ export function Logo({
     xl: 'text-7xl md:text-[10rem]',
   } as const;
 
+  // dotless stem (ı) + orange dot. letterSpacing:0 isolates the stem box from the
+  // wordmark tracking so left:50% lands on the stem; dot metrics tuned to Outfit 800.
   const dotI = (key: string) => (
-    <span key={key} className="relative inline-block">
+    <span key={key} className="relative inline-block" style={{ letterSpacing: 0 }}>
       ı
       <span
         aria-hidden
         className="absolute left-1/2 -translate-x-1/2 rounded-full bg-brand-orange"
-        style={{ width: '0.16em', height: '0.16em', bottom: '0.52em' }}
+        style={{ width: '0.205em', height: '0.205em', bottom: '0.52em' }}
       />
     </span>
   );
