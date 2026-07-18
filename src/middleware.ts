@@ -1,22 +1,28 @@
 import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
+import { isStaff, canAccessSection, sectionFromPath } from '@/lib/roles';
 
 /**
  * Role-based route protection.
- *   • /admin/*     → ADMIN only (clients bounced to /dashboard)
- *   • /dashboard/* → any signed-in user (admins bounced to /admin)
+ *   • /admin/*     → staff roles (ADMIN/OPS/videographer/sales/…); clients bounced
+ *                    to /dashboard. Limited staff can only reach sections their
+ *                    role allows (everything else → /admin/calendar).
+ *   • /dashboard/* → clients only (staff bounced to /admin).
  * Unauthenticated visitors are redirected to /auth/login with a callbackUrl.
  */
 export default withAuth(
   function middleware(req) {
     const { token } = req.nextauth;
     const { pathname } = req.nextUrl;
-    const role = token?.role;
+    const role = token?.role as string | undefined;
 
-    if (pathname.startsWith('/admin') && role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+    if (pathname.startsWith('/admin')) {
+      if (!isStaff(role)) return NextResponse.redirect(new URL('/dashboard', req.url));
+      if (!canAccessSection(role, sectionFromPath(pathname))) {
+        return NextResponse.redirect(new URL('/admin/calendar', req.url));
+      }
     }
-    if (pathname.startsWith('/dashboard') && role === 'ADMIN') {
+    if (pathname.startsWith('/dashboard') && isStaff(role)) {
       return NextResponse.redirect(new URL('/admin', req.url));
     }
     return NextResponse.next();

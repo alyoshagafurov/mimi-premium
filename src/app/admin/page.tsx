@@ -1,11 +1,13 @@
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { DEAL_STAGES, monthName } from '@/lib/utils';
+import { canSeeRevenue } from '@/lib/roles';
 import { AdminDashboardClient } from './AdminDashboardClient';
 
 export default async function AdminDashboardPage() {
   const session = await getSafeSession();
   const me = session?.user?.name ?? 'Admin';
+  const showRevenue = canSeeRevenue((session?.user as any)?.role);
 
   const [clients, deals, tasks, payments] = await Promise.all([
     prisma.client.findMany({ include: { owner: { select: { name: true, tariff: true, tariffEnd: true } } } }),
@@ -67,6 +69,7 @@ export default async function AdminDashboardPage() {
   return (
     <AdminDashboardClient
       me={me}
+      showRevenue={showRevenue}
       stats={{ totalClients, activeClients, activeDeals, revenueMonth, overdue }}
       pipeline={pipeline}
       revenueTrend={revenueTrend}

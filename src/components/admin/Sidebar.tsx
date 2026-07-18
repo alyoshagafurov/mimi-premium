@@ -8,23 +8,36 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from '@/components/ui/Logo';
 import { NotificationsBell } from '@/components/ui/NotificationsBell';
 import { cn } from '@/lib/utils';
+import { canAccessSection, ROLE_LABEL, type AdminSection } from '@/lib/roles';
+import type { Role } from '@prisma/client';
 
-const ITEMS = [
-  { href: '/admin', label: 'Дашборд', n: '01' },
-  { href: '/admin/clients', label: 'Клиенты', n: '02' },
-  { href: '/admin/leads', label: 'Сделки', n: '03' },
-  { href: '/admin/content', label: 'Контент', n: '04' },
-  { href: '/admin/cases', label: 'Кейсы', n: '05' },
-  { href: '/admin/blog', label: 'Блог', n: '06' },
-  { href: '/admin/media', label: 'Медиатека', n: '07' },
-  { href: '/admin/calendar', label: 'Календарь', n: '08' },
-  { href: '/admin/analytics', label: 'Аналитика', n: '09' },
-  { href: '/admin/integrations', label: 'Интеграции', n: '10' },
-  { href: '/admin/settings', label: 'Настройки', n: '11' },
+const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
+  { href: '/admin', label: 'Дашборд', section: 'dashboard' },
+  { href: '/admin/clients', label: 'Клиенты', section: 'clients' },
+  { href: '/admin/leads', label: 'Сделки', section: 'leads' },
+  { href: '/admin/content', label: 'Контент', section: 'content' },
+  { href: '/admin/cases', label: 'Кейсы', section: 'cases' },
+  { href: '/admin/blog', label: 'Блог', section: 'blog' },
+  { href: '/admin/media', label: 'Медиатека', section: 'media' },
+  { href: '/admin/calendar', label: 'Календарь', section: 'calendar' },
+  { href: '/admin/analytics', label: 'Аналитика', section: 'analytics' },
+  { href: '/admin/team', label: 'Сотрудники', section: 'team' },
+  { href: '/admin/integrations', label: 'Интеграции', section: 'integrations' },
+  { href: '/admin/settings', label: 'Настройки', section: 'settings' },
 ];
 
-export function Sidebar({ name }: { name: string }) {
+function itemsFor(role?: Role | string) {
+  return ALL_ITEMS.filter((it) => canAccessSection(role, it.section)).map((it, i) => ({
+    ...it,
+    n: String(i + 1).padStart(2, '0'),
+  }));
+}
+
+export function Sidebar({ name, role }: { name: string; role?: Role | string }) {
   const pathname = usePathname();
+  const ITEMS = itemsFor(role);
+  const roleLabel = role ? ROLE_LABEL[role as Role] ?? 'Сотрудник' : 'Сотрудник';
+  const badge = role === 'ADMIN' ? 'admin' : role === 'OPS_DIRECTOR' ? 'ops' : 'staff';
   return (
     <aside className="glass-luxury sticky top-4 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-3xl p-7 lg:flex">
       <div className="flex items-center justify-between">
@@ -32,7 +45,7 @@ export function Sidebar({ name }: { name: string }) {
         <div className="flex items-center gap-2">
           <NotificationsBell />
           <span className="rounded-full border border-brand-lime/30 bg-brand-lime/5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime">
-            admin
+            {badge}
           </span>
         </div>
       </div>
@@ -78,7 +91,7 @@ export function Sidebar({ name }: { name: string }) {
           </div>
           <div className="min-w-0">
             <div className="truncate text-sm font-medium text-light">{name}</div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-light/45">Administrator</div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-light/45">{roleLabel}</div>
           </div>
         </div>
         <Link
@@ -98,8 +111,11 @@ export function Sidebar({ name }: { name: string }) {
   );
 }
 
-export function MobileTopbar({ name }: { name: string }) {
+export function MobileTopbar({ name, role }: { name: string; role?: Role | string }) {
   const [open, setOpen] = useState(false);
+  const ITEMS = itemsFor(role);
+  const roleLabel = role ? ROLE_LABEL[role as Role] ?? 'Сотрудник' : 'Сотрудник';
+  const badge = role === 'ADMIN' ? 'admin' : role === 'OPS_DIRECTOR' ? 'ops' : 'staff';
 
   useEffect(() => {
     if (!open) return;
@@ -121,7 +137,7 @@ export function MobileTopbar({ name }: { name: string }) {
         <div className="flex items-center gap-3">
           <Logo size="sm" />
           <span className="hidden rounded-full border border-brand-lime/30 bg-brand-lime/[0.06] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime sm:inline">
-            admin
+            {badge}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -238,9 +254,9 @@ export function MobileTopbar({ name }: { name: string }) {
                   className="mt-10 space-y-3"
                 >
                   <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="text-[10px] uppercase tracking-[0.28em] text-light/45">Администратор</p>
+                    <p className="text-[10px] uppercase tracking-[0.28em] text-light/45">{roleLabel}</p>
                     <p className="mt-2 font-display text-base font-bold text-light">{name}</p>
-                    <p className="text-[11px] text-light/40">Admin Panel</p>
+                    <p className="text-[11px] text-light/40">mimi Panel</p>
                   </div>
                   <Link
                     href="/"

@@ -10,6 +10,12 @@ datasource db {
 enum Role {
   CLIENT
   ADMIN
+  OPS_DIRECTOR
+  VIDEOGRAPHER
+  SALES
+  DESIGNER
+  TARGETOLOGIST
+  DEVELOPER
 }
 
 enum Tariff {
@@ -70,9 +76,24 @@ enum NotificationKind {
 enum CalendarEventKind {
   MEETING
   CALL
+  CONSULTATION
+  PAYMENT
+  COLLABORATION
+  SHOOTING
   LAUNCH
+  RETARGETING
   DEADLINE
+  TASK
   OTHER
+}
+
+enum EventCategory {
+  GENERAL
+  VIDEO
+  DESIGN
+  SALES
+  TARGET
+  WEB
 }
 
 enum InvoiceStatus {
@@ -113,6 +134,7 @@ model User {
   sentMessages    Message[]         @relation("MessageSender")
   uploadedFiles   File[]            @relation("FileUploader")
   calendarEvents  CalendarEvent[]   @relation("EventOwner")
+  assignedEvents  CalendarEvent[]   @relation("EventAssignee")
   resetTokens     PasswordResetToken[]
 }
 
@@ -345,16 +367,20 @@ model CalendarEvent {
   title       String
   description String?
   kind        CalendarEventKind @default(MEETING)
+  category    EventCategory     @default(GENERAL)
   startAt     DateTime
   endAt       DateTime?
   clientId    String?
   client      Client?           @relation(fields: [clientId], references: [id], onDelete: Cascade)
   ownerId     String?
   owner       User?             @relation("EventOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  assigneeId  String?
+  assignee    User?             @relation("EventAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
   @@index([startAt])
+  @@index([category])
 }
 
 /// Task template — a checklist of tasks applied to a client (e.g. "New PRO client" → 12 tasks).

@@ -22,6 +22,7 @@ type Renewal = { businessName: string; tariff: string; daysLeft: number };
 
 export function AdminDashboardClient({
   me,
+  showRevenue = true,
   stats,
   pipeline,
   revenueTrend,
@@ -29,6 +30,7 @@ export function AdminDashboardClient({
   renewals,
 }: {
   me: string;
+  showRevenue?: boolean;
   stats: Stats;
   pipeline: Pipeline;
   revenueTrend: { label: string; amount: number }[];
@@ -57,12 +59,18 @@ export function AdminDashboardClient({
       <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
         <KpiCard label="Клиентов" value={formatInt(stats.totalClients)} delay={0} icon={<span className="text-sm">◷</span>} />
         <KpiCard label="Активные сделки" value={formatInt(stats.activeDeals)} delay={0.05} icon={<span className="text-sm">◐</span>} />
-        <KpiCard label="Выручка за месяц" value={formatMoney(stats.revenueMonth)} delay={0.1} icon={<span className="text-sm">$</span>} />
-        <KpiCard label="Долг" value={formatMoney(stats.overdue)} delay={0.15} icon={<span className="text-sm">!</span>} />
+        {showRevenue ? (
+          <>
+            <KpiCard label="Выручка за месяц" value={formatMoney(stats.revenueMonth)} delay={0.1} icon={<span className="text-sm">$</span>} />
+            <KpiCard label="Долг" value={formatMoney(stats.overdue)} delay={0.15} icon={<span className="text-sm">!</span>} />
+          </>
+        ) : (
+          <KpiCard label="Активные клиенты" value={formatInt(stats.activeClients)} delay={0.1} icon={<span className="text-sm">◍</span>} />
+        )}
       </div>
 
       {/* Pipeline + revenue */}
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className={cn('grid gap-5', showRevenue && 'lg:grid-cols-2')}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -93,6 +101,7 @@ export function AdminDashboardClient({
           </div>
         </motion.div>
 
+        {showRevenue && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -126,6 +135,7 @@ export function AdminDashboardClient({
             </ResponsiveContainer>
           </div>
         </motion.div>
+        )}
       </div>
 
       {/* Tasks + renewals */}
