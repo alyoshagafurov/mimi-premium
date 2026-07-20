@@ -6,8 +6,9 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 
 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
-  | 'dashboard' | 'clients' | 'projects' | 'leads' | 'content' | 'cases' | 'blog'
-  | 'media' | 'calendar' | 'analytics' | 'team' | 'integrations' | 'settings';
+  | 'dashboard' | 'clients' | 'projects' | 'sales' | 'tasks' | 'ads' | 'leads'
+  | 'content' | 'cases' | 'blog' | 'media' | 'calendar' | 'analytics' | 'team'
+  | 'integrations' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
@@ -41,6 +42,35 @@ export const ROLE_LABEL: Record<Role, string> = {
 export const ASSIGNABLE_ROLES: Role[] = [
   'OPS_DIRECTOR', 'VIDEOGRAPHER', 'SALES', 'DESIGNER', 'TARGETOLOGIST', 'DEVELOPER', 'ADMIN',
 ];
+
+/** Sales pipeline statuses — order defines the board columns. */
+export const SALES_STATUSES = ['NEW_LEAD', 'POTENTIAL_LEAD', 'CONSULTATION', 'PREPAYMENT', 'PARTNER'] as const;
+export type SalesStatus = (typeof SALES_STATUSES)[number];
+export const SALES_STATUS_LABEL: Record<SalesStatus, string> = {
+  NEW_LEAD: 'Новый лид',
+  POTENTIAL_LEAD: 'Потенциальный лид',
+  CONSULTATION: 'Запись на консультацию',
+  PREPAYMENT: 'Предоплата',
+  PARTNER: 'Партнёр',
+};
+
+export const PACKAGES = [
+  'NONE', 'PRO', 'STANDART', 'ELITE', 'TARGET_2500', 'TARGET_3000',
+  'DEVELOPMENT', 'DESIGN', 'SCRIPT', 'MASTERCLASS',
+] as const;
+export type ClientPackage = (typeof PACKAGES)[number];
+export const PACKAGE_LABEL: Record<ClientPackage, string> = {
+  NONE: 'Не выбран',
+  PRO: 'PRO',
+  STANDART: 'STANDART',
+  ELITE: 'ELITE',
+  TARGET_2500: 'Таргет 2500',
+  TARGET_3000: 'Таргет 3000',
+  DEVELOPMENT: 'Разработка',
+  DESIGN: 'Дизайн',
+  SCRIPT: 'Скрипт продаж',
+  MASTERCLASS: 'Мастер-класс',
+};
 
 export const CATEGORY_LABEL: Record<EventCategory, string> = {
   GENERAL: 'Общий',
@@ -76,11 +106,19 @@ export function visibleCategories(role?: string | null): EventCategory[] {
  * Section access. Phase 1: admin + ops see everything; every other staff role
  * is limited to the calendar (their specialised sections open in later phases).
  */
+/** Sections each specialised staff role may open (beyond calendar + projects). */
+const ROLE_SECTIONS: Record<string, AdminSection[]> = {
+  SALES: ['calendar', 'projects', 'sales'],
+  DESIGNER: ['calendar', 'projects', 'tasks'],
+  DEVELOPER: ['calendar', 'projects', 'tasks'],
+  TARGETOLOGIST: ['calendar', 'projects', 'ads'],
+  VIDEOGRAPHER: ['calendar', 'projects'],
+};
+
 export function canAccessSection(role: string | null | undefined, section: AdminSection): boolean {
   if (role === 'ADMIN') return true;
   if (role === 'OPS_DIRECTOR') return true;
-  // Other staff: calendar + read-only projects (specialised sections open later).
-  if (isStaff(role)) return section === 'calendar' || section === 'projects';
+  if (isStaff(role)) return (ROLE_SECTIONS[role as string] ?? []).includes(section);
   return false;
 }
 
@@ -89,7 +127,8 @@ export function sectionFromPath(pathname: string): AdminSection {
   if (pathname === '/admin' || pathname === '/admin/') return 'dashboard';
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
-    clients: 'clients', projects: 'projects', leads: 'leads', content: 'content', cases: 'cases', blog: 'blog',
+    clients: 'clients', projects: 'projects', sales: 'sales', tasks: 'tasks', ads: 'ads',
+    leads: 'leads', content: 'content', cases: 'cases', blog: 'blog',
     media: 'media', calendar: 'calendar', analytics: 'analytics', team: 'team',
     integrations: 'integrations', settings: 'settings',
   };

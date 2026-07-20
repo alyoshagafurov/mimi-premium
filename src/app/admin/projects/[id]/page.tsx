@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isAdminLike } from '@/lib/roles';
+import { isAdminLike, SALES_STATUS_LABEL, PACKAGE_LABEL, type SalesStatus, type ClientPackage } from '@/lib/roles';
+import { TechSpec } from './TechSpec';
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'Активен', ARCHIVED: 'В архиве' };
 
@@ -45,6 +46,9 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
           <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">О бизнесе</p>
           <Row label="Ниша" value={c.niche} />
           <Row label="Дата поступления" value={new Date(c.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' })} />
+          <Row label="Статус в CRM" value={SALES_STATUS_LABEL[c.salesStatus as SalesStatus]} />
+          {c.packageType !== 'NONE' && <Row label="Пакет" value={PACKAGE_LABEL[c.packageType as ClientPackage]} />}
+          {c.comment && <Row label="Комментарий" value={c.comment} />}
           <Row label="Цели" value={c.briefGoals} />
           <Row label="Аудитория" value={c.briefTargetAudience} />
           <Row label="УТП" value={c.briefUSP} />
@@ -68,6 +72,9 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
           </div>
         </div>
       </div>
+
+      {/* Tech spec — for the developer; filled by admin / ops */}
+      <TechSpec clientId={c.id} value={c.techSpec ?? ''} canEdit={adminLike} />
     </div>
   );
 }

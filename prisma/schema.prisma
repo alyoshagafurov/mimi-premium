@@ -87,6 +87,29 @@ enum CalendarEventKind {
   OTHER
 }
 
+/// Sales pipeline status shown in the продажник cabinet.
+enum SalesStatus {
+  NEW_LEAD
+  POTENTIAL_LEAD
+  CONSULTATION
+  PREPAYMENT
+  PARTNER
+}
+
+/// Service package sold to the client.
+enum ClientPackage {
+  NONE
+  PRO
+  STANDART
+  ELITE
+  TARGET_2500
+  TARGET_3000
+  DEVELOPMENT
+  DESIGN
+  SCRIPT
+  MASTERCLASS
+}
+
 enum EventCategory {
   GENERAL
   VIDEO
@@ -166,6 +189,18 @@ model Client {
   briefBudget      Float?
   briefCompetitors String?
   briefUSP         String?
+
+  // Sales cabinet (продажник)
+  salesStatus   SalesStatus   @default(NEW_LEAD)
+  contactName   String?
+  packageType   ClientPackage @default(NONE)
+  comment       String?
+  reminderAt    DateTime?
+  reminderNote  String?
+  reminderDone  Boolean       @default(false)
+
+  // Developer cabinet — тех. задание (filled by admin / ops director)
+  techSpec      String?
 
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -266,9 +301,12 @@ model Deal {
 model Task {
   id        String       @id @default(cuid())
   title     String
+  description String?
   done      Boolean      @default(false)
   dueDate   DateTime?
   priority  TaskPriority @default(MEDIUM)
+  /// Which team the task belongs to — drives per-role task visibility.
+  category  EventCategory @default(GENERAL)
   ownerId   String?
   owner     User?        @relation("TaskOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   clientId  String?

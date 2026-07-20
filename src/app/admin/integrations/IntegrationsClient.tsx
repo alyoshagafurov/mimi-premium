@@ -19,9 +19,13 @@ type Account = {
 export function IntegrationsClient({
   clients,
   accounts,
+  webhookUrl,
+  verifyToken,
 }: {
   clients: { id: string; businessName: string }[];
   accounts: Account[];
+  webhookUrl: string;
+  verifyToken: string;
 }) {
   const router = useRouter();
   const [clientId, setClientId] = useState('');
@@ -92,14 +96,59 @@ export function IntegrationsClient({
           </button>
         </div>
         <p className="mt-2 text-sm text-light/55">
-          После заполнения Page ID, Ad Account ID и Access Token лиды и метрики из Facebook будут автоматически попадать в кабинет клиента. Webhook URL для Facebook App:
+          Всё уже настроено на стороне сайта. Осталось создать токен в Meta и вставить его ниже — лиды и метрики начнут приходить автоматически.
         </p>
-        <code className="mt-3 block break-all rounded-xl border border-white/[0.06] bg-ink2/40 px-3 py-2 font-mono text-[12px] text-brand-lime">
-          {`${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/facebook/webhook`}
-        </code>
-        <p className="mt-2 text-[11px] text-light/45">
-          В переменных окружения должен быть установлен FB_VERIFY_TOKEN — он указывается в Facebook App при настройке webhook.
-        </p>
+
+        <ol className="mt-5 space-y-4 text-sm">
+          <li>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-brand-orange">Шаг 1 · Webhook в Meta App</span>
+            <p className="mt-1 text-light/60">Webhooks → Page → Callback URL:</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <code className="block break-all rounded-xl border border-white/[0.06] bg-ink2/40 px-3 py-2 font-mono text-[12px] text-brand-lime">
+                {webhookUrl}
+              </code>
+              <button
+                onClick={() => { navigator.clipboard.writeText(webhookUrl); toast.success('Скопировано'); }}
+                className="rounded-lg border border-white/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-light/55 hover:text-brand-lime"
+              >
+                Копировать
+              </button>
+            </div>
+          </li>
+
+          <li>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-brand-orange">Шаг 2 · Verify Token</span>
+            {verifyToken ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <code className="rounded-xl border border-white/[0.06] bg-ink2/40 px-3 py-2 font-mono text-[12px] text-brand-lime">{verifyToken}</code>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(verifyToken); toast.success('Скопировано'); }}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-light/55 hover:text-brand-lime"
+                >
+                  Копировать
+                </button>
+                <span className="text-[11px] text-light/45">вставьте это в поле «Verify Token» в Meta</span>
+              </div>
+            ) : (
+              <p className="mt-2 rounded-xl border border-brand-orange/30 bg-brand-orange/[0.06] px-3 py-2 text-[12px] text-brand-orange">
+                Не задан. Добавьте переменную <code className="font-mono">FB_VERIFY_TOKEN</code> в Vercel (любая строка, например <code className="font-mono">mimi_fb_2026</code>) и нажмите Redeploy.
+              </p>
+            )}
+            <p className="mt-2 text-[11px] text-light/45">Подписаться на поле: <code className="font-mono text-light/70">leadgen</code></p>
+          </li>
+
+          <li>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-brand-orange">Шаг 3 · Права для токена</span>
+            <p className="mt-1 font-mono text-[11px] leading-relaxed text-light/60">
+              leads_retrieval · pages_show_list · pages_read_engagement · pages_manage_metadata · ads_read
+            </p>
+          </li>
+
+          <li>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-brand-orange">Шаг 4 · Вставить сюда</span>
+            <p className="mt-1 text-light/60">Ниже выберите клиента и вставьте Page ID, Ad Account ID и Access Token.</p>
+          </li>
+        </ol>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">

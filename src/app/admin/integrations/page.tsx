@@ -6,8 +6,11 @@ export default async function AdminIntegrationsPage() {
     prisma.client.findMany({ select: { id: true, businessName: true }, orderBy: { businessName: 'asc' } }),
     prisma.facebookAccount.findMany({ include: { client: { select: { businessName: true } } } }),
   ]);
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://mimitj.agency').replace(/\/$/, '');
   return (
     <IntegrationsClient
+      webhookUrl={`${appUrl}/api/facebook/webhook`}
+      verifyToken={process.env.FB_VERIFY_TOKEN ?? ''}
       clients={clients}
       accounts={accounts.map((a) => ({
         id: a.id,
