@@ -8,12 +8,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from '@/components/ui/Logo';
 import { NotificationsBell } from '@/components/ui/NotificationsBell';
 import { cn } from '@/lib/utils';
-import { canAccessSection, ROLE_LABEL, type AdminSection } from '@/lib/roles';
+import { canAccessSection, isAdminLike, ROLE_LABEL, type AdminSection } from '@/lib/roles';
 import type { Role } from '@prisma/client';
 
 const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
   { href: '/admin', label: 'Дашборд', section: 'dashboard' },
   { href: '/admin/clients', label: 'Клиенты', section: 'clients' },
+  { href: '/admin/projects', label: 'Проекты', section: 'projects' },
   { href: '/admin/leads', label: 'Сделки', section: 'leads' },
   { href: '/admin/content', label: 'Контент', section: 'content' },
   { href: '/admin/cases', label: 'Кейсы', section: 'cases' },
@@ -27,10 +28,12 @@ const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
 ];
 
 function itemsFor(role?: Role | string) {
-  return ALL_ITEMS.filter((it) => canAccessSection(role, it.section)).map((it, i) => ({
-    ...it,
-    n: String(i + 1).padStart(2, '0'),
-  }));
+  const adminLike = isAdminLike(role);
+  return ALL_ITEMS
+    .filter((it) => canAccessSection(role, it.section))
+    // Admin/ops use the full "Клиенты"; the read-only "Проекты" is for other staff.
+    .filter((it) => !(it.section === 'projects' && adminLike))
+    .map((it, i) => ({ ...it, n: String(i + 1).padStart(2, '0') }));
 }
 
 export function Sidebar({ name, role }: { name: string; role?: Role | string }) {

@@ -51,6 +51,11 @@ function endOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth() + 1
 function isSameDay(a: Date, b: Date) { return a.toDateString() === b.toDateString(); }
 function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }
 function fmtDate(iso: string) { return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' }); }
+/** Date → value for <input type="datetime-local"> in local time (YYYY-MM-DDTHH:mm). */
+function toLocalInput(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -83,6 +88,17 @@ export function CalendarClient({
   const [tab, setTab] = useState<'ALL' | EventCategory>('ALL');
   const [hover, setHover] = useState<{ e: Event; x: number; y: number; flip: boolean } | null>(null);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((p) => ({ ...p, [k]: v }));
+
+  // Open the form with sensible default date/time so the date is never empty
+  // (Safari renders an empty datetime-local as a grey hint, which read as "missing").
+  const openForm = () => {
+    const start = new Date();
+    start.setMinutes(0, 0, 0);
+    start.setHours(start.getHours() + 1);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    setForm({ ...EMPTY, startAt: toLocalInput(start), endAt: toLocalInput(end) });
+    setShowForm(true);
+  };
 
   const showTabs = categories.length > 1;
   const shownEvents = useMemo(
@@ -117,13 +133,14 @@ export function CalendarClient({
   }, [shownEvents]);
 
   const save = async () => {
-    if (!form.title || !form.startAt) return toast.error('Заполните название и дату');
+    if (!form.title.trim()) return toast.error('Введите название события');
+    if (!form.startAt) return toast.error('Укажите дату и время начала');
     setSaving(true);
     try {
       const r = await fetch('/api/calendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, clientId: form.clientId || null, assigneeId: form.assigneeId || null, endAt: form.endAt || null }),
+        body: JSON.stringify({ ...form, title: form.title.trim(), clientId: form.clientId || null, assigneeId: form.assigneeId || null, endAt: form.endAt || null }),
       });
       if (!r.ok) throw new Error();
       toast.success('Событие добавлено');
@@ -191,7 +208,7 @@ export function CalendarClient({
           <button onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} className="rounded-lg border border-white/10 px-3 py-1 text-sm text-light/70 hover:text-brand-lime">→</button>
           <button onClick={() => setCursor(new Date())} className="ml-2 rounded-lg border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.15em] text-light/55 hover:text-brand-lime">Сегодня</button>
         </div>
-        {canManage && <button onClick={() => setShowForm(true)} className="btn-lime">+ Событие</button>}
+        {canManage && <button onClick={openForm} className="btn-lime">+ Событие</button>}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/[0.06]">

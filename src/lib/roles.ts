@@ -6,7 +6,7 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 
 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
-  | 'dashboard' | 'clients' | 'leads' | 'content' | 'cases' | 'blog'
+  | 'dashboard' | 'clients' | 'projects' | 'leads' | 'content' | 'cases' | 'blog'
   | 'media' | 'calendar' | 'analytics' | 'team' | 'integrations' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
@@ -79,7 +79,8 @@ export function visibleCategories(role?: string | null): EventCategory[] {
 export function canAccessSection(role: string | null | undefined, section: AdminSection): boolean {
   if (role === 'ADMIN') return true;
   if (role === 'OPS_DIRECTOR') return true;
-  if (isStaff(role)) return section === 'calendar';
+  // Other staff: calendar + read-only projects (specialised sections open later).
+  if (isStaff(role)) return section === 'calendar' || section === 'projects';
   return false;
 }
 
@@ -88,7 +89,7 @@ export function sectionFromPath(pathname: string): AdminSection {
   if (pathname === '/admin' || pathname === '/admin/') return 'dashboard';
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
-    clients: 'clients', leads: 'leads', content: 'content', cases: 'cases', blog: 'blog',
+    clients: 'clients', projects: 'projects', leads: 'leads', content: 'content', cases: 'cases', blog: 'blog',
     media: 'media', calendar: 'calendar', analytics: 'analytics', team: 'team',
     integrations: 'integrations', settings: 'settings',
   };
