@@ -12,6 +12,10 @@ import { cn } from '@/lib/utils';
 import { canAccessSection, isAdminLike, ROLE_LABEL, type AdminSection } from '@/lib/roles';
 import type { Role } from '@prisma/client';
 
+/**
+ * Order = how often it's actually used. Daily work first; the CMS
+ * (контент/кейсы/блог/медиатека) and config sit at the bottom.
+ */
 const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
   { href: '/admin', label: 'Дашборд', section: 'dashboard' },
   { href: '/admin/clients', label: 'Клиенты', section: 'clients' },
@@ -20,13 +24,14 @@ const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
   { href: '/admin/tasks', label: 'Задачи', section: 'tasks' },
   { href: '/admin/ads', label: 'Реклама', section: 'ads' },
   { href: '/admin/leads', label: 'Сделки', section: 'leads' },
-  { href: '/admin/content', label: 'Контент', section: 'content' },
-  { href: '/admin/cases', label: 'Кейсы', section: 'cases' },
-  { href: '/admin/blog', label: 'Блог', section: 'blog' },
-  { href: '/admin/media', label: 'Медиатека', section: 'media' },
   { href: '/admin/calendar', label: 'Календарь', section: 'calendar' },
   { href: '/admin/analytics', label: 'Аналитика', section: 'analytics' },
   { href: '/admin/team', label: 'Сотрудники', section: 'team' },
+  // ── ниже: редко используемое ──
+  { href: '/admin/media', label: 'Медиатека', section: 'media' },
+  { href: '/admin/content', label: 'Контент', section: 'content' },
+  { href: '/admin/cases', label: 'Кейсы', section: 'cases' },
+  { href: '/admin/blog', label: 'Блог', section: 'blog' },
   { href: '/admin/integrations', label: 'Интеграции', section: 'integrations' },
   { href: '/admin/settings', label: 'Настройки', section: 'settings' },
 ];
