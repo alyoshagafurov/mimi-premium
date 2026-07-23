@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from './Logo';
 import { LangSwitcher } from './LangSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 import { cn } from '@/lib/utils';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
@@ -127,6 +128,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                 </a>
               </>
             )}
+            <ThemeToggle />
             <LangSwitcher />
           </nav>
 
@@ -306,7 +308,10 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                   transition={{ duration: 0.5, delay: 0.55 }}
                   className="mt-10 space-y-2 border-t border-white/[0.05] pt-6"
                 >
-                  <LangSwitcher className="mb-4 w-max" />
+                  <div className="mb-4 flex items-center gap-3">
+                    <LangSwitcher className="w-max" />
+                    <ThemeToggle />
+                  </div>
                   <p className="text-[10px] uppercase tracking-[0.28em] text-light/35">
                     mimi · marketing agency
                   </p>

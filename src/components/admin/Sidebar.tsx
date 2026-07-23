@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from '@/components/ui/Logo';
 import { NotificationsBell } from '@/components/ui/NotificationsBell';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { canAccessSection, isAdminLike, ROLE_LABEL, type AdminSection } from '@/lib/roles';
 import type { Role } from '@prisma/client';
@@ -49,6 +50,7 @@ export function Sidebar({ name, role }: { name: string; role?: Role | string }) 
       <div className="flex items-center justify-between">
         <Logo size="md" />
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <NotificationsBell />
           <span className="rounded-full border border-brand-lime/30 bg-brand-lime/5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime">
             {badge}
@@ -147,6 +149,7 @@ export function MobileTopbar({ name, role }: { name: string; role?: Role | strin
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <NotificationsBell />
           <button
             type="button"

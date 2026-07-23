@@ -30,7 +30,7 @@ export function ReportPrintClient({
   const cpl = report.leads > 0 ? report.spent / report.leads : 0;
 
   return (
-    <div className="mx-auto max-w-[800px] bg-white p-12 text-[#111] print:p-0 print:shadow-none" style={{ minHeight: '297mm' }}>
+    <div className="mx-auto max-w-[800px] bg-[#fff] p-12 text-[#111] print:p-0 print:shadow-none" style={{ minHeight: '297mm' }}>
       <style>{`
         @page { size: A4; margin: 16mm; }
         @media print {
@@ -41,7 +41,7 @@ export function ReportPrintClient({
 
       <div className="no-print mb-6 flex items-center justify-between rounded-2xl border border-gray-200 p-4">
         <div className="text-sm text-gray-600">Этот отчёт оптимизирован под печать (Ctrl/Cmd + P → Сохранить как PDF).</div>
-        <button onClick={() => window.print()} className="rounded-lg bg-[#3C1975] px-4 py-2 text-sm font-bold text-white">
+        <button onClick={() => window.print()} className="rounded-lg bg-[#3C1975] px-4 py-2 text-sm font-bold text-[#fff]">
           Скачать PDF
         </button>
       </div>

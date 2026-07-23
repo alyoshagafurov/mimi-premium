@@ -10,6 +10,101 @@
   --brand-purple-deep: #2A1257;
   --brand-lime: #D4EC4C;
   --brand-orange: #FC9603;
+
+  /* ─── DARK THEME (default) — RGB channels for Tailwind alpha support ─── */
+  --c-ink: 10 7 18;
+  --c-ink2: 15 10 27;
+  --c-surface: 21 16 42;
+  --c-surface2: 27 20 56;
+  --c-light: 245 241 250;
+  --c-muted: 138 127 168;
+  --c-white: 255 255 255;
+
+  /* Ambient page glows + glass treatment */
+  --page-bg:
+    radial-gradient(1200px 600px at 80% -10%, rgba(60, 25, 117, 0.5) 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, rgba(212, 236, 76, 0.05) 0%, transparent 60%),
+    radial-gradient(700px 400px at 50% 110%, rgba(60, 25, 117, 0.25) 0%, transparent 60%),
+    rgb(var(--c-ink));
+  --glass-tint: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(60, 25, 117, 0.04) 100%);
+  --glass-inset: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset;
+  --shadow-soft: 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+  --shadow-brand: 0 30px 80px -20px rgba(212, 236, 76, 0.15);
+  --shadow-lux: 0 50px 120px -40px rgba(0, 0, 0, 0.85);
+  --dots: rgba(212, 236, 76, 0.06);
+  --hairline: rgba(255, 255, 255, 0.06);
+  --scroll-thumb: rgba(91, 60, 163, 0.35);
+  --scroll-thumb-hover: rgba(212, 236, 76, 0.45);
+}
+
+/* ─── LIGHT THEME — white canvas, brand-tinted shadows ─── */
+[data-theme='light'] {
+  --c-ink: 255 255 255;
+  --c-ink2: 250 249 254;
+  --c-surface: 246 244 252;
+  --c-surface2: 240 236 250;
+  --c-light: 26 15 46;      /* near-black with brand violet undertone */
+  --c-muted: 107 95 134;
+  --c-white: 60 25 117;      /* glass + hairlines become soft brand violet */
+
+  --page-bg:
+    radial-gradient(1100px 600px at 82% -12%, rgba(60, 25, 117, 0.10) 0%, transparent 62%),
+    radial-gradient(900px 520px at -10% 26%, rgba(212, 236, 76, 0.22) 0%, transparent 60%),
+    radial-gradient(760px 420px at 52% 112%, rgba(252, 150, 3, 0.10) 0%, transparent 62%),
+    rgb(var(--c-ink));
+  --glass-tint: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(60, 25, 117, 0.03) 100%);
+  --glass-inset: 0 1px 0 0 rgba(255, 255, 255, 0.9) inset;
+  --shadow-soft: 0 18px 45px -18px rgba(60, 25, 117, 0.22);
+  --shadow-brand: 0 28px 70px -22px rgba(60, 25, 117, 0.18);
+  --shadow-lux: 0 40px 90px -35px rgba(60, 25, 117, 0.28);
+  --dots: rgba(60, 25, 117, 0.10);
+  --hairline: rgba(60, 25, 117, 0.10);
+  --scroll-thumb: rgba(60, 25, 117, 0.25);
+  --scroll-thumb-hover: rgba(168, 189, 47, 0.55);
+}
+
+/**
+ * Light theme contrast: lime is unreadable as text on white, so accent TEXT
+ * switches to brand purple (exactly like the brandbook logo on white).
+ * Lime stays as-is for fills/borders (btn-lime, chips) where it pops.
+ */
+[data-theme='light'] .text-brand-lime,
+[data-theme='light'] .text-brand-limeSoft,
+[data-theme='light'] .text-mimi,
+[data-theme='light'] .hover\:text-brand-lime:hover,
+[data-theme='light'] .hover\:text-brand-limeSoft:hover,
+[data-theme='light'] .group:hover .group-hover\:text-brand-lime {
+  color: #3C1975;
+}
+[data-theme='light'] .text-lime-grad,
+[data-theme='light'] .text-gold-grad {
+  background: linear-gradient(135deg, #5B3CA3 0%, #3C1975 55%, #2A1257 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+/**
+ * Opt-out: blocks that are intentionally dark/purple in BOTH themes
+ * (the brand card, print layouts) keep the original lime accents.
+ */
+[data-theme='light'] .theme-fixed .text-brand-lime,
+[data-theme='light'] .theme-fixed .text-brand-limeSoft,
+[data-theme='light'] .theme-fixed .text-mimi,
+[data-theme='light'] .theme-fixed .hover\:text-brand-lime:hover {
+  color: #D4EC4C;
+}
+[data-theme='light'] .theme-fixed .text-lime-grad,
+[data-theme='light'] .theme-fixed .text-gold-grad {
+  background: linear-gradient(135deg, #E4F47A 0%, #D4EC4C 50%, #A8BD2F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Selection + lime button keep the brand pop on white */
+[data-theme='light'] ::selection {
+  background: rgba(212, 236, 76, 0.55);
+  color: #1A0F2E;
 }
 
 * {
@@ -20,19 +115,17 @@
 
 html,
 body {
-  background: var(--ink);
-  color: #F5F1FA;
+  background: rgb(var(--c-ink));
+  color: rgb(var(--c-light));
   min-height: 100%;
   overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
 body {
-  background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(60, 25, 117, 0.5) 0%, transparent 60%),
-    radial-gradient(900px 500px at -10% 30%, rgba(212, 236, 76, 0.05) 0%, transparent 60%),
-    radial-gradient(700px 400px at 50% 110%, rgba(60, 25, 117, 0.25) 0%, transparent 60%),
-    var(--ink);
+  background: var(--page-bg);
+  background-attachment: fixed;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
 ::selection {
@@ -48,11 +141,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(91, 60, 163, 0.35);
+  background: var(--scroll-thumb);
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 236, 76, 0.45);
+  background: var(--scroll-thumb-hover);
 }
 
 @layer base {
@@ -68,41 +161,32 @@ body {
   /* ─── GLASS PRIMITIVES ─── */
   .glass {
     @apply relative rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl;
-    background-image: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.035) 0%,
-      rgba(60, 25, 117, 0.04) 100%
-    );
-    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+    background-image: var(--glass-tint);
+    box-shadow: var(--glass-inset), var(--shadow-soft);
   }
   .glass-gold,
   .glass-lime {
     @apply glass;
     border-color: rgba(212, 236, 76, 0.3);
     box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+      var(--glass-inset),
       0 0 0 1px rgba(212, 236, 76, 0.08),
-      0 30px 80px -20px rgba(212, 236, 76, 0.15),
-      0 20px 60px -20px rgba(0, 0, 0, 0.7);
+      var(--shadow-brand),
+      var(--shadow-soft);
   }
   .glass-purple {
     @apply glass;
     border-color: rgba(91, 60, 163, 0.4);
     box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+      var(--glass-inset),
       0 0 0 1px rgba(60, 25, 117, 0.25),
       0 30px 80px -20px rgba(60, 25, 117, 0.4),
-      0 20px 60px -20px rgba(0, 0, 0, 0.7);
+      var(--shadow-soft);
   }
   .glass-luxury {
-    @apply relative rounded-3xl backdrop-blur-2xl;
-    background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(60, 25, 117, 0.05) 100%),
-      rgba(10, 7, 18, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
-      0 50px 120px -40px rgba(0, 0, 0, 0.85);
+    @apply relative rounded-3xl border border-white/[0.06] backdrop-blur-2xl;
+    background: var(--glass-tint), rgb(var(--c-ink2) / 0.4);
+    box-shadow: var(--glass-inset), var(--shadow-lux);
   }
   .glass-luxury::before {
     content: '';
@@ -284,7 +368,7 @@ body {
     scrollbar-width: none;
   }
   .grid-dots {
-    background-image: radial-gradient(rgba(212, 236, 76, 0.06) 1px, transparent 1px);
+    background-image: radial-gradient(var(--dots) 1px, transparent 1px);
     background-size: 32px 32px;
   }
   .grid-circuits {
@@ -357,19 +441,19 @@ body {
   color: rgba(245, 241, 250, 0.6);
   font-style: italic;
 }
-.prose-mimi img { border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); margin: 1.5em 0; }
+.prose-mimi img { border-radius: 16px; border: 1px solid var(--hairline); margin: 1.5em 0; }
 .prose-mimi code {
-  background: rgba(255,255,255,0.06);
+  background: var(--hairline);
   padding: 0.15em 0.4em;
   border-radius: 6px;
   font-size: 0.9em;
 }
 .prose-mimi pre {
   background: rgba(10,7,18,0.6);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--hairline);
   border-radius: 14px;
   padding: 1.1em;
   overflow-x: auto;
 }
 .prose-mimi pre code { background: none; padding: 0; }
-.prose-mimi hr { border: 0; border-top: 1px solid rgba(255,255,255,0.08); margin: 2em 0; }
+.prose-mimi hr { border: 0; border-top: 1px solid var(--hairline); margin: 2em 0; }

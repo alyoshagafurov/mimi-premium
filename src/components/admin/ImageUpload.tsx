@@ -104,7 +104,7 @@ export function GalleryUpload({
             <button
               type="button"
               onClick={() => onChange(value.filter((u) => u !== url))}
-              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] text-white opacity-0 transition group-hover:opacity-100"
+              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] text-[#fff] opacity-0 transition group-hover:opacity-100"
               aria-label="Удалить изображение"
             >
               ×

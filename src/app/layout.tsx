@@ -94,7 +94,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const lang = isLang(cookieLang) ? cookieLang : DEFAULT_LANG;
 
   return (
-    <html lang={lang} className={`${manrope.variable} ${moderustic.variable} ${serif.variable}`}>
+    <html lang={lang} className={`${manrope.variable} ${moderustic.variable} ${serif.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Apply the saved theme before first paint so light mode never flashes dark. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem('mimi-theme')==='light'){document.documentElement.setAttribute('data-theme','light')}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="font-sans antialiased">
         <SiteJsonLd />
         <Providers initialLang={lang}>{children}</Providers>

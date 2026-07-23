@@ -103,7 +103,8 @@ export default function ContactsPage() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="relative w-full max-w-3xl"
         >
-          <div className="relative overflow-hidden rounded-[28px] shadow-purple print:shadow-none">
+          {/* theme-fixed: the brand card stays purple/lime in both themes */}
+          <div className="theme-fixed relative overflow-hidden rounded-[28px] shadow-purple print:shadow-none">
             <div className="relative bg-brand-purple px-8 py-14 md:px-14 md:py-20">
               <span className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-brand-lime/10 blur-2xl" />
               <span className="absolute bottom-4 left-8 h-3 w-3 rounded-full border-2 border-brand-lime/60" />
@@ -157,7 +158,7 @@ export default function ContactsPage() {
                 </div>
 
                 <div className="flex flex-col items-center justify-end gap-2">
-                  <div className="rounded-2xl border-4 border-brand-purple bg-white p-3" role="img" aria-label="QR-код: mimi в Instagram">
+                  <div className="rounded-2xl border-4 border-brand-purple bg-[#fff] p-3" role="img" aria-label="QR-код: mimi в Instagram">
                     <QRCodeSVG
                       value={BRAND_INSTAGRAM}
                       size={140}

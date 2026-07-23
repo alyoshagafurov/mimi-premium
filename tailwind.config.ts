@@ -12,10 +12,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: '#0A0712',
-        ink2: '#0F0A1B',
-        surface: '#15102A',
-        surface2: '#1B1438',
+        /**
+         * Theme-driven tokens — the actual values live in CSS variables
+         * (globals.css) and flip on <html data-theme="light">.
+         * `white` is the glass/hairline colour: white on dark, deep purple on light,
+         * so every `bg-white/[0.02]` and `border-white/[0.06]` re-themes for free.
+         */
+        white: 'rgb(var(--c-white) / <alpha-value>)',
+        ink: 'rgb(var(--c-ink) / <alpha-value>)',
+        ink2: 'rgb(var(--c-ink2) / <alpha-value>)',
+        surface: 'rgb(var(--c-surface) / <alpha-value>)',
+        surface2: 'rgb(var(--c-surface2) / <alpha-value>)',
         brand: {
           purple: '#3C1975',
           purpleDeep: '#2A1257',
@@ -36,8 +43,8 @@ const config: Config = {
           deep: '#3C1975',
           glow: '#5B3CA3',
         },
-        muted: '#8A7FA8',
-        light: '#F5F1FA',
+        muted: 'rgb(var(--c-muted) / <alpha-value>)',
+        light: 'rgb(var(--c-light) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
