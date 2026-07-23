@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { Logo } from '@/components/ui/Logo';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
+import { passwordRules, isStrongPassword, emailProblem, phoneProblem } from '@/lib/validation';
 
 const ru = {
   cabinet: 'создание аккаунта',
@@ -16,18 +17,12 @@ const ru = {
   placeholderName: 'Иван Иванов',
   labelPhone: 'Телефон',
   labelEmail: 'Email',
-  labelBusiness: 'Название бизнеса',
-  labelNiche: 'Ниша',
-  placeholderNiche: 'Недвижимость',
   labelPassword: 'Пароль',
   labelConfirm: 'Подтверждение',
   submit: 'Создать аккаунт',
   submitting: 'Создаём аккаунт...',
   errPassMatch: 'Пароли не совпадают',
-  errPassLen: 'Пароль минимум 8 символов',
-  errBusiness: 'Укажите название бизнеса',
   errAutoLogin: 'Аккаунт создан, но не получилось войти. Попробуйте сами.',
-  successAdmin: 'Админ-аккаунт создан',
   successClient: 'Добро пожаловать в mimi.',
   errGeneric: 'Не удалось зарегистрироваться',
   home: '← На главную',
@@ -39,18 +34,12 @@ const en: typeof ru = {
   placeholderName: 'John Smith',
   labelPhone: 'Phone',
   labelEmail: 'Email',
-  labelBusiness: 'Business name',
-  labelNiche: 'Niche',
-  placeholderNiche: 'Real estate',
   labelPassword: 'Password',
   labelConfirm: 'Confirm password',
   submit: 'Create account',
   submitting: 'Creating account...',
   errPassMatch: 'Passwords do not match',
-  errPassLen: 'Password must be at least 8 characters',
-  errBusiness: 'Please enter business name',
   errAutoLogin: 'Account created but auto-login failed. Please sign in manually.',
-  successAdmin: 'Admin account created',
   successClient: 'Welcome to mimi.',
   errGeneric: 'Registration failed',
   home: '← Home',
@@ -62,18 +51,12 @@ const tg: typeof ru = {
   placeholderName: 'Аҳмад Аҳмадов',
   labelPhone: 'Телефон',
   labelEmail: 'Email',
-  labelBusiness: 'Номи бизнес',
-  labelNiche: 'Ниша',
-  placeholderNiche: 'Амволи ғайриманқул',
   labelPassword: 'Парол',
   labelConfirm: 'Тасдиқи парол',
   submit: 'Сохтани аккаунт',
   submitting: 'Аккаунт сохта истодаем...',
   errPassMatch: 'Паролҳо мувофиқат намекунанд',
-  errPassLen: 'Парол ҳадди ақал 8 рамз',
-  errBusiness: 'Номи бизнесро нависед',
   errAutoLogin: 'Аккаунт сохта шуд, аммо даромадан нашуд. Худатон кӯшиш кунед.',
-  successAdmin: 'Аккаунти админ сохта шуд',
   successClient: 'Хуш омадед ба mimi.',
   errGeneric: 'Бақайдгирӣ нашуд',
   home: '← Ба саҳифаи асосӣ',
@@ -84,49 +67,40 @@ const COPY: Record<Lang, typeof ru> = { ru, en, tg };
 export default function RegisterPage() {
   const t = useCopy(COPY);
   const router = useRouter();
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirm: '',
-    businessName: '',
-    niche: '',
-  });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
 
   const onChange = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+  const blur = (k: string) => () => setTouched((s) => ({ ...s, [k]: true }));
+
+  const rules = useMemo(() => passwordRules(form.password), [form.password]);
+  const emailErr = form.email ? emailProblem(form.email) : null;
+  const phoneErr = form.phone ? phoneProblem(form.phone) : null;
+  const passOk = isStrongPassword(form.password);
+  const matchErr = form.confirm && form.password !== form.confirm ? t.errPassMatch : null;
+
+  const canSubmit =
+    form.name.trim().length >= 2 && !emailErr && form.email && !phoneErr && form.phone && passOk && !matchErr && form.confirm;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.password !== form.confirm) {
-      toast.error(t.errPassMatch);
-      return;
-    }
-    if (form.password.length < 8) {
-      toast.error(t.errPassLen);
-      return;
-    }
-    if (!form.businessName) {
-      toast.error(t.errBusiness);
-      return;
-    }
+    setTouched({ name: true, email: true, phone: true, password: true, confirm: true });
+    const firstError = emailProblem(form.email) ?? phoneProblem(form.phone) ?? (passOk ? null : 'Пароль не соответствует требованиям') ?? matchErr;
+    if (firstError) return toast.error(firstError);
+
     setLoading(true);
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ name: form.name, email: form.email, phone: form.phone, password: form.password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'failed');
 
-      const signed = await signIn('credentials', {
-        email: form.email,
-        password: form.password,
-        redirect: false,
-      });
+      const signed = await signIn('credentials', { email: form.email, password: form.password, redirect: false });
       if (signed?.error) {
         toast.error(t.errAutoLogin);
         router.push('/auth/login');
@@ -141,6 +115,9 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  const errText = (msg: string | null, key: string) =>
+    msg && touched[key] ? <p className="mt-1.5 text-[11px] leading-snug text-rose-400">{msg}</p> : null;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center px-5 py-16">
@@ -159,36 +136,86 @@ export default function RegisterPage() {
           <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">{t.cabinet}</p>
         </div>
 
-        <form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="label-soft">{t.labelName}</label>
-            <input required className="input-glass" value={form.name} onChange={onChange('name')} placeholder={t.placeholderName} />
+            <input required className="input-glass" value={form.name} onChange={onChange('name')} onBlur={blur('name')} placeholder={t.placeholderName} />
           </div>
           <div>
             <label className="label-soft">{t.labelPhone}</label>
-            <input className="input-glass" value={form.phone} onChange={onChange('phone')} placeholder="+992 ___" />
+            <input
+              required
+              inputMode="tel"
+              className="input-glass"
+              value={form.phone}
+              onChange={onChange('phone')}
+              onBlur={blur('phone')}
+              placeholder="+992 90 123 45 67"
+            />
+            {errText(phoneErr, 'phone')}
           </div>
           <div className="md:col-span-2">
             <label className="label-soft">{t.labelEmail}</label>
-            <input type="email" required className="input-glass" value={form.email} onChange={onChange('email')} placeholder="you@company.com" />
-          </div>
-          <div>
-            <label className="label-soft">{t.labelBusiness}</label>
-            <input required className="input-glass" value={form.businessName} onChange={onChange('businessName')} placeholder="Acme Inc." />
-          </div>
-          <div>
-            <label className="label-soft">{t.labelNiche}</label>
-            <input className="input-glass" value={form.niche} onChange={onChange('niche')} placeholder={t.placeholderNiche} />
+            <input
+              type="email"
+              required
+              inputMode="email"
+              autoComplete="email"
+              className="input-glass"
+              value={form.email}
+              onChange={onChange('email')}
+              onBlur={blur('email')}
+              placeholder="you@company.com"
+            />
+            {errText(emailErr, 'email')}
           </div>
           <div>
             <label className="label-soft">{t.labelPassword}</label>
-            <input type="password" required minLength={8} className="input-glass" value={form.password} onChange={onChange('password')} placeholder="••••••••" />
+            <input
+              type="password"
+              required
+              autoComplete="new-password"
+              className="input-glass"
+              value={form.password}
+              onChange={onChange('password')}
+              onBlur={blur('password')}
+              placeholder="••••••••"
+            />
           </div>
           <div>
             <label className="label-soft">{t.labelConfirm}</label>
-            <input type="password" required minLength={8} className="input-glass" value={form.confirm} onChange={onChange('confirm')} placeholder="••••••••" />
+            <input
+              type="password"
+              required
+              autoComplete="new-password"
+              className="input-glass"
+              value={form.confirm}
+              onChange={onChange('confirm')}
+              onBlur={blur('confirm')}
+              placeholder="••••••••"
+            />
+            {errText(matchErr, 'confirm')}
           </div>
-          <button type="submit" disabled={loading} className="btn-gold mt-2 w-full disabled:opacity-60 md:col-span-2">
+
+          {/* Live password checklist */}
+          <ul className="md:col-span-2 grid grid-cols-1 gap-1.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:grid-cols-2">
+            {rules.map((r) => (
+              <li key={r.id} className="flex items-center gap-2 text-[11px]">
+                <span
+                  className={
+                    r.ok
+                      ? 'flex h-4 w-4 items-center justify-center rounded-full bg-brand-lime/20 text-[9px] text-brand-lime'
+                      : 'flex h-4 w-4 items-center justify-center rounded-full border border-white/15 text-[9px] text-light/30'
+                  }
+                >
+                  {r.ok ? '✓' : '•'}
+                </span>
+                <span className={r.ok ? 'text-light/70' : 'text-light/40'}>{r.label}</span>
+              </li>
+            ))}
+          </ul>
+
+          <button type="submit" disabled={loading || !canSubmit} className="btn-gold mt-2 w-full disabled:opacity-50 md:col-span-2">
             {loading ? t.submitting : t.submit}
           </button>
         </form>

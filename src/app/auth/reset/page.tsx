@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { passwordRules, isStrongPassword } from '@/lib/validation';
 import { Logo } from '@/components/ui/Logo';
 
 function ResetInner() {
@@ -17,8 +18,8 @@ function ResetInner() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error('Пароль минимум 8 символов');
+    if (!isStrongPassword(password)) {
+      toast.error('Пароль не соответствует требованиям безопасности');
       return;
     }
     if (password !== confirm) {
@@ -73,6 +74,18 @@ function ResetInner() {
             <div>
               <label className="label-soft">Подтверждение</label>
               <input type="password" required minLength={8} className="input-glass" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div>
+              <ul className="grid grid-cols-1 gap-1.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:grid-cols-2">
+                {passwordRules(password).map((r) => (
+                  <li key={r.id} className="flex items-center gap-2 text-[11px]">
+                    <span className={r.ok ? 'flex h-4 w-4 items-center justify-center rounded-full bg-brand-lime/20 text-[9px] text-brand-lime' : 'flex h-4 w-4 items-center justify-center rounded-full border border-white/15 text-[9px] text-light/30'}>
+                      {r.ok ? '✓' : '•'}
+                    </span>
+                    <span className={r.ok ? 'text-light/70' : 'text-light/40'}>{r.label}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
             <button type="submit" disabled={loading} className="btn-gold w-full disabled:opacity-60">
               {loading ? 'Сохраняем...' : 'Сохранить пароль'}

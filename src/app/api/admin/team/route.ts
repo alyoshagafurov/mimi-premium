@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { ASSIGNABLE_ROLES } from '@/lib/roles';
+import { passwordProblem, emailProblem } from '@/lib/validation';
 import type { Role } from '@prisma/client';
 
 /** List all agency staff (non-client users). */
@@ -31,9 +32,10 @@ export async function POST(req: Request) {
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'Заполните имя, email и пароль' }, { status: 400 });
   }
-  if (password.length < 6) {
-    return NextResponse.json({ error: 'Пароль минимум 6 символов' }, { status: 400 });
-  }
+  const passErr = passwordProblem(password);
+  if (passErr) return NextResponse.json({ error: passErr }, { status: 400 });
+  const emailErr = emailProblem(email);
+  if (emailErr) return NextResponse.json({ error: emailErr }, { status: 400 });
   if (!ASSIGNABLE_ROLES.includes(role)) {
     return NextResponse.json({ error: 'Недопустимая роль' }, { status: 400 });
   }

@@ -2,13 +2,18 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { passwordProblem } from '@/lib/validation';
 
-const schema = z.object({ token: z.string().min(10), password: z.string().min(8).max(200) });
+const schema = z.object({ token: z.string().min(10), password: z.string().max(200) });
 
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Проверьте поля' }, { status: 400 });
   const { token, password } = parsed.data;
+
+  // Same strength policy as sign-up.
+  const passErr = passwordProblem(password);
+  if (passErr) return NextResponse.json({ error: passErr }, { status: 400 });
 
   const record = await prisma.passwordResetToken.findUnique({ where: { token }, include: { user: true } });
   if (!record || record.usedAt || record.expiresAt < new Date()) {

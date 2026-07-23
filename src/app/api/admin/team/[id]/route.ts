@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { ASSIGNABLE_ROLES } from '@/lib/roles';
+import { passwordProblem } from '@/lib/validation';
 import type { Role } from '@prisma/client';
 
 /** Update a staff member (role, name, phone, optional new password). */
@@ -23,7 +24,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.role = body.role;
   }
   if (typeof body.password === 'string' && body.password) {
-    if (body.password.length < 6) return NextResponse.json({ error: 'Пароль минимум 6 символов' }, { status: 400 });
+    const passErr = passwordProblem(body.password);
+    if (passErr) return NextResponse.json({ error: passErr }, { status: 400 });
     data.password = await bcrypt.hash(body.password, 12);
   }
   const user = await prisma.user.update({
