@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 
@@ -15,6 +16,8 @@ const authSecret = process.env.NEXTAUTH_SECRET || 'mimi-fallback-secret-set-NEXT
 if (isProd && !process.env.NEXTAUTH_SECRET) {
   console.error('[auth] NEXTAUTH_SECRET is not set — set it in the environment for secure, stable sessions.');
 }
+
+const googleEnabled = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 }, // 30 days
@@ -32,25 +35,67 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where: { email: credentials.email.toLowerCase() },
         });
-        if (!user) return null;
+        // No password → Google-only account; must use "Continue with Google".
+        if (!user || !user.password) return null;
         const ok = await bcrypt.compare(credentials.password, user.password);
         if (!ok) return null;
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          tariff: user.tariff,
-        };
+        return { id: user.id, email: user.email, name: user.name, role: user.role, tariff: user.tariff };
       },
     }),
+    ...(googleEnabled
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Credentials: block until the email is confirmed.
+      if (account?.provider === 'credentials') {
+        const dbUser = await prisma.user.findUnique({ where: { email: (user.email ?? '').toLowerCase() } });
+        return !!dbUser?.emailVerified;
+      }
+      // Google: upsert the account; Google has already verified the email.
+      if (account?.provider === 'google') {
+        const email = (user.email ?? '').toLowerCase();
+        if (!email) return false;
+        const existing = await prisma.user.findUnique({ where: { email } });
+        const name = user.name ?? (profile as any)?.name ?? email.split('@')[0];
+        if (!existing) {
+          await prisma.user.create({
+            data: {
+              email,
+              name,
+              role: 'CLIENT',
+              emailVerified: new Date(),
+              avatar: (profile as any)?.picture ?? null,
+              client: { create: { businessName: name, niche: 'Не указана' } },
+            },
+          });
+        } else if (!existing.emailVerified) {
+          await prisma.user.update({ where: { email }, data: { emailVerified: new Date() } });
+        }
+        return true;
+      }
+      return true;
+    },
     async jwt({ token, user }) {
+      // On sign-in, resolve our real DB id/role/tariff by email (works for both
+      // credentials and Google, whose `user` is the OAuth profile).
       if (user) {
-        token.id = (user as any).id;
-        token.role = (user as any).role;
-        token.tariff = (user as any).tariff;
+        const email = (user.email ?? (token.email as string) ?? '').toLowerCase();
+        if (email) {
+          const dbUser = await prisma.user.findUnique({ where: { email } });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+            token.tariff = dbUser.tariff;
+          }
+        }
       }
       return token;
     },

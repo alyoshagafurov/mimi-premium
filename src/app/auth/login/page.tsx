@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Logo } from '@/components/ui/Logo';
+import { GoogleButton } from '@/components/auth/GoogleButton';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
 
@@ -55,6 +56,7 @@ function LoginInner() {
   const callbackUrl = params.get('callbackUrl') ?? '/dashboard';
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +68,7 @@ function LoginInner() {
     setLoading(false);
     if (res?.error) {
       toast.error(t.errorLogin);
+      setFailed(true);
       return;
     }
     toast.success(t.successLogin);
@@ -89,6 +92,7 @@ function LoginInner() {
           <Logo size="md" />
           <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">{t.cabinet}</p>
         </div>
+        <div className="grid grid-cols-1"><GoogleButton label="Войти через Google" /></div>
         <form onSubmit={submit} className="space-y-5">
           <div>
             <label className="label-soft">{t.labelEmail}</label>
@@ -124,6 +128,14 @@ function LoginInner() {
         <div className="mt-3 text-center">
           <Link href="/auth/forgot" className="text-xs text-muted transition hover:text-gold">{t.forgot}</Link>
         </div>
+        {failed && (
+          <p className="mt-4 text-center text-xs text-muted">
+            Не подтвердили почту?{' '}
+            <Link href={`/auth/verify?email=${encodeURIComponent(form.email)}`} className="text-brand-lime hover:underline">
+              Подтвердить email
+            </Link>
+          </p>
+        )}
       </motion.div>
     </main>
   );

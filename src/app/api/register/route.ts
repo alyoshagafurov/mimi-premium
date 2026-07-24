@@ -10,6 +10,7 @@ import {
   passwordProblem, phoneProblem, normalizePhone,
 } from '@/lib/validation';
 import { domainCanReceiveMail } from '@/lib/email-dns';
+import { sendVerificationCode } from '@/lib/email-verify';
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -70,7 +71,14 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ id: user.id, role: user.role });
+    // Email confirmation. If Resend isn't configured yet, auto-verify so the
+    // flow keeps working; once RESEND_API_KEY is set, a real code is required.
+    const sent = await sendVerificationCode({ id: user.id, email, name });
+    if (!sent) {
+      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+    }
+
+    return NextResponse.json({ id: user.id, role: user.role, needsVerification: sent });
   } catch (e: any) {
     if (e?.name === 'ZodError') {
       return NextResponse.json({ error: 'Проверьте корректность полей' }, { status: 400 });

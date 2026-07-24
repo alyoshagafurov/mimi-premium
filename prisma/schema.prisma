@@ -137,17 +137,18 @@ enum FileKind {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  phone     String?
-  role      Role     @default(CLIENT)
-  tariff    Tariff   @default(NONE)
-  tariffEnd DateTime?
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?   // null for Google / OAuth-only accounts
+  name          String
+  phone         String?
+  role          Role      @default(CLIENT)
+  tariff        Tariff    @default(NONE)
+  tariffEnd     DateTime?
+  avatar        String?
+  emailVerified DateTime? // null = not yet confirmed
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   client          Client?
   ownedDeals      Deal[]            @relation("DealOwner")
@@ -159,6 +160,19 @@ model User {
   calendarEvents  CalendarEvent[]   @relation("EventOwner")
   assignedEvents  CalendarEvent[]   @relation("EventAssignee")
   resetTokens     PasswordResetToken[]
+  emailCodes      EmailVerificationCode[]
+}
+
+model EmailVerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 /// One-time token for password reset, delivered by email.

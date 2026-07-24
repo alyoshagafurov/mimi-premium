@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Logo } from '@/components/ui/Logo';
+import { GoogleButton } from '@/components/auth/GoogleButton';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
 import { passwordRules, isStrongPassword, emailProblem, phoneProblem } from '@/lib/validation';
@@ -70,6 +71,9 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'form' | 'code'>('form');
+  const [code, setCode] = useState('');
+  const [resendIn, setResendIn] = useState(0);
 
   const onChange = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -100,21 +104,70 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'failed');
 
-      const signed = await signIn('credentials', { email: form.email, password: form.password, redirect: false });
-      if (signed?.error) {
-        toast.error(t.errAutoLogin);
-        router.push('/auth/login');
+      // Email confirmation required → show the code step (password kept in state).
+      if (data.needsVerification) {
+        setStep('code');
+        setResendIn(45);
+        toast.success('Код отправлен на ' + form.email);
         return;
       }
-      toast.success(t.successClient);
-      router.push('/dashboard');
-      router.refresh();
+      await finishLogin();
     } catch (err: any) {
       toast.error(err.message ?? t.errGeneric);
     } finally {
       setLoading(false);
     }
   };
+
+  // Sign in with the credentials we still hold in state, then go to the cabinet.
+  const finishLogin = async () => {
+    const signed = await signIn('credentials', { email: form.email, password: form.password, redirect: false });
+    if (signed?.error) {
+      toast.error(t.errAutoLogin);
+      router.push('/auth/login');
+      return;
+    }
+    toast.success(t.successClient);
+    router.push('/dashboard');
+    router.refresh();
+  };
+
+  const verify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (code.replace(/\D/g, '').length !== 6) return toast.error('Введите 6-значный код из письма');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Неверный код');
+      await finishLogin();
+    } catch (err: any) {
+      toast.error(err.message ?? 'Неверный код');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resend = async () => {
+    if (resendIn > 0) return;
+    await fetch('/api/auth/verify-email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: form.email }),
+    });
+    setResendIn(45);
+    toast.success('Код отправлен повторно');
+  };
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [resendIn]);
 
   const errText = (msg: string | null, key: string) =>
     msg && touched[key] ? <p className="mt-1.5 text-[11px] leading-snug text-rose-400">{msg}</p> : null;
@@ -133,10 +186,39 @@ export default function RegisterPage() {
       >
         <div className="mb-8 text-center">
           <Logo size="md" />
-          <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">{t.cabinet}</p>
+          <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted">
+            {step === 'code' ? 'подтверждение почты' : t.cabinet}
+          </p>
         </div>
 
+        {step === 'code' ? (
+          <form onSubmit={verify} className="space-y-5">
+            <p className="text-center text-sm leading-relaxed text-light/65">
+              Мы отправили 6-значный код на<br />
+              <span className="font-medium text-light">{form.email}</span>. Введите его ниже.
+            </p>
+            <input
+              autoFocus
+              inputMode="numeric"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="______"
+              className="input-glass text-center font-mono text-2xl tracking-[0.5em]"
+            />
+            <button type="submit" disabled={loading} className="btn-gold w-full disabled:opacity-60">
+              {loading ? 'Проверяем…' : 'Подтвердить и войти'}
+            </button>
+            <div className="flex items-center justify-between text-xs text-muted">
+              <button type="button" onClick={() => setStep('form')} className="hover:text-gold">← Изменить данные</button>
+              <button type="button" onClick={resend} disabled={resendIn > 0} className="hover:text-gold disabled:opacity-50">
+                {resendIn > 0 ? `Отправить снова (${resendIn})` : 'Отправить код снова'}
+              </button>
+            </div>
+          </form>
+        ) : (
         <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <GoogleButton />
           <div>
             <label className="label-soft">{t.labelName}</label>
             <input required className="input-glass" value={form.name} onChange={onChange('name')} onBlur={blur('name')} placeholder={t.placeholderName} />
@@ -219,6 +301,7 @@ export default function RegisterPage() {
             {loading ? t.submitting : t.submit}
           </button>
         </form>
+        )}
         <div className="mt-6 flex items-center justify-between text-xs text-muted">
           <Link href="/" className="transition hover:text-gold">{t.home}</Link>
           <Link href="/auth/login" className="transition hover:text-gold">{t.hasAccount}</Link>
