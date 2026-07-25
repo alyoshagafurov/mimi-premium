@@ -12,6 +12,7 @@ export default async function AdminClientsPage() {
         id: c.id,
         businessName: c.businessName,
         niche: c.niche,
+        logo: c.logo,
         status: c.status,
         createdAt: c.createdAt.toISOString(),
         ownerName: c.owner.name,

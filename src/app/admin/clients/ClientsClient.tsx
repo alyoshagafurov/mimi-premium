@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,12 +9,14 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { PageHeader } from '@/components/admin/PageHeader';
-import { tariffLabel } from '@/lib/utils';
+import { ImageUpload } from '@/components/admin/ImageUpload';
+import { cn, tariffLabel } from '@/lib/utils';
 
 type Row = {
   id: string;
   businessName: string;
   niche: string;
+  logo: string | null;
   status: string;
   createdAt: string;
   ownerName: string;
@@ -23,6 +25,22 @@ type Row = {
   tariff: string;
   reports: number;
 };
+
+/** Small logo/initial for a project. */
+function ProjectLogo({ name, logo, size = 40 }: { name: string; logo: string | null; size?: number }) {
+  if (logo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logo} alt={name} width={size} height={size} className="shrink-0 rounded-2xl object-cover" style={{ width: size, height: size }} />;
+  }
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center rounded-2xl bg-lime-gradient font-display font-extrabold text-[#0A0712]"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
 
 const TARIFFS = ['NONE', 'START', 'GROWTH', 'PREMIUM'] as const;
 
@@ -42,6 +60,14 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
   const [form, setForm] = useState(emptyNew);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState('');
+  const [view, setView] = useState<'tiles' | 'list'>('tiles');
+
+  // Remember the chosen view between visits.
+  useEffect(() => {
+    const saved = localStorage.getItem('clients-view');
+    if (saved === 'list' || saved === 'tiles') setView(saved);
+  }, []);
+  const changeView = (v: 'tiles' | 'list') => { setView(v); localStorage.setItem('clients-view', v); };
 
   const filtered = clients.filter((c) =>
     [c.businessName, c.niche, c.ownerName, c.ownerEmail].join(' ').toLowerCase().includes(filter.toLowerCase()),
@@ -63,7 +89,7 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
     const res = await fetch(`/api/clients/${row.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ businessName: row.businessName, niche: row.niche, tariff: row.tariff }),
+      body: JSON.stringify({ businessName: row.businessName, niche: row.niche, tariff: row.tariff, logo: row.logo }),
     });
     if (res.ok) {
       toast.success('Изменения сохранены');
@@ -115,9 +141,59 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
           onChange={(e) => setFilter(e.target.value)}
           className="input-glass max-w-sm"
         />
-        <span className="chip-lime">{filtered.length} клиентов</span>
+        <div className="flex items-center gap-3">
+          {/* List / tiles toggle */}
+          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+            <button
+              onClick={() => changeView('tiles')}
+              aria-label="Плитки"
+              className={cn('rounded-full p-1.5 transition-colors', view === 'tiles' ? 'bg-brand-lime text-[#0A0712]' : 'text-light/50 hover:text-light')}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+            </button>
+            <button
+              onClick={() => changeView('list')}
+              aria-label="Список"
+              className={cn('rounded-full p-1.5 transition-colors', view === 'list' ? 'bg-brand-lime text-[#0A0712]' : 'text-light/50 hover:text-light')}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="3" rx="1.5"/><rect x="3" y="10.5" width="18" height="3" rx="1.5"/><rect x="3" y="17" width="18" height="3" rx="1.5"/></svg>
+            </button>
+          </div>
+          <span className="chip-lime">{filtered.length} клиентов</span>
+        </div>
       </div>
 
+      {/* ─── TILES ─── */}
+      {view === 'tiles' && (
+        filtered.length ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {filtered.map((c) => (
+              <Link
+                key={c.id}
+                href={`/admin/clients/${c.id}`}
+                className="group relative flex flex-col items-center rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-colors hover:border-brand-lime/30"
+              >
+                <button
+                  onClick={(e) => { e.preventDefault(); setEditing(c); }}
+                  aria-label="Редактировать"
+                  className="absolute right-2 top-2 rounded-full border border-white/10 bg-ink/40 p-1.5 text-light/40 opacity-0 transition hover:text-brand-lime group-hover:opacity-100"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <ProjectLogo name={c.businessName} logo={c.logo} size={64} />
+                <div className="mt-3 line-clamp-1 font-medium text-light group-hover:text-brand-lime">{c.businessName}</div>
+                <div className="mt-1 line-clamp-1 text-[11px] text-muted">{c.niche}</div>
+                <div className="mt-3"><StatusPill status={c.status} /></div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-12 text-center text-muted">Ничего не найдено</p>
+        )
+      )}
+
+      {/* ─── LIST ─── */}
+      {view === 'list' && (
       <div className="glass overflow-hidden rounded-2xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-sm">
@@ -135,15 +211,13 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
               {filtered.map((c) => (
                 <tr key={c.id} className="border-t border-white/5 transition hover:bg-white/[0.02]">
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lime-gradient font-bold text-[#0A0712]">
-                        {c.businessName.charAt(0)}
-                      </div>
+                    <Link href={`/admin/clients/${c.id}`} className="group flex items-center gap-3">
+                      <ProjectLogo name={c.businessName} logo={c.logo} size={36} />
                       <div>
-                        <div className="font-medium text-light">{c.businessName}</div>
+                        <div className="font-medium text-light group-hover:text-brand-lime">{c.businessName}</div>
                         <div className="text-[11px] text-muted">{c.ownerName} · {c.ownerEmail}</div>
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-muted">{c.niche}</td>
                   <td className="px-4 py-3">
@@ -153,12 +227,6 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
                   <td className="px-4 py-3"><StatusPill status={c.status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
-                      <Link
-                        href={`/admin/clients/${c.id}`}
-                        className="rounded-lg border border-brand-lime/30 bg-brand-lime/[0.06] px-3 py-1.5 text-[11px] text-brand-lime transition hover:bg-brand-lime/[0.12]"
-                      >
-                        Управлять
-                      </Link>
                       <button
                         onClick={() => setEditing(c)}
                         className="rounded-lg border border-white/10 px-3 py-1.5 text-[11px] text-muted transition hover:border-gold/40 hover:text-gold"
@@ -184,6 +252,7 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
           </table>
         </div>
       </div>
+      )}
 
       {/* Edit modal */}
       <AnimatePresence>
@@ -205,6 +274,12 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
               <h2 className="font-display text-xl font-bold">Редактировать клиента</h2>
               <p className="text-xs text-muted">{editing.ownerEmail}</p>
               <div className="mt-6 space-y-4">
+                <div className="flex items-center gap-4">
+                  <ProjectLogo name={editing.businessName} logo={editing.logo} size={56} />
+                  <div className="flex-1">
+                    <ImageUpload label="Логотип проекта" value={editing.logo} onChange={(url) => setEditing({ ...editing, logo: url })} />
+                  </div>
+                </div>
                 <div>
                   <label className="label-soft">Название бизнеса</label>
                   <input

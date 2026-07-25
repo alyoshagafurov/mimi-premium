@@ -194,6 +194,7 @@ model Client {
   owner        User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   businessName String
   niche        String
+  logo         String?      // uploaded project logo/icon (URL or data-URI)
   status       ClientStatus @default(ACTIVE)
 
   // Onboarding brief

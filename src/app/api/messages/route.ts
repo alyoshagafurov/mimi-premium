@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     where: { clientId },
     orderBy: { createdAt: 'asc' },
     take: 200,
-    include: { sender: { select: { id: true, name: true, role: true } } },
+    include: { sender: { select: { id: true, name: true, role: true, avatar: true } } },
   });
 
   await prisma.message.updateMany({
@@ -61,21 +61,22 @@ export async function POST(req: Request) {
 
   const msg = await prisma.message.create({
     data: { clientId, senderId: me.id, body: text },
-    include: { sender: { select: { id: true, name: true, role: true } } },
+    include: { sender: { select: { id: true, name: true, role: true, avatar: true } } },
   });
 
   // notify the other side
   if (me.role === 'CLIENT') {
     const client = await prisma.client.findUnique({ where: { id: clientId }, include: { owner: true } });
-    const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+    // Management roles that watch client conversations (not just full ADMIN).
+    const managers = await prisma.user.findMany({ where: { role: { in: ['ADMIN', 'OPS_DIRECTOR'] } } });
     await Promise.all(
-      admins.map((a) =>
+      managers.map((a) =>
         notify({
           userId: a.id,
           kind: 'MESSAGE',
           title: `Сообщение от ${client?.businessName ?? me.name}`,
           body: text.slice(0, 80),
-          link: `/admin/clients/${clientId}`,
+          link: `/admin/chat?client=${clientId}`,
         }),
       ),
     );

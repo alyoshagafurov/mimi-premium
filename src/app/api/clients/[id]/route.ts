@@ -7,6 +7,7 @@ import { Tariff } from '@prisma/client';
 const schema = z.object({
   businessName: z.string().optional(),
   niche: z.string().optional(),
+  logo: z.string().nullable().optional(),
   status: z.enum(['ACTIVE', 'ARCHIVED']).optional(),
   tariff: z.enum(['NONE', 'START', 'GROWTH', 'PREMIUM']).optional(),
 });

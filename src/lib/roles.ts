@@ -8,7 +8,7 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 
 export type AdminSection =
   | 'dashboard' | 'clients' | 'projects' | 'sales' | 'tasks' | 'ads' | 'leads'
   | 'content' | 'cases' | 'blog' | 'media' | 'calendar' | 'analytics' | 'team'
-  | 'integrations' | 'settings';
+  | 'chat' | 'integrations' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
@@ -130,7 +130,7 @@ export function sectionFromPath(pathname: string): AdminSection {
     clients: 'clients', projects: 'projects', sales: 'sales', tasks: 'tasks', ads: 'ads',
     leads: 'leads', content: 'content', cases: 'cases', blog: 'blog',
     media: 'media', calendar: 'calendar', analytics: 'analytics', team: 'team',
-    integrations: 'integrations', settings: 'settings',
+    chat: 'chat', integrations: 'integrations', settings: 'settings',
   };
   return map[seg] ?? 'dashboard';
 }

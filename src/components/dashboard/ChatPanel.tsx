@@ -8,8 +8,37 @@ type Msg = {
   id: string;
   body: string;
   createdAt: string;
-  sender: { id: string; name: string; role: 'ADMIN' | 'CLIENT' };
+  sender: { id: string; name: string; role: string; avatar?: string | null };
 };
+
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: 'агентство', OPS_DIRECTOR: 'опер. директор', VIDEOGRAPHER: 'видеограф',
+  SALES: 'продажи', DESIGNER: 'дизайнер', TARGETOLOGIST: 'таргетолог',
+  DEVELOPER: 'разработка', CLIENT: 'клиент',
+};
+
+/** Deterministic avatar colour from a name, so each person is recognisable. */
+function avatarHue(seed: string) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360;
+  return h;
+}
+
+function Avatar({ name, avatar }: { name: string; avatar?: string | null }) {
+  if (avatar) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={avatar} alt={name} className="h-7 w-7 shrink-0 rounded-full object-cover" />;
+  }
+  const hue = avatarHue(name || '?');
+  return (
+    <span
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-[#0A0712]"
+      style={{ background: `hsl(${hue} 70% 70%)` }}
+    >
+      {(name || '?').charAt(0).toUpperCase()}
+    </span>
+  );
+}
 
 export function ChatPanel({ clientId, currentUserId }: { clientId?: string; currentUserId: string }) {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -75,11 +104,12 @@ export function ChatPanel({ clientId, currentUserId }: { clientId?: string; curr
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
-                className={cn('flex', mine ? 'justify-end' : 'justify-start')}
+                className={cn('flex items-end gap-2', mine ? 'justify-end' : 'justify-start')}
               >
+                {!mine && <Avatar name={m.sender.name} avatar={m.sender.avatar} />}
                 <div
                   className={cn(
-                    'max-w-[80%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed',
+                    'max-w-[78%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed',
                     mine
                       ? 'bg-brand-lime/15 text-light border border-brand-lime/30'
                       : 'bg-white/[0.04] text-light/90 border border-white/[0.06]',
@@ -87,7 +117,7 @@ export function ChatPanel({ clientId, currentUserId }: { clientId?: string; curr
                 >
                   {!mine && (
                     <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-brand-orange/80">
-                      {m.sender.role === 'ADMIN' ? `${m.sender.name} · агентство` : m.sender.name}
+                      {m.sender.name} · {ROLE_LABEL[m.sender.role] ?? m.sender.role}
                     </div>
                   )}
                   <div className="whitespace-pre-wrap">{m.body}</div>
@@ -95,6 +125,7 @@ export function ChatPanel({ clientId, currentUserId }: { clientId?: string; curr
                     {new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
+                {mine && <Avatar name={m.sender.name} avatar={m.sender.avatar} />}
               </motion.div>
             );
           })}
