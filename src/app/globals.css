@@ -123,9 +123,25 @@ body {
 }
 
 body {
-  background: var(--page-bg);
-  background-attachment: fixed;
+  background: rgb(var(--c-ink));
   transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/**
+ * Ambient glow layer. A `position: fixed` element is painted ONCE and
+ * composited by the GPU, so it stays put on scroll with zero repaint — unlike
+ * `background-attachment: fixed`, which repaints the whole gradient every
+ * scroll frame and was tanking performance.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--page-bg);
+  transform: translateZ(0);
+  transition: background 0.35s ease;
 }
 
 ::selection {

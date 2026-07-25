@@ -66,7 +66,10 @@ export function VideoHero() {
     const root = sectionRef.current;
     if (!root) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return;
+    // Mouse-parallax only makes sense with a fine pointer (desktop). On touch
+    // devices it just burns a rAF loop every frame → skip it entirely.
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+    if (reduce || !finePointer) return;
 
     let tx = 0, ty = 0;
     const layers = {
@@ -111,8 +114,19 @@ export function VideoHero() {
       }
       frame = requestAnimationFrame(tick);
     };
-    frame = requestAnimationFrame(tick);
+
+    // Only run the loop while the hero is actually on screen.
+    let running = false;
+    const start = () => { if (!running) { running = true; frame = requestAnimationFrame(tick); } };
+    const stop = () => { running = false; cancelAnimationFrame(frame); };
+    const io = new IntersectionObserver(
+      ([entry]) => (entry.isIntersecting ? start() : stop()),
+      { threshold: 0 },
+    );
+    io.observe(root);
+
     return () => {
+      io.disconnect();
       root.removeEventListener('mousemove', onMove);
       cancelAnimationFrame(frame);
     };
