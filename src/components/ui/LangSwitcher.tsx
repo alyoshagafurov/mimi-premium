@@ -27,7 +27,7 @@ export function LangSwitcher({ className }: { className?: string }) {
           aria-label={LANG_NAMES[l.code] ?? l.label}
           className={cn(
             'rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors',
-            lang === l.code ? 'bg-brand-lime text-ink' : 'text-light/70 hover:text-brand-lime',
+            lang === l.code ? 'bg-brand-lime text-[#0A0712]' : 'text-light/70 hover:text-brand-lime',
           )}
         >
           {l.label}

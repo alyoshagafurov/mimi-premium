@@ -144,7 +144,7 @@ export function CmsTestimonials({ items }: { items: CmsData['testimonials'] }) {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={t.photo} alt={t.name} loading="lazy" decoding="async" className="h-11 w-11 rounded-full object-cover" />
                 ) : (
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-lime-gradient font-display text-sm font-extrabold text-ink">{t.name.charAt(0)}</span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-lime-gradient font-display text-sm font-extrabold text-[#0A0712]">{t.name.charAt(0)}</span>
                 )}
                 <div>
                   <div className="text-sm font-semibold text-light">{t.name}</div>

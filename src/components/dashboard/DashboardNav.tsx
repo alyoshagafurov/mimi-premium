@@ -52,7 +52,7 @@ export function DashboardNav() {
             Главная
           </Link>
           <div className="hidden h-9 items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 lg:flex">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-lime-gradient text-[10px] font-bold text-ink">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-lime-gradient text-[10px] font-bold text-[#0A0712]">
               {name.charAt(0).toUpperCase()}
             </div>
             <span className="text-[12px] text-light/80">{name.split(' ')[0]}</span>

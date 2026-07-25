@@ -94,7 +94,7 @@ export function NotificationsBell() {
       >
         <span className="text-base">◷</span>
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-lime px-1 text-[10px] font-bold text-ink">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-lime px-1 text-[10px] font-bold text-[#0A0712]">
             {unread > 9 ? '9+' : unread}
           </span>
         )}

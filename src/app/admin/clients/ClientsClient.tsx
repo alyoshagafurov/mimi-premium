@@ -136,7 +136,7 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
                 <tr key={c.id} className="border-t border-white/5 transition hover:bg-white/[0.02]">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lime-gradient font-bold text-ink">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lime-gradient font-bold text-[#0A0712]">
                         {c.businessName.charAt(0)}
                       </div>
                       <div>

@@ -101,7 +101,7 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
           <div className="divide-y divide-white/[0.05]">
             {staff.map((s) => (
               <div key={s.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lime-gradient font-display text-base font-extrabold text-ink">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lime-gradient font-display text-base font-extrabold text-[#0A0712]">
                   {s.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">

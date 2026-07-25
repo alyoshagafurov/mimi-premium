@@ -197,7 +197,7 @@ export default function PricingPage() {
                 )}
               >
                 {meta.featured && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-lime-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-ink shadow-lime">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-lime-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0A0712] shadow-lime">
                     {t.hit}
                   </span>
                 )}

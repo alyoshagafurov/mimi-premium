@@ -120,7 +120,7 @@ function TiltCard({
         />
 
         {meta.featured && (
-          <span className="absolute -top-3 left-10 rounded-full bg-lime-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-ink">
+          <span className="absolute -top-3 left-10 rounded-full bg-lime-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A0712]">
             {t.hit}
           </span>
         )}

@@ -99,7 +99,7 @@ export function Sidebar({ name, role }: { name: string; role?: Role | string }) 
 
       <div className="border-t border-white/[0.06] pt-5">
         <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lime-gradient font-display text-base font-extrabold text-ink">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lime-gradient font-display text-base font-extrabold text-[#0A0712]">
             {name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
