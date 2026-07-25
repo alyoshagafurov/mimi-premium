@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { AvatarUploader } from '@/components/ui/AvatarUploader';
 
 export function SettingsClient({
   user,
 }: {
-  user: { id: string; name: string; email: string; phone: string };
+  user: { id: string; name: string; email: string; phone: string; avatar: string | null };
 }) {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -72,6 +73,10 @@ export function SettingsClient({
         className="glass-gold mx-auto max-w-2xl rounded-3xl p-8"
       >
         <h2 className="font-display text-xl font-bold">Профиль</h2>
+        <div className="mt-5 border-b border-white/[0.06] pb-6">
+          <label className="label-soft">Фото профиля</label>
+          <div className="mt-2"><AvatarUploader name={user.name} avatar={user.avatar} /></div>
+        </div>
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="label-soft">Имя</label>

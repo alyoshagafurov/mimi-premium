@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Logo } from '@/components/ui/Logo';
 import { NotificationsBell } from '@/components/ui/NotificationsBell';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { cn } from '@/lib/utils';
 import { canAccessSection, isAdminLike, ROLE_LABEL, type AdminSection } from '@/lib/roles';
 import type { Role } from '@prisma/client';
@@ -46,7 +47,7 @@ function itemsFor(role?: Role | string) {
     .map((it, i) => ({ ...it, n: String(i + 1).padStart(2, '0') }));
 }
 
-export function Sidebar({ name, role }: { name: string; role?: Role | string }) {
+export function Sidebar({ name, role, avatar }: { name: string; role?: Role | string; avatar?: string | null }) {
   const pathname = usePathname();
   const ITEMS = itemsFor(role);
   const roleLabel = role ? ROLE_LABEL[role as Role] ?? 'Сотрудник' : 'Сотрудник';
@@ -99,15 +100,13 @@ export function Sidebar({ name, role }: { name: string; role?: Role | string }) 
       </nav>
 
       <div className="border-t border-white/[0.06] pt-5">
-        <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lime-gradient font-display text-base font-extrabold text-[#0A0712]">
-            {name.charAt(0).toUpperCase()}
-          </div>
+        <Link href="/admin/settings" className="mb-3 flex items-center gap-3 rounded-2xl transition hover:opacity-80">
+          <UserAvatar name={name} avatar={avatar} size={40} />
           <div className="min-w-0">
             <div className="truncate text-sm font-medium text-light">{name}</div>
             <div className="text-[10px] uppercase tracking-[0.18em] text-light/45">{roleLabel}</div>
           </div>
-        </div>
+        </Link>
         <Link
           href="/"
           className="mb-2 block w-full rounded-xl border border-white/10 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-light/55 transition-all hover:border-brand-lime/40 hover:text-brand-lime"
@@ -125,7 +124,7 @@ export function Sidebar({ name, role }: { name: string; role?: Role | string }) 
   );
 }
 
-export function MobileTopbar({ name, role }: { name: string; role?: Role | string }) {
+export function MobileTopbar({ name, role, avatar }: { name: string; role?: Role | string; avatar?: string | null }) {
   const [open, setOpen] = useState(false);
   const ITEMS = itemsFor(role);
   const roleLabel = role ? ROLE_LABEL[role as Role] ?? 'Сотрудник' : 'Сотрудник';
@@ -268,11 +267,13 @@ export function MobileTopbar({ name, role }: { name: string; role?: Role | strin
                   transition={{ duration: 0.5, delay: 0.45 }}
                   className="mt-10 space-y-3"
                 >
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="text-[10px] uppercase tracking-[0.28em] text-light/45">{roleLabel}</p>
-                    <p className="mt-2 font-display text-base font-bold text-light">{name}</p>
-                    <p className="text-[11px] text-light/40">mimi Panel</p>
-                  </div>
+                  <Link href="/admin/settings" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                    <UserAvatar name={name} avatar={avatar} size={40} />
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-[0.28em] text-light/45">{roleLabel}</p>
+                      <p className="truncate font-display text-base font-bold text-light">{name}</p>
+                    </div>
+                  </Link>
                   <Link
                     href="/"
                     onClick={() => setOpen(false)}
