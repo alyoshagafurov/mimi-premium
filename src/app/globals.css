@@ -37,30 +37,30 @@
   --scroll-thumb-hover: rgba(212, 236, 76, 0.45);
 }
 
-/* ─── LIGHT THEME — white canvas, brand-tinted shadows ─── */
+/* ─── LIGHT THEME — soft off-grey canvas (not stark white), brand-tinted shadows ─── */
 [data-theme='light'] {
-  --c-ink: 255 255 255;
-  --c-ink2: 250 249 254;
-  --c-surface: 246 244 252;
-  --c-surface2: 240 236 250;
-  --c-light: 26 15 46;      /* near-black with brand violet undertone */
-  --c-muted: 107 95 134;
+  --c-ink: 232 231 238;      /* page: gentle grey-lavender, easy on the eyes */
+  --c-ink2: 248 247 252;     /* cards: near-white, slightly raised above the page */
+  --c-surface: 251 250 254;
+  --c-surface2: 244 243 249;
+  --c-light: 26 15 46;       /* near-black with brand violet undertone (main text) */
+  --c-muted: 92 82 116;      /* muted text — darker than before for readability */
   --c-white: 60 25 117;      /* glass + hairlines become soft brand violet */
 
   --page-bg:
-    radial-gradient(1100px 600px at 82% -12%, rgba(60, 25, 117, 0.10) 0%, transparent 62%),
-    radial-gradient(900px 520px at -10% 26%, rgba(212, 236, 76, 0.22) 0%, transparent 60%),
-    radial-gradient(760px 420px at 52% 112%, rgba(252, 150, 3, 0.10) 0%, transparent 62%),
+    radial-gradient(1100px 600px at 82% -12%, rgba(60, 25, 117, 0.07) 0%, transparent 62%),
+    radial-gradient(900px 520px at -10% 26%, rgba(168, 189, 47, 0.10) 0%, transparent 60%),
+    radial-gradient(760px 420px at 52% 112%, rgba(252, 150, 3, 0.06) 0%, transparent 62%),
     rgb(var(--c-ink));
-  --glass-tint: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(60, 25, 117, 0.03) 100%);
-  --glass-inset: 0 1px 0 0 rgba(255, 255, 255, 0.9) inset;
-  --shadow-soft: 0 18px 45px -18px rgba(60, 25, 117, 0.22);
-  --shadow-brand: 0 28px 70px -22px rgba(60, 25, 117, 0.18);
-  --shadow-lux: 0 40px 90px -35px rgba(60, 25, 117, 0.28);
-  --dots: rgba(60, 25, 117, 0.10);
-  --hairline: rgba(60, 25, 117, 0.10);
-  --scroll-thumb: rgba(60, 25, 117, 0.25);
-  --scroll-thumb-hover: rgba(168, 189, 47, 0.55);
+  --glass-tint: linear-gradient(135deg, rgba(255, 255, 255, 0.82) 0%, rgba(60, 25, 117, 0.02) 100%);
+  --glass-inset: 0 1px 0 0 rgba(255, 255, 255, 0.85) inset;
+  --shadow-soft: 0 18px 45px -20px rgba(60, 25, 117, 0.20);
+  --shadow-brand: 0 28px 70px -24px rgba(60, 25, 117, 0.16);
+  --shadow-lux: 0 40px 90px -38px rgba(60, 25, 117, 0.24);
+  --dots: rgba(60, 25, 117, 0.08);
+  --hairline: rgba(60, 25, 117, 0.12);
+  --scroll-thumb: rgba(60, 25, 117, 0.22);
+  --scroll-thumb-hover: rgba(168, 189, 47, 0.5);
 }
 
 /**
