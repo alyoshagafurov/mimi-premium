@@ -36,11 +36,22 @@ function toLocalInput(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+const emptyLead = {
+  name: '',
+  phone: '',
+  businessName: '',
+  niche: '',
+  salesStatus: 'NEW_LEAD' as SalesStatus,
+};
+
 export function SalesClient({ clients }: { clients: Row[] }) {
   const router = useRouter();
   const [open, setOpen] = useState<Row | null>(null);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Partial<Row>>({});
+  const [creating, setCreating] = useState(false);
+  const [lead, setLead] = useState(emptyLead);
+  const [busy, setBusy] = useState(false);
 
   const byStatus = useMemo(() => {
     const map = new Map<SalesStatus, Row[]>();
@@ -92,12 +103,40 @@ export function SalesClient({ clients }: { clients: Row[] }) {
     if (ok) setOpen(null);
   };
 
+  const createLead = async () => {
+    if (!lead.name.trim()) {
+      toast.error('Укажите имя лида');
+      return;
+    }
+    setBusy(true);
+    const r = await fetch('/api/clients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lead),
+    });
+    setBusy(false);
+    if (r.ok) {
+      toast.success('Лид добавлен');
+      setCreating(false);
+      setLead(emptyLead);
+      router.refresh();
+    } else {
+      const d = await r.json().catch(() => ({}));
+      toast.error(d.error || 'Не удалось добавить лид');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Sales"
         title={<>Продажи</>}
         subtitle="Статусы клиентов, пакеты, комментарии и напоминания перезвонить."
+        action={
+          <button onClick={() => setCreating(true)} className="btn-lime !px-5 !py-3 !text-[11px]">
+            + Новый лид
+          </button>
+        }
       />
 
       {/* Due reminders */}
@@ -221,6 +260,50 @@ export function SalesClient({ clients }: { clients: Row[] }) {
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => setOpen(null)} className="btn-ghost">Отмена</button>
               <button onClick={save} disabled={saving} className="btn-lime disabled:opacity-60">{saving ? 'Сохраняем…' : 'Сохранить'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New lead */}
+      {creating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4" onClick={() => setCreating(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/[0.08] bg-ink2 p-6">
+            <h3 className="font-display text-xl font-bold text-light">Новый лид</h3>
+            <p className="mt-1 text-[12px] text-light/45">Появится на доске. Email и пароль для входа можно задать позже в карточке клиента.</p>
+
+            <div className="mt-5 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label-soft">Имя Фамилия</label>
+                  <input className="input-glass" value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="label-soft">Телефон</label>
+                  <input className="input-glass" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label-soft">Бизнес</label>
+                  <input className="input-glass" value={lead.businessName} onChange={(e) => setLead({ ...lead, businessName: e.target.value })} />
+                </div>
+                <div>
+                  <label className="label-soft">Ниша</label>
+                  <input className="input-glass" value={lead.niche} onChange={(e) => setLead({ ...lead, niche: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="label-soft">Статус</label>
+                <select className="input-glass" value={lead.salesStatus} onChange={(e) => setLead({ ...lead, salesStatus: e.target.value as SalesStatus })}>
+                  {SALES_STATUSES.map((s) => <option key={s} value={s}>{SALES_STATUS_LABEL[s]}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setCreating(false)} className="btn-ghost">Отмена</button>
+              <button onClick={createLead} disabled={busy} className="btn-lime disabled:opacity-60">{busy ? 'Добавляем…' : 'Добавить лид'}</button>
             </div>
           </div>
         </div>

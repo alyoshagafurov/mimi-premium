@@ -18,10 +18,12 @@ type Row = {
   niche: string;
   logo: string | null;
   status: string;
+  salesStatus: string;
   createdAt: string;
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  ownerAvatar: string | null;
   tariff: string;
   reports: number;
 };
@@ -48,6 +50,7 @@ const emptyNew = {
   name: '',
   email: '',
   password: '',
+  phone: '',
   businessName: '',
   niche: '',
   tariff: 'NONE' as string,
@@ -56,11 +59,14 @@ const emptyNew = {
 export function ClientsClient({ clients }: { clients: Row[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Row | null>(null);
+  const [pw, setPw] = useState(''); // new password for the client being edited (blank = keep)
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(emptyNew);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState('');
   const [view, setView] = useState<'tiles' | 'list'>('tiles');
+
+  const openEdit = (row: Row) => { setPw(''); setEditing(row); };
 
   // Remember the chosen view between visits.
   useEffect(() => {
@@ -86,16 +92,36 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
   };
 
   const save = async (row: Row) => {
+    if (pw && pw.length < 6) {
+      toast.error('Пароль минимум 6 символов');
+      return;
+    }
+    setBusy(true);
     const res = await fetch(`/api/clients/${row.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ businessName: row.businessName, niche: row.niche, tariff: row.tariff, logo: row.logo }),
+      body: JSON.stringify({
+        businessName: row.businessName,
+        niche: row.niche,
+        tariff: row.tariff,
+        logo: row.logo,
+        name: row.ownerName,
+        email: row.ownerEmail,
+        phone: row.ownerPhone,
+        avatar: row.ownerAvatar,
+        ...(pw ? { password: pw } : {}),
+      }),
     });
+    setBusy(false);
     if (res.ok) {
       toast.success('Изменения сохранены');
       setEditing(null);
+      setPw('');
       router.refresh();
-    } else toast.error('Не удалось сохранить');
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error ?? 'Не удалось сохранить');
+    }
   };
 
   const create = async () => {
@@ -107,7 +133,8 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
     const res = await fetch('/api/clients', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      // A client added here is a converted partner (leads are added on Продажи).
+      body: JSON.stringify({ ...form, salesStatus: 'PARTNER' }),
     });
     setBusy(false);
     if (res.ok) {
@@ -174,7 +201,7 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
                 className="group relative flex flex-col items-center rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-colors hover:border-brand-lime/30"
               >
                 <button
-                  onClick={(e) => { e.preventDefault(); setEditing(c); }}
+                  onClick={(e) => { e.preventDefault(); openEdit(c); }}
                   aria-label="Редактировать"
                   className="absolute right-2 top-2 rounded-full border border-white/10 bg-ink/40 p-1.5 text-light/40 opacity-0 transition hover:text-brand-lime group-hover:opacity-100"
                 >
@@ -228,7 +255,7 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <button
-                        onClick={() => setEditing(c)}
+                        onClick={() => openEdit(c)}
                         className="rounded-lg border border-white/10 px-3 py-1.5 text-[11px] text-muted transition hover:border-gold/40 hover:text-gold"
                       >
                         Редактировать
@@ -272,8 +299,8 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
               className="glass-gold w-full max-w-md rounded-3xl p-8"
             >
               <h2 className="font-display text-xl font-bold">Редактировать клиента</h2>
-              <p className="text-xs text-muted">{editing.ownerEmail}</p>
-              <div className="mt-6 space-y-4">
+              <p className="text-xs text-muted">Логотип проекта, данные и вход клиента.</p>
+              <div className="mt-6 max-h-[65vh] space-y-4 overflow-y-auto pr-1">
                 <div className="flex items-center gap-4">
                   <ProjectLogo name={editing.businessName} logo={editing.logo} size={56} />
                   <div className="flex-1">
@@ -308,13 +335,59 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
                     ))}
                   </select>
                 </div>
+
+                {/* ─── Login & profile ─── */}
+                <div className="border-t border-white/10 pt-4">
+                  <p className="mb-3 text-[10px] uppercase tracking-[0.16em] text-muted">Вход и профиль клиента</p>
+                  <ImageUpload label="Аватар клиента" value={editing.ownerAvatar} onChange={(url) => setEditing({ ...editing, ownerAvatar: url })} />
+                </div>
+                <div>
+                  <label className="label-soft">Имя контактного лица</label>
+                  <input
+                    className="input-glass"
+                    value={editing.ownerName}
+                    onChange={(e) => setEditing({ ...editing, ownerName: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label-soft">Email (логин)</label>
+                    <input
+                      className="input-glass"
+                      type="email"
+                      value={editing.ownerEmail}
+                      onChange={(e) => setEditing({ ...editing, ownerEmail: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="label-soft">Телефон</label>
+                    <input
+                      className="input-glass"
+                      value={editing.ownerPhone}
+                      onChange={(e) => setEditing({ ...editing, ownerPhone: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="label-soft">Новый пароль</label>
+                  <input
+                    className="input-glass"
+                    type="text"
+                    placeholder="Оставьте пустым, чтобы не менять"
+                    value={pw}
+                    onChange={(e) => setPw(e.target.value)}
+                  />
+                </div>
+
                 <div className="text-[11px] text-muted">
                   Создан: {format(new Date(editing.createdAt), 'd MMMM yyyy', { locale: ru })}
                 </div>
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <button onClick={() => setEditing(null)} className="btn-ghost">Отмена</button>
-                <button onClick={() => save(editing)} className="btn-gold">Сохранить</button>
+                <button onClick={() => save(editing)} disabled={busy} className="btn-gold disabled:opacity-60">
+                  {busy ? 'Сохраняем…' : 'Сохранить'}
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -341,13 +414,19 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
               <h2 className="font-display text-xl font-bold">Новый клиент</h2>
               <p className="text-xs text-muted">Создаст учётную запись и бизнес-аккаунт.</p>
               <div className="mt-6 space-y-4">
-                <div>
-                  <label className="label-soft">Имя контактного лица</label>
-                  <input className="input-glass" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label-soft">Имя контактного лица</label>
+                    <input className="input-glass" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label-soft">Телефон</label>
+                    <input className="input-glass" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="label-soft">Email</label>
+                    <label className="label-soft">Email (логин)</label>
                     <input className="input-glass" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                   </div>
                   <div>
