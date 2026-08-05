@@ -48,6 +48,9 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
           reach: r.reach,
           clicks: r.clicks,
           leads: r.leads,
+          revenue: r.revenue,
+          profileVisits: r.profileVisits,
+          campaignCount: r.campaignCount,
           platforms: r.platforms.map((p) => ({ name: p.name, spent: p.spent, roas: p.roas })),
           audience: r.audience
             ? {

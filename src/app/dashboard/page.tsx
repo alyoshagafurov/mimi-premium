@@ -66,10 +66,14 @@ export default async function DashboardPage() {
         clicks: current?.clicks ?? 0,
         leads: current?.leads ?? 0,
         budget: current?.budget ?? 0,
+        revenue: current?.revenue ?? 0,
+        profileVisits: current?.profileVisits ?? 0,
+        campaignCount: current?.campaignCount ?? 0,
         spentDelta: deltaPct(current?.spent, prev?.spent),
         reachDelta: deltaPct(current?.reach, prev?.reach),
         clicksDelta: deltaPct(current?.clicks, prev?.clicks),
         leadsDelta: deltaPct(current?.leads, prev?.leads),
+        revenueDelta: deltaPct(current?.revenue, prev?.revenue),
       }}
       reachTrend={reports.map((r) => ({
         label: `${monthName(r.month)} ${String(r.year).slice(2)}`,

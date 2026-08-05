@@ -9,6 +9,9 @@ const schema = z.object({
   reach: z.number().int().nonnegative().optional(),
   clicks: z.number().int().nonnegative().optional(),
   leads: z.number().int().nonnegative().optional(),
+  revenue: z.number().nonnegative().optional(),
+  profileVisits: z.number().int().nonnegative().optional(),
+  campaignCount: z.number().int().nonnegative().optional(),
   platforms: z
     .array(
       z.object({

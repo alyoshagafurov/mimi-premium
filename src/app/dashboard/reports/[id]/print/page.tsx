@@ -32,6 +32,9 @@ export default async function ReportPrintPage({ params }: { params: { id: string
         reach: report.reach,
         clicks: report.clicks,
         leads: report.leads,
+        revenue: report.revenue,
+        profileVisits: report.profileVisits,
+        campaignCount: report.campaignCount,
         platforms: report.platforms.map((p) => ({ name: p.name, spent: p.spent, roas: p.roas })),
         campaigns: report.campaigns.map((c) => ({ name: c.name, platform: c.platform, status: c.status })),
         audience: report.audience

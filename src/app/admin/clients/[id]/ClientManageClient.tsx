@@ -20,6 +20,9 @@ type Report = {
   reach: number;
   clicks: number;
   leads: number;
+  revenue: number;
+  profileVisits: number;
+  campaignCount: number;
   platforms: Platform[];
   audience: Audience | null;
   campaigns: Campaign[];
@@ -45,6 +48,7 @@ const int = (s: string) => Math.max(0, Math.round(num(s)));
 
 type Draft = {
   spent: string; budget: string; reach: string; clicks: string; leads: string;
+  revenue: string; profileVisits: string; campaignCount: string;
   igSpent: string; igRoas: string; fbSpent: string; fbRoas: string;
   a1: string; a2: string; a3: string; a4: string;
 };
@@ -55,6 +59,7 @@ const draftFrom = (r: Report): Draft => {
   return {
     spent: String(r.spent), budget: String(r.budget), reach: String(r.reach),
     clicks: String(r.clicks), leads: String(r.leads),
+    revenue: String(r.revenue), profileVisits: String(r.profileVisits), campaignCount: String(r.campaignCount),
     igSpent: String(ig?.spent ?? 0), igRoas: String(ig?.roas ?? 0),
     fbSpent: String(fb?.spent ?? 0), fbRoas: String(fb?.roas ?? 0),
     a1: String(r.audience?.age18_24 ?? 0), a2: String(r.audience?.age25_34 ?? 0),
@@ -126,6 +131,9 @@ export function ClientManageClient({ client, reports }: { client: Client; report
         reach: int(draft.reach),
         clicks: int(draft.clicks),
         leads: int(draft.leads),
+        revenue: num(draft.revenue),
+        profileVisits: int(draft.profileVisits),
+        campaignCount: int(draft.campaignCount),
         platforms: [
           { name: 'Instagram', spent: num(draft.igSpent), roas: num(draft.igRoas) },
           { name: 'Facebook', spent: num(draft.fbSpent), roas: num(draft.fbRoas) },
@@ -269,11 +277,18 @@ export function ClientManageClient({ client, reports }: { client: Client; report
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Потрачено (сомони)" value={draft.spent} onChange={set('spent')} />
-                <Field label="Бюджет (сомони)" value={draft.budget} onChange={set('budget')} />
+                <Field label="Плановый бюджет (сомони)" value={draft.budget} onChange={set('budget')} />
+                <Field label="Выручка (сомони)" value={draft.revenue} onChange={set('revenue')} />
                 <Field label="Охват" value={draft.reach} onChange={set('reach')} />
                 <Field label="Клики" value={draft.clicks} onChange={set('clicks')} />
-                <Field label="Заявки" value={draft.leads} onChange={set('leads')} />
+                <Field label="Заявки (лиды)" value={draft.leads} onChange={set('leads')} />
+                <Field label="Переходы в профиль" value={draft.profileVisits} onChange={set('profileVisits')} />
+                <Field label="Кол-во кампаний" value={draft.campaignCount} onChange={set('campaignCount')} />
               </div>
+              <p className="mt-3 text-[11px] leading-relaxed text-muted">
+                CPL, CPC, ROAS, ROMI и окупаемость считаются автоматически из этих
+                значений и показываются клиенту в кабинете.
+              </p>
             </div>
 
             <div className="glass rounded-2xl p-6">

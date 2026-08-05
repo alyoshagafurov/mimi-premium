@@ -244,6 +244,10 @@ model MonthlyReport {
   reach     Int      @default(0)
   clicks    Int      @default(0)
   leads     Int      @default(0)
+  // Manually entered by the agency for the client cabinet analytics.
+  revenue       Float @default(0) // выручка
+  profileVisits Int   @default(0) // переходы в профиль
+  campaignCount Int   @default(0) // количество рекламных кампаний
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

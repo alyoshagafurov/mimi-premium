@@ -94,6 +94,27 @@ export const monthName = (month: number) => (MONTHS_RU[month - 1] ?? '—').toLo
 export const formatRoas = (n: number) =>
   `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(n)}×`;
 
+/**
+ * Derived marketing KPIs for a monthly report. All inputs are entered manually
+ * by the agency; these ratios are computed the same way for the admin editor,
+ * the client cabinet and the printed report so the numbers never disagree.
+ *   CPL — spend per lead · CPC — spend per click
+ *   ROAS (×) — revenue / spend
+ *   ROMI (%) — profit / spend = (revenue − spend) / spend
+ *   Окупаемость (%) — revenue / spend (share of spend returned)
+ */
+export function reportKpis(r: { spent: number; revenue: number; leads: number; clicks: number }) {
+  const spent = r.spent || 0;
+  const revenue = r.revenue || 0;
+  return {
+    cpl: r.leads > 0 ? spent / r.leads : 0,
+    cpc: r.clicks > 0 ? spent / r.clicks : 0,
+    roas: spent > 0 ? revenue / spent : 0,
+    romi: spent > 0 ? ((revenue - spent) / spent) * 100 : 0,
+    payback: spent > 0 ? (revenue / spent) * 100 : 0,
+  };
+}
+
 /* ─────────────────────────  CRM  ───────────────────────── */
 
 /** Sales-pipeline stages in display order. */

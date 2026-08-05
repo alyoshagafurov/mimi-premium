@@ -10,7 +10,7 @@ import { BudgetBar } from '@/components/dashboard/BudgetBar';
 import { PlatformRow } from '@/components/dashboard/PlatformRow';
 import { CampaignList } from '@/components/dashboard/CampaignList';
 import { AudienceChart, type AudienceData } from '@/components/dashboard/AudienceChart';
-import { formatInt, formatMoney, monthLabel, tariffLabel } from '@/lib/utils';
+import { formatInt, formatMoney, formatPct, formatRoas, monthLabel, reportKpis, tariffLabel } from '@/lib/utils';
 
 type Metrics = {
   spent: number;
@@ -18,10 +18,14 @@ type Metrics = {
   clicks: number;
   leads: number;
   budget: number;
+  revenue: number;
+  profileVisits: number;
+  campaignCount: number;
   spentDelta: number | null;
   reachDelta: number | null;
   clicksDelta: number | null;
   leadsDelta: number | null;
+  revenueDelta: number | null;
 };
 
 export function DashboardClient({
@@ -44,6 +48,7 @@ export function DashboardClient({
   audience: AudienceData | null;
 }) {
   const hasData = period !== null;
+  const k = reportKpis({ spent: metrics.spent, revenue: metrics.revenue, leads: metrics.leads, clicks: metrics.clicks });
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-20 pt-6">
@@ -90,12 +95,28 @@ export function DashboardClient({
         </div>
       ) : (
         <>
-          {/* KPI ROW */}
+          {/* KPI ROW — reach funnel */}
           <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <MetricCard label="Потрачено" value={formatMoney(metrics.spent)} delta={metrics.spentDelta} delay={0} />
             <MetricCard label="Охват" value={formatInt(metrics.reach)} delta={metrics.reachDelta} delay={0.08} />
             <MetricCard label="Клики" value={formatInt(metrics.clicks)} delta={metrics.clicksDelta} delay={0.16} />
             <MetricCard label="Заявки" value={formatInt(metrics.leads)} delta={metrics.leadsDelta} delay={0.24} />
+          </div>
+
+          {/* KPI ROW — revenue + unit economics */}
+          <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <MetricCard label="Выручка" value={formatMoney(metrics.revenue)} delta={metrics.revenueDelta} delay={0} />
+            <MetricCard label="CPL — цена заявки" value={formatMoney(k.cpl)} delta={null} delay={0.08} />
+            <MetricCard label="CPC — цена клика" value={formatMoney(k.cpc)} delta={null} delay={0.16} />
+            <MetricCard label="Переходы в профиль" value={formatInt(metrics.profileVisits)} delta={null} delay={0.24} />
+          </div>
+
+          {/* ANALYTICS — marketing payback */}
+          <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <MetricCard label="ROAS" value={formatRoas(k.roas)} delta={null} delay={0} />
+            <MetricCard label="ROMI" value={formatPct(k.romi, true)} delta={null} delay={0.08} />
+            <MetricCard label="Окупаемость маркетинга" value={`${Math.round(k.payback)}%`} delta={null} delay={0.16} />
+            <MetricCard label="Рекламных кампаний" value={formatInt(metrics.campaignCount)} delta={null} delay={0.24} />
           </div>
 
           {/* CHART + BUDGET */}

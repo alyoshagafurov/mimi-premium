@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { formatInt, formatMoney, formatRoas, monthName } from '@/lib/utils';
+import { formatInt, formatMoney, formatPct, formatRoas, monthName, reportKpis } from '@/lib/utils';
 
 type Report = {
   month: number;
@@ -11,6 +11,9 @@ type Report = {
   reach: number;
   clicks: number;
   leads: number;
+  revenue: number;
+  profileVisits: number;
+  campaignCount: number;
   platforms: { name: string; spent: number; roas: number }[];
   campaigns: { name: string; platform: string; status: string }[];
   audience: { age18_24: number; age25_34: number; age35_44: number; age45plus: number } | null;
@@ -27,7 +30,7 @@ export function ReportPrintClient({
     setTimeout(() => window.print(), 800);
   }, []);
 
-  const cpl = report.leads > 0 ? report.spent / report.leads : 0;
+  const k = reportKpis(report);
 
   return (
     <div className="mx-auto max-w-[800px] bg-[#fff] p-12 text-[#111] print:p-0 print:shadow-none" style={{ minHeight: '297mm' }}>
@@ -65,25 +68,45 @@ export function ReportPrintClient({
         <div className="mt-4 grid grid-cols-4 gap-4">
           {[
             { label: 'Расход', value: formatMoney(report.spent) },
-            { label: 'Бюджет', value: formatMoney(report.budget) },
+            { label: 'Выручка', value: formatMoney(report.revenue) },
             { label: 'Охват', value: formatInt(report.reach) },
             { label: 'Лиды', value: formatInt(report.leads) },
-          ].map((k) => (
-            <div key={k.label} className="rounded-xl border border-gray-200 p-4">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-gray-500">{k.label}</div>
-              <div className="mt-2 font-display text-xl font-extrabold text-[#3C1975]">{k.value}</div>
+          ].map((m) => (
+            <div key={m.label} className="rounded-xl border border-gray-200 p-4">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-gray-500">{m.label}</div>
+              <div className="mt-2 font-display text-xl font-extrabold text-[#3C1975]">{m.value}</div>
             </div>
           ))}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-4">
-          <div className="rounded-xl border border-gray-200 p-4">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-gray-500">Стоимость лида</div>
-            <div className="mt-2 font-display text-lg font-bold text-[#3C1975]">{formatMoney(cpl)}</div>
-          </div>
-          <div className="rounded-xl border border-gray-200 p-4">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-gray-500">Клики</div>
-            <div className="mt-2 font-display text-lg font-bold text-[#3C1975]">{formatInt(report.clicks)}</div>
-          </div>
+        <div className="mt-3 grid grid-cols-4 gap-4">
+          {[
+            { label: 'CPL — цена заявки', value: formatMoney(k.cpl) },
+            { label: 'CPC — цена клика', value: formatMoney(k.cpc) },
+            { label: 'Клики', value: formatInt(report.clicks) },
+            { label: 'Переходы в профиль', value: formatInt(report.profileVisits) },
+          ].map((m) => (
+            <div key={m.label} className="rounded-xl border border-gray-200 p-4">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-gray-500">{m.label}</div>
+              <div className="mt-2 font-display text-lg font-bold text-[#3C1975]">{m.value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="font-display text-lg font-bold text-[#3C1975]">Окупаемость маркетинга</h2>
+        <div className="mt-4 grid grid-cols-4 gap-4">
+          {[
+            { label: 'ROAS', value: formatRoas(k.roas) },
+            { label: 'ROMI', value: formatPct(k.romi, true) },
+            { label: 'Окупаемость', value: `${Math.round(k.payback)}%` },
+            { label: 'Кампаний', value: formatInt(report.campaignCount) },
+          ].map((m) => (
+            <div key={m.label} className="rounded-xl border border-gray-200 p-4">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-gray-500">{m.label}</div>
+              <div className="mt-2 font-display text-lg font-bold text-[#3C1975]">{m.value}</div>
+            </div>
+          ))}
         </div>
       </section>
 
