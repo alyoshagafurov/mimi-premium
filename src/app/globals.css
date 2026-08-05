@@ -404,6 +404,23 @@ body::before {
     mask-image: linear-gradient(to right, #000 85%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, #000 85%, transparent 100%);
   }
+
+  /* ── Entrance reveal — VISIBLE BY DEFAULT ──────────────────────────
+     Pure CSS, so it paints on first frame without waiting for JS to
+     hydrate (framer-motion left sections blank on slow/hidden tabs).
+     Resting state is opacity:1, so content is NEVER stuck invisible;
+     the fade-up is a progressive enhancement that also collapses to
+     "instantly visible" under the reduced-motion rule below. */
+  @keyframes mimi-rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .reveal { opacity: 1; animation: mimi-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .reveal-d1 { animation-delay: 0.10s; }
+  .reveal-d2 { animation-delay: 0.22s; }
+  .reveal-d3 { animation-delay: 0.36s; }
+  .reveal-d4 { animation-delay: 0.52s; }
+  .reveal-d5 { animation-delay: 0.68s; }
 }
 
 @media print {
