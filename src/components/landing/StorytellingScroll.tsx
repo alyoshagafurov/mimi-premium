@@ -241,7 +241,7 @@ export function StorytellingScroll() {
 
       // ── PROGRESS BAR + TICKER ──────────────────────────────────
       if (progressFillRef.current) {
-        tl.fromTo(progressFillRef.current, { width: '0%' }, { width: '100%', ease: 'none', duration: 1 }, 0);
+        tl.fromTo(progressFillRef.current, { scaleX: 0 }, { scaleX: 1, ease: 'none', duration: 1 }, 0);
       }
       tickerRefs.current.forEach((tick, i) => {
         if (!tick) return;
@@ -310,6 +310,12 @@ export function StorytellingScroll() {
         {/* ── BG L3: particles + decorations + mimi wordmark with orbits ── */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <Particles />
+          {/* static wordmark glow — painted once, never re-rasterised on scroll */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[42vh] w-[42vh] -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ background: 'radial-gradient(closest-side, rgba(212,236,76,0.09), transparent 70%)', filter: 'blur(40px)' }}
+          />
           <div ref={decorationsWrapRef} className="absolute inset-0">
             <Decorations />
           </div>
@@ -325,7 +331,6 @@ export function StorytellingScroll() {
               style={{
                 fontSize: 'clamp(8rem, 24vw, 22rem)',
                 color: 'rgba(212,236,76,0.10)',
-                filter: 'drop-shadow(0 0 60px rgba(212,236,76,0.18))',
               }}
             >
               {/* dotless ı — quiet, clean watermark */}
@@ -429,7 +434,8 @@ export function StorytellingScroll() {
               <span className="relative h-px flex-1 bg-white/[0.08]">
                 <span
                   ref={progressFillRef}
-                  className="absolute inset-y-0 left-0 block w-0 bg-gradient-to-r from-brand-lime to-brand-orange"
+                  className="absolute inset-y-0 left-0 block w-full origin-left bg-gradient-to-r from-brand-lime to-brand-orange"
+                  style={{ transform: 'scaleX(0)' }}
                 />
               </span>
             </div>

@@ -197,9 +197,9 @@ export function ProcessSection() {
       if (lineFillRef.current) {
         gsap.fromTo(
           lineFillRef.current,
-          { height: '0%' },
+          { scaleY: 0 },
           {
-            height: '100%',
+            scaleY: 1,
             ease: 'none',
             scrollTrigger: {
               trigger: '.process-list',
@@ -329,8 +329,8 @@ export function ProcessSection() {
             <span className="absolute left-7 top-3 bottom-3 w-px bg-white/[0.07]" aria-hidden />
             <span
               ref={lineFillRef}
-              className="absolute left-7 top-3 block w-px bg-gradient-to-b from-brand-lime via-brand-lime to-brand-orange"
-              style={{ height: '0%' }}
+              className="absolute left-7 top-3 bottom-3 block w-px origin-top bg-gradient-to-b from-brand-lime via-brand-lime to-brand-orange"
+              style={{ transform: 'scaleY(0)' }}
               aria-hidden
             />
 
