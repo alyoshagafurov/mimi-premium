@@ -119,6 +119,13 @@ enum EventCategory {
   WEB
 }
 
+/// Per-discipline production status on a project (changed by the owning role).
+enum WorkStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+}
+
 enum InvoiceStatus {
   DRAFT
   SENT
@@ -216,6 +223,12 @@ model Client {
 
   // Developer cabinet — тех. задание (filled by admin / ops director)
   techSpec      String?
+
+  // Production statuses — each changed by the role that owns that discipline.
+  shootingStatus WorkStatus @default(PLANNED) // видеограф — съёмка
+  montageStatus  WorkStatus @default(PLANNED) // видео-команда — монтаж
+  designStatus   WorkStatus @default(PLANNED) // дизайнер
+  devStatus      WorkStatus @default(PLANNED) // разработчик
 
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

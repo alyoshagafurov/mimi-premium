@@ -4,6 +4,7 @@ import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { isAdminLike, SALES_STATUS_LABEL, PACKAGE_LABEL, type SalesStatus, type ClientPackage } from '@/lib/roles';
 import { TechSpec } from './TechSpec';
+import { ProductionStatus } from './ProductionStatus';
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'Активен', ARCHIVED: 'В архиве' };
 
@@ -18,7 +19,8 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default async function AdminProjectDetailPage({ params }: { params: { id: string } }) {
   const session = await getSafeSession();
-  const adminLike = isAdminLike((session?.user as any)?.role);
+  const role = (session?.user as any)?.role as string;
+  const adminLike = isAdminLike(role);
 
   const c = await prisma.client.findUnique({
     where: { id: params.id },
@@ -72,6 +74,18 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
           </div>
         </div>
       </div>
+
+      {/* Production statuses — each discipline changed by its owning role */}
+      <ProductionStatus
+        clientId={c.id}
+        role={role}
+        initial={{
+          shooting: c.shootingStatus,
+          montage: c.montageStatus,
+          design: c.designStatus,
+          dev: c.devStatus,
+        }}
+      />
 
       {/* Tech spec — for the developer; filled by admin / ops */}
       <TechSpec clientId={c.id} value={c.techSpec ?? ''} canEdit={adminLike} />

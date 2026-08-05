@@ -72,6 +72,46 @@ export const PACKAGE_LABEL: Record<ClientPackage, string> = {
   MASTERCLASS: 'Мастер-класс',
 };
 
+/* ─── Production statuses (per-role project workflow) ─── */
+export const WORK_STATUSES = ['PLANNED', 'IN_PROGRESS', 'DONE'] as const;
+export type WorkStatus = (typeof WORK_STATUSES)[number];
+
+export type ProductionKind = 'shooting' | 'montage' | 'design' | 'dev';
+export type ProductionField = 'shootingStatus' | 'montageStatus' | 'designStatus' | 'devStatus';
+
+/**
+ * The four production disciplines, who owns each, and the wording each uses for
+ * its three states. There is no separate «монтажёр» account role yet, so the
+ * video team (VIDEOGRAPHER) owns both съёмка and монтаж.
+ */
+export const PRODUCTION: {
+  kind: ProductionKind;
+  field: ProductionField;
+  title: string;
+  ownerRoles: Role[];
+  labels: Record<WorkStatus, string>;
+}[] = [
+  { kind: 'shooting', field: 'shootingStatus', title: 'Съёмка', ownerRoles: ['VIDEOGRAPHER'],
+    labels: { PLANNED: 'Планируется', IN_PROGRESS: 'В ожидании', DONE: 'Съёмка проведена' } },
+  { kind: 'montage', field: 'montageStatus', title: 'Монтаж', ownerRoles: ['VIDEOGRAPHER'],
+    labels: { PLANNED: 'Планируется', IN_PROGRESS: 'В ожидании', DONE: 'Монтаж сдан' } },
+  { kind: 'design', field: 'designStatus', title: 'Дизайн', ownerRoles: ['DESIGNER'],
+    labels: { PLANNED: 'Планируется', IN_PROGRESS: 'В ожидании', DONE: 'Сделано' } },
+  { kind: 'dev', field: 'devStatus', title: 'Разработка', ownerRoles: ['DEVELOPER'],
+    labels: { PLANNED: 'Планируется', IN_PROGRESS: 'В процессе', DONE: 'Готово' } },
+];
+
+export const PRODUCTION_BY_KIND = Object.fromEntries(
+  PRODUCTION.map((p) => [p.kind, p]),
+) as Record<ProductionKind, (typeof PRODUCTION)[number]>;
+
+/** Admin/ops can change any discipline; a specialist only the one they own. */
+export function canEditProduction(role: string | null | undefined, kind: ProductionKind): boolean {
+  if (isAdminLike(role)) return true;
+  const p = PRODUCTION_BY_KIND[kind];
+  return !!role && !!p && (p.ownerRoles as string[]).includes(role);
+}
+
 export const CATEGORY_LABEL: Record<EventCategory, string> = {
   GENERAL: 'Общий',
   VIDEO: 'Видео',
