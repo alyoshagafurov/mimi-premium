@@ -49,3 +49,15 @@ export async function notifyAdmins(args: Omit<NotifyArgs, 'userId'>) {
   const admins = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } });
   await Promise.all(admins.map((a) => notify({ ...args, userId: a.id })));
 }
+
+/**
+ * Notify everyone who works the sales pipeline (admin, ops director, sales).
+ * Used when a new lead lands so the sales team can pick it up.
+ */
+export async function notifySales(args: Omit<NotifyArgs, 'userId'>) {
+  const reps = await prisma.user.findMany({
+    where: { role: { in: ['ADMIN', 'OPS_DIRECTOR', 'SALES'] } },
+    select: { id: true },
+  });
+  await Promise.all(reps.map((r) => notify({ ...args, userId: r.id })));
+}

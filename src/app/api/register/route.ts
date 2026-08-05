@@ -11,6 +11,7 @@ import {
 } from '@/lib/validation';
 import { domainCanReceiveMail } from '@/lib/email-dns';
 import { sendVerificationCode } from '@/lib/email-verify';
+import { notifySales } from '@/lib/notify';
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -70,6 +71,15 @@ export async function POST(req: Request) {
         client: { create: { businessName: name, niche: 'Не указана' } },
       },
     });
+
+    // A self-registered client is a fresh CRM lead — alert the sales team so it
+    // gets picked up. Never let a notification failure block registration.
+    notifySales({
+      kind: 'LEAD',
+      title: 'Новый лид',
+      body: `${name} зарегистрировался — ${phone}`,
+      link: '/admin/sales',
+    }).catch(() => {});
 
     // Email confirmation. If Resend isn't configured yet, auto-verify so the
     // flow keeps working; once RESEND_API_KEY is set, a real code is required.
