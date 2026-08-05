@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
-import { ASSIGNABLE_ROLES } from '@/lib/roles';
+import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
 import { passwordProblem } from '@/lib/validation';
+import { logAudit } from '@/lib/audit';
 import type { Role } from '@prisma/client';
 
 /** Update a staff member (role, name, phone, optional new password). */
@@ -33,6 +34,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data,
     select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
   });
+  const roleChanged = data.role && data.role !== target.role;
+  await logAudit({
+    action: 'updated',
+    entity: 'user',
+    entityId: user.id,
+    summary: roleChanged
+      ? `Роль «${user.name}»: ${ROLE_LABEL[target.role as Role]} → ${ROLE_LABEL[user.role as Role]}`
+      : `Изменён сотрудник «${user.name}»`,
+  });
   return NextResponse.json(user);
 }
 
@@ -45,5 +55,6 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const target = await prisma.user.findUnique({ where: { id: params.id } });
   if (!target || target.role === 'CLIENT') return NextResponse.json({ error: 'not_found' }, { status: 404 });
   await prisma.user.delete({ where: { id: params.id } });
+  await logAudit({ action: 'deleted', entity: 'user', entityId: params.id, summary: `Удалён сотрудник «${target.name}»` });
   return NextResponse.json({ ok: true });
 }

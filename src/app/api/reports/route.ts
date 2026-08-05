@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { ensureAdmin } from '@/lib/api-guard';
+import { logAudit } from '@/lib/audit';
 
 const schema = z.object({
   clientId: z.string(),
@@ -34,6 +35,12 @@ export async function POST(req: Request) {
         },
         audience: { create: {} },
       },
+    });
+    await logAudit({
+      action: 'created',
+      entity: 'report',
+      entityId: report.id,
+      summary: `Создан отчёт за ${data.month}/${data.year}`,
     });
     return NextResponse.json({ id: report.id });
   } catch (e: any) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { ensureAdmin } from '@/lib/api-guard';
+import { logAudit } from '@/lib/audit';
 
 const schema = z.object({
   spent: z.number().nonnegative().optional(),
@@ -61,6 +62,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
     });
 
+    await logAudit({ action: 'updated', entity: 'report', entityId: params.id, summary: 'Обновлён месячный отчёт' });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });
@@ -71,6 +73,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!(await ensureAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
     await prisma.monthlyReport.delete({ where: { id: params.id } });
+    await logAudit({ action: 'deleted', entity: 'report', entityId: params.id, summary: 'Удалён месячный отчёт' });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });

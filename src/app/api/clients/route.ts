@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { emailProblem, normalizeEmail } from '@/lib/validation';
 import { SALES_STATUSES } from '@/lib/roles';
+import { logAudit } from '@/lib/audit';
 import { Tariff } from '@prisma/client';
 
 const schema = z.object({
@@ -69,6 +70,13 @@ export async function POST(req: Request) {
         },
       },
       include: { client: true },
+    });
+
+    await logAudit({
+      action: 'created',
+      entity: 'client',
+      entityId: user.client?.id,
+      summary: `Создан клиент/лид «${data.businessName?.trim() || name}»`,
     });
 
     return NextResponse.json({ id: user.client?.id, userId: user.id });

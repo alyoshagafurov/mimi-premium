@@ -35,6 +35,7 @@ const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
   { href: '/admin/cases', label: 'Кейсы', section: 'cases' },
   { href: '/admin/blog', label: 'Блог', section: 'blog' },
   { href: '/admin/integrations', label: 'Интеграции', section: 'integrations' },
+  { href: '/admin/audit', label: 'История действий', section: 'audit' },
   { href: '/admin/settings', label: 'Настройки', section: 'settings' },
 ];
 

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
-import { ASSIGNABLE_ROLES } from '@/lib/roles';
+import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
 import { passwordProblem, emailProblem } from '@/lib/validation';
+import { logAudit } from '@/lib/audit';
 import type { Role } from '@prisma/client';
 
 /** List all agency staff (non-client users). */
@@ -47,6 +48,12 @@ export async function POST(req: Request) {
     // Staff are created by an admin who vouches for them → email pre-verified.
     data: { name, email, password: hashed, role, phone, emailVerified: new Date() },
     select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+  });
+  await logAudit({
+    action: 'created',
+    entity: 'user',
+    entityId: user.id,
+    summary: `Создан сотрудник «${user.name}» (${ROLE_LABEL[user.role as Role]})`,
   });
   return NextResponse.json(user);
 }

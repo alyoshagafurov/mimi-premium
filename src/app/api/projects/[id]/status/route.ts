@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { ensureStaff } from '@/lib/api-guard';
-import { canEditProduction, PRODUCTION_BY_KIND, WORK_STATUSES, type ProductionKind } from '@/lib/roles';
+import { canEditProduction, PRODUCTION_BY_KIND, WORK_STATUSES, type ProductionKind, type WorkStatus } from '@/lib/roles';
+import { logAudit } from '@/lib/audit';
 
 const schema = z.object({
   kind: z.enum(['shooting', 'montage', 'design', 'dev']),
@@ -19,8 +20,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (!canEditProduction(role, kind as ProductionKind)) {
       return NextResponse.json({ error: 'Нет доступа к этому статусу' }, { status: 403 });
     }
-    const field = PRODUCTION_BY_KIND[kind as ProductionKind].field;
-    await prisma.client.update({ where: { id: params.id }, data: { [field]: status } });
+    const disc = PRODUCTION_BY_KIND[kind as ProductionKind];
+    const client = await prisma.client.update({
+      where: { id: params.id },
+      data: { [disc.field]: status },
+      select: { businessName: true },
+    });
+    await logAudit({
+      action: 'status',
+      entity: 'project',
+      entityId: params.id,
+      summary: `«${client.businessName}» · ${disc.title}: ${disc.labels[status as WorkStatus]}`,
+    });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });

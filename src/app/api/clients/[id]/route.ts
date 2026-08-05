@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { ensureAdmin } from '@/lib/api-guard';
 import { emailProblem, normalizeEmail } from '@/lib/validation';
 import { SALES_STATUSES } from '@/lib/roles';
+import { logAudit } from '@/lib/audit';
 import { Tariff } from '@prisma/client';
 
 const schema = z.object({
@@ -69,6 +70,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         ...(Object.keys(ownerData).length ? { owner: { update: ownerData } } : {}),
       },
     });
+    await logAudit({
+      action: 'updated',
+      entity: 'client',
+      entityId: params.id,
+      summary: `Изменён клиент «${updated.businessName}»`,
+    });
+
     return NextResponse.json(updated);
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });
@@ -82,6 +90,12 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     const client = await prisma.client.findUnique({ where: { id: params.id } });
     if (!client) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await prisma.user.delete({ where: { id: client.ownerId } });
+    await logAudit({
+      action: 'deleted',
+      entity: 'client',
+      entityId: params.id,
+      summary: `Удалён клиент «${client.businessName}»`,
+    });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });

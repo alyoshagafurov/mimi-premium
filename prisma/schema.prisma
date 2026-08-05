@@ -126,6 +126,23 @@ enum WorkStatus {
   DONE
 }
 
+/// Immutable audit trail of who created/changed/deleted what. No FK to User so
+/// the record survives even if the actor account is later removed.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String
+  actorRole String?
+  action    String // created | updated | deleted | status
+  entity    String // client | report | payment | user | project | ...
+  entityId  String?
+  summary   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+}
+
 enum InvoiceStatus {
   DRAFT
   SENT
