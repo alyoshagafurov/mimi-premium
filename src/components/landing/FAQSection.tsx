@@ -111,7 +111,7 @@ export function FAQSection({ cmsFaqs }: { cmsFaqs?: { question: string; answer: 
               <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-brand-purple/[0.2] blur-3xl" />
 
               <div className="relative flex items-center justify-between">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={`tag-${current.n}`}
                     initial={{ opacity: 0, y: 6 }}
@@ -127,7 +127,7 @@ export function FAQSection({ cmsFaqs }: { cmsFaqs?: { question: string; answer: 
               </div>
 
               <div className="relative mt-8 min-h-[280px]">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={`a-${current.n}`}
                     initial={{ opacity: 0, y: 14 }}

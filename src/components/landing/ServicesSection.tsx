@@ -235,7 +235,7 @@ export function ServicesSection() {
               <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-brand-purple/[0.18] blur-3xl" />
 
               <div className="relative flex items-center justify-between">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={`n-${current.n}`}
                     initial={{ opacity: 0, y: 8 }}
@@ -251,7 +251,7 @@ export function ServicesSection() {
               </div>
 
               <div className="relative mt-8 aspect-[5/3] w-full overflow-hidden rounded-2xl border border-white/[0.05] bg-ink/40">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={`v-${current.n}`}
                     initial={{ opacity: 0, scale: 0.96 }}
@@ -266,7 +266,7 @@ export function ServicesSection() {
               </div>
 
               <div className="relative mt-8 min-h-[200px]">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={`t-${current.n}`}
                     initial={{ opacity: 0, y: 12 }}

@@ -267,7 +267,7 @@ export function ProcessSection() {
               <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-brand-purple/[0.18] blur-3xl" />
 
               <div className="relative flex items-center justify-between">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={`pn-${current.n}`}
                     initial={{ opacity: 0, y: 6 }}
@@ -284,7 +284,7 @@ export function ProcessSection() {
 
               {/* Visual */}
               <div className="relative mt-8 aspect-[5/3] w-full overflow-hidden rounded-2xl border border-white/[0.05] bg-ink/40">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={`pv-${current.n}`}
                     initial={{ opacity: 0, scale: 0.96 }}
@@ -300,7 +300,7 @@ export function ProcessSection() {
 
               {/* Title + description */}
               <div className="relative mt-8 min-h-[180px]">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={`pt-${current.n}`}
                     initial={{ opacity: 0, y: 12 }}
