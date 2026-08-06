@@ -13,7 +13,7 @@ type Msg = {
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'агентство', OPS_DIRECTOR: 'опер. директор', VIDEOGRAPHER: 'видеограф',
-  SALES: 'продажи', DESIGNER: 'дизайнер', TARGETOLOGIST: 'таргетолог',
+  MONTAGE: 'монтажёр', SALES: 'продажи', DESIGNER: 'дизайнер', TARGETOLOGIST: 'таргетолог',
   DEVELOPER: 'разработка', CLIENT: 'клиент',
 };
 

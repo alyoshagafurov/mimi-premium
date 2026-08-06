@@ -12,7 +12,7 @@ export type AdminSection =
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
-  'ADMIN', 'OPS_DIRECTOR', 'VIDEOGRAPHER', 'SALES', 'DESIGNER', 'TARGETOLOGIST', 'DEVELOPER',
+  'ADMIN', 'OPS_DIRECTOR', 'VIDEOGRAPHER', 'MONTAGE', 'SALES', 'DESIGNER', 'TARGETOLOGIST', 'DEVELOPER',
 ];
 
 export function isStaff(role?: string | null): boolean {
@@ -32,6 +32,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   ADMIN: 'Администратор',
   OPS_DIRECTOR: 'Операционный директор',
   VIDEOGRAPHER: 'Видеограф',
+  MONTAGE: 'Монтажёр',
   SALES: 'Продажник',
   DESIGNER: 'Дизайнер',
   TARGETOLOGIST: 'Таргетолог',
@@ -40,7 +41,7 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 /** Staff roles that can be created in the Team section (not CLIENT). */
 export const ASSIGNABLE_ROLES: Role[] = [
-  'OPS_DIRECTOR', 'VIDEOGRAPHER', 'SALES', 'DESIGNER', 'TARGETOLOGIST', 'DEVELOPER', 'ADMIN',
+  'OPS_DIRECTOR', 'VIDEOGRAPHER', 'MONTAGE', 'SALES', 'DESIGNER', 'TARGETOLOGIST', 'DEVELOPER', 'ADMIN',
 ];
 
 /** Sales pipeline statuses — order defines the board columns. */
@@ -81,8 +82,8 @@ export type ProductionField = 'shootingStatus' | 'montageStatus' | 'designStatus
 
 /**
  * The four production disciplines, who owns each, and the wording each uses for
- * its three states. There is no separate «монтажёр» account role yet, so the
- * video team (VIDEOGRAPHER) owns both съёмка and монтаж.
+ * its three states: съёмка → видеограф, монтаж → монтажёр, дизайн → дизайнер,
+ * разработка → разработчик (admin/ops can change any).
  */
 export const PRODUCTION: {
   kind: ProductionKind;
@@ -93,7 +94,7 @@ export const PRODUCTION: {
 }[] = [
   { kind: 'shooting', field: 'shootingStatus', title: 'Съёмка', ownerRoles: ['VIDEOGRAPHER'],
     labels: { PLANNED: 'Планируется', IN_PROGRESS: 'В ожидании', DONE: 'Съёмка проведена' } },
-  { kind: 'montage', field: 'montageStatus', title: 'Монтаж', ownerRoles: ['VIDEOGRAPHER'],
+  { kind: 'montage', field: 'montageStatus', title: 'Монтаж', ownerRoles: ['MONTAGE'],
     labels: { PLANNED: 'Планируется', IN_PROGRESS: 'В ожидании', DONE: 'Монтаж сдан' } },
   { kind: 'design', field: 'designStatus', title: 'Дизайн', ownerRoles: ['DESIGNER'],
     labels: { PLANNED: 'Планируется', IN_PROGRESS: 'В ожидании', DONE: 'Сделано' } },
@@ -128,6 +129,7 @@ export function visibleCategories(role?: string | null): EventCategory[] {
     case 'OPS_DIRECTOR':
       return [...EVENT_CATEGORIES];
     case 'VIDEOGRAPHER':
+    case 'MONTAGE':
       return ['VIDEO'];
     case 'DESIGNER':
       return ['DESIGN'];
@@ -152,7 +154,8 @@ const ROLE_SECTIONS: Record<string, AdminSection[]> = {
   DESIGNER: ['calendar', 'projects', 'tasks'],
   DEVELOPER: ['calendar', 'projects', 'tasks'],
   TARGETOLOGIST: ['calendar', 'projects', 'ads'],
-  VIDEOGRAPHER: ['calendar', 'projects'],
+  VIDEOGRAPHER: ['calendar', 'projects', 'tasks'],
+  MONTAGE: ['calendar', 'projects', 'tasks'],
 };
 
 export function canAccessSection(role: string | null | undefined, section: AdminSection): boolean {
