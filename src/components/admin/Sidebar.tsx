@@ -54,7 +54,7 @@ export function Sidebar({ name, role, avatar }: { name: string; role?: Role | st
   const roleLabel = role ? ROLE_LABEL[role as Role] ?? 'Сотрудник' : 'Сотрудник';
   const badge = role === 'ADMIN' ? 'admin' : role === 'OPS_DIRECTOR' ? 'ops' : 'staff';
   return (
-    <aside className="glass-luxury sticky top-4 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-3xl p-7 lg:flex">
+    <aside className="glass-luxury sticky top-4 z-40 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-3xl p-7 lg:flex">
       <div className="flex items-center justify-between">
         <Logo size="md" />
         <div className="flex items-center gap-2">
