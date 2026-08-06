@@ -35,7 +35,7 @@ function timeAgo(iso: string) {
   return `${d} д`;
 }
 
-export function NotificationsBell() {
+export function NotificationsBell({ align = 'right' }: { align?: 'left' | 'right' } = {}) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [unread, setUnread] = useState(0);
@@ -107,7 +107,10 @@ export function NotificationsBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="absolute right-0 top-12 z-50 w-[340px] overflow-hidden rounded-2xl border border-white/10 bg-ink2/95 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.7)] backdrop-blur-xl"
+            className={cn(
+              'absolute top-12 z-50 w-[min(340px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/10 bg-ink2/95 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.7)] backdrop-blur-xl',
+              align === 'left' ? 'left-0' : 'right-0',
+            )}
           >
             <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
               <div className="text-sm font-semibold text-light">Уведомления</div>

@@ -59,7 +59,7 @@ export function Sidebar({ name, role, avatar }: { name: string; role?: Role | st
         <Logo size="md" />
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <NotificationsBell />
+          <NotificationsBell align="left" />
           <span className="rounded-full border border-brand-lime/30 bg-brand-lime/5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime">
             {badge}
           </span>
