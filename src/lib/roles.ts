@@ -6,9 +6,8 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 
 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
-  | 'dashboard' | 'clients' | 'projects' | 'sales' | 'tasks' | 'ads' | 'leads'
-  | 'content' | 'cases' | 'blog' | 'media' | 'calendar' | 'analytics' | 'team'
-  | 'chat' | 'integrations' | 'audit' | 'settings';
+  | 'dashboard' | 'clients' | 'projects' | 'sales' | 'tasks'
+  | 'calendar' | 'team' | 'audit' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
@@ -153,7 +152,7 @@ const ROLE_SECTIONS: Record<string, AdminSection[]> = {
   SALES: ['calendar', 'projects', 'sales'],
   DESIGNER: ['calendar', 'projects', 'tasks'],
   DEVELOPER: ['calendar', 'projects', 'tasks'],
-  TARGETOLOGIST: ['calendar', 'projects', 'ads'],
+  TARGETOLOGIST: ['calendar', 'projects', 'tasks'],
   VIDEOGRAPHER: ['calendar', 'projects', 'tasks'],
   MONTAGE: ['calendar', 'projects', 'tasks'],
 };
@@ -170,10 +169,8 @@ export function sectionFromPath(pathname: string): AdminSection {
   if (pathname === '/admin' || pathname === '/admin/') return 'dashboard';
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
-    clients: 'clients', projects: 'projects', sales: 'sales', tasks: 'tasks', ads: 'ads',
-    leads: 'leads', content: 'content', cases: 'cases', blog: 'blog',
-    media: 'media', calendar: 'calendar', analytics: 'analytics', team: 'team',
-    chat: 'chat', integrations: 'integrations', audit: 'audit', settings: 'settings',
+    clients: 'clients', projects: 'projects', sales: 'sales', tasks: 'tasks',
+    calendar: 'calendar', team: 'team', audit: 'audit', settings: 'settings',
   };
   return map[seg] ?? 'dashboard';
 }

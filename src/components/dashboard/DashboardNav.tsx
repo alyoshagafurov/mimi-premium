@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 
 const ITEMS = [
   { href: '/dashboard', label: 'Обзор' },
-  { href: '/dashboard/chat', label: 'Чат' },
   { href: '/dashboard/files', label: 'Файлы' },
   { href: '/dashboard/invoices', label: 'Счета' },
   { href: '/dashboard/profile', label: 'Профиль' },
