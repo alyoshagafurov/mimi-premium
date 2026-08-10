@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { ensureAdmin } from '@/lib/api-guard';
+import { logAudit } from '@/lib/audit';
 import { PaymentStatus } from '@prisma/client';
 
 const schema = z.object({
@@ -24,6 +25,27 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}),
       },
     });
+
+    // ТЗ: после оплаты лид становится партнёром и переходит в «Проекты».
+    if (status === 'PAID') {
+      const client = await prisma.client.findUnique({
+        where: { id: payment.clientId },
+        select: { salesStatus: true, businessName: true },
+      });
+      if (client && client.salesStatus !== 'PARTNER') {
+        await prisma.client.update({
+          where: { id: payment.clientId },
+          data: { salesStatus: 'PARTNER', status: 'ACTIVE' },
+        });
+        await logAudit({
+          action: 'status',
+          entity: 'client',
+          entityId: payment.clientId,
+          summary: `«${client.businessName}» переведён в партнёры после оплаты`,
+        });
+      }
+    }
+
     return NextResponse.json(payment);
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { isAdminLike, SALES_STATUS_LABEL, PACKAGE_LABEL, type SalesStatus, type ClientPackage } from '@/lib/roles';
 import { TechSpec } from './TechSpec';
 import { ProductionStatus } from './ProductionStatus';
+import { ProjectNotes } from './ProjectNotes';
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'Активен', ARCHIVED: 'В архиве' };
 
@@ -24,7 +25,15 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
 
   const c = await prisma.client.findUnique({
     where: { id: params.id },
-    include: { owner: { select: { name: true, email: true, phone: true } } },
+    include: {
+      owner: { select: { name: true, email: true, phone: true } },
+      activities: {
+        where: { kind: 'NOTE' },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: { author: { select: { name: true } } },
+      },
+    },
   });
   if (!c) notFound();
 
@@ -85,6 +94,17 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
           design: c.designStatus,
           dev: c.devStatus,
         }}
+      />
+
+      {/* Internal notes — staff only, never shown to the client */}
+      <ProjectNotes
+        clientId={c.id}
+        initial={c.activities.map((a) => ({
+          id: a.id,
+          body: a.body,
+          author: a.author?.name ?? 'Сотрудник',
+          createdAt: a.createdAt.toISOString(),
+        }))}
       />
 
       {/* Tech spec — for the developer; filled by admin / ops */}

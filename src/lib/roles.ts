@@ -40,7 +40,7 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 /** Staff roles that can be created in the Team section (not CLIENT). */
 export const ASSIGNABLE_ROLES: Role[] = [
-  'OPS_DIRECTOR', 'VIDEOGRAPHER', 'MONTAGE', 'SALES', 'DESIGNER', 'TARGETOLOGIST', 'DEVELOPER', 'ADMIN',
+  'OPS_DIRECTOR', 'VIDEOGRAPHER', 'MONTAGE', 'SALES', 'DESIGNER', 'DEVELOPER', 'ADMIN',
 ];
 
 /** Sales pipeline statuses — order defines the board columns. */
@@ -134,8 +134,6 @@ export function visibleCategories(role?: string | null): EventCategory[] {
       return ['DESIGN'];
     case 'SALES':
       return ['SALES', 'GENERAL'];
-    case 'TARGETOLOGIST':
-      return ['TARGET'];
     case 'DEVELOPER':
       return ['WEB'];
     default:
@@ -152,7 +150,6 @@ const ROLE_SECTIONS: Record<string, AdminSection[]> = {
   SALES: ['calendar', 'projects', 'sales'],
   DESIGNER: ['calendar', 'projects', 'tasks'],
   DEVELOPER: ['calendar', 'projects', 'tasks'],
-  TARGETOLOGIST: ['calendar', 'projects', 'tasks'],
   VIDEOGRAPHER: ['calendar', 'projects', 'tasks'],
   MONTAGE: ['calendar', 'projects', 'tasks'],
 };

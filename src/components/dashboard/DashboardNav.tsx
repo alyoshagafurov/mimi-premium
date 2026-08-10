@@ -10,8 +10,8 @@ import { cn } from '@/lib/utils';
 
 const ITEMS = [
   { href: '/dashboard', label: 'Обзор' },
-  { href: '/dashboard/files', label: 'Файлы' },
-  { href: '/dashboard/invoices', label: 'Счета' },
+  { href: '/dashboard/invoices', label: 'Финансы' },
+  { href: '/dashboard/calendar', label: 'Календарь' },
   { href: '/dashboard/profile', label: 'Профиль' },
 ];
 
