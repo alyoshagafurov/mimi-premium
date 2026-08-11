@@ -40,7 +40,7 @@ const ru = {
   intro: 'Минимизировать расходы предпринимателей на маркетинг и максимизировать их доход с медиаплощадок.',
   coda: 'меньше шума, больше смысла и ответственности.',
   eyebrow: 'наши принципы',
-  hint: 'Листайте вниз — 5 принципов',
+  hint: 'Листай',
   ofTotal: 'из',
   stories: [
     { title: 'Умная эффективность', body: ['Мы не делаем «больше ради больше».', 'Каждое действие должно иметь смысл и результат.', 'Если что-то не работает — мы это убираем, даже если «так принято».'] },
@@ -54,7 +54,7 @@ const en: typeof ru = {
   intro: 'Minimise entrepreneurs’ marketing spend and maximise their revenue from media channels.',
   coda: 'less noise, more meaning and responsibility.',
   eyebrow: 'our principles',
-  hint: 'Scroll down — 5 principles',
+  hint: 'Scroll',
   ofTotal: 'of',
   stories: [
     { title: 'Smart efficiency', body: ['We don’t do «more for the sake of more».', 'Every action must carry meaning and a result.', 'If something doesn’t work, we remove it — even if it’s «the norm».'] },
@@ -68,7 +68,7 @@ const tg: typeof ru = {
   intro: 'Хароҷоти соҳибкоронро ба маркетинг кам карда, даромади онҳоро аз медиаплатформаҳо зиёд кунем.',
   coda: 'камтар садо, бештар маъно ва масъулият.',
   eyebrow: 'принсипҳои мо',
-  hint: 'Ба поён ҳаракат кунед — 5 принсип',
+  hint: 'Ба поён',
   ofTotal: 'аз',
   stories: [
     { title: 'Самаранокии оқилона', body: ['Мо «бештар ба хотири бештар» намекунем.', 'Ҳар амал бояд маъно ва натиҷа дошта бошад.', 'Агар чизе кор накунад — онро мебардорем, ҳатто агар «чунин қабул шуда бошад».'] },
@@ -261,9 +261,11 @@ export function StorytellingScroll() {
         }
       });
 
-      // ── SCROLL HINT: fades out as soon as the story starts ─────
+      // ── SCROLL HINT: stays up for the WHOLE pinned scroll and only
+      //    fades on the last stretch, once there's nothing left to scroll.
       if (hintRef.current) {
-        tl.to(hintRef.current, { opacity: 0, duration: PHASE * 0.4, ease: 'power2.out' }, 0);
+        const fade = PHASE * 0.4;
+        tl.to(hintRef.current, { opacity: 0, duration: fade, ease: 'power2.out' }, 1 - fade);
       }
 
       // ── CODA: fades in as the last phase begins ────────────────
@@ -426,18 +428,16 @@ export function StorytellingScroll() {
           <div className="mx-auto max-w-[1500px]">
             {/* Scroll affordance — makes it obvious this is a scroll-through story
                 (fades out via GSAP once the user starts moving). */}
-            <div ref={hintRef} className="mb-5 flex justify-center">
-              <span className="inline-flex items-center gap-2.5 rounded-full border border-brand-lime/30 bg-brand-lime/[0.07] px-4 py-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-lime">{t.hint}</span>
-                <svg
-                  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  className="animate-bounce text-brand-lime"
-                  aria-hidden
-                >
-                  <path d="M12 5v14M19 12l-7 7-7-7" />
-                </svg>
-              </span>
+            <div ref={hintRef} className="mb-5 flex flex-col items-center gap-1.5">
+              <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-brand-lime">{t.hint}</span>
+              <svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                className="animate-bounce text-brand-lime"
+                aria-hidden
+              >
+                <path d="M12 5v14M19 12l-7 7-7-7" />
+              </svg>
             </div>
 
             <p
