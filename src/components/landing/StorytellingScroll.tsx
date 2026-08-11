@@ -40,6 +40,7 @@ const ru = {
   intro: 'Минимизировать расходы предпринимателей на маркетинг и максимизировать их доход с медиаплощадок.',
   coda: 'меньше шума, больше смысла и ответственности.',
   eyebrow: 'наши принципы',
+  hint: 'Листайте вниз — 5 принципов',
   ofTotal: 'из',
   stories: [
     { title: 'Умная эффективность', body: ['Мы не делаем «больше ради больше».', 'Каждое действие должно иметь смысл и результат.', 'Если что-то не работает — мы это убираем, даже если «так принято».'] },
@@ -53,6 +54,7 @@ const en: typeof ru = {
   intro: 'Minimise entrepreneurs’ marketing spend and maximise their revenue from media channels.',
   coda: 'less noise, more meaning and responsibility.',
   eyebrow: 'our principles',
+  hint: 'Scroll down — 5 principles',
   ofTotal: 'of',
   stories: [
     { title: 'Smart efficiency', body: ['We don’t do «more for the sake of more».', 'Every action must carry meaning and a result.', 'If something doesn’t work, we remove it — even if it’s «the norm».'] },
@@ -66,6 +68,7 @@ const tg: typeof ru = {
   intro: 'Хароҷоти соҳибкоронро ба маркетинг кам карда, даромади онҳоро аз медиаплатформаҳо зиёд кунем.',
   coda: 'камтар садо, бештар маъно ва масъулият.',
   eyebrow: 'принсипҳои мо',
+  hint: 'Ба поён ҳаракат кунед — 5 принсип',
   ofTotal: 'аз',
   stories: [
     { title: 'Самаранокии оқилона', body: ['Мо «бештар ба хотири бештар» намекунем.', 'Ҳар амал бояд маъно ва натиҷа дошта бошад.', 'Агар чизе кор накунад — онро мебардорем, ҳатто агар «чунин қабул шуда бошад».'] },
@@ -155,6 +158,7 @@ export function StorytellingScroll() {
   const progressFillRef = useRef<HTMLSpanElement>(null);
   const decorationsWrapRef = useRef<HTMLDivElement>(null);
   const codaRef = useRef<HTMLParagraphElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -180,13 +184,16 @@ export function StorytellingScroll() {
       decos.forEach((d) => gsap.set(d, { opacity: 0.14, scale: 1 }));
 
       if (codaRef.current) gsap.set(codaRef.current, { opacity: 0, y: 8 });
+      if (hintRef.current) gsap.set(hintRef.current, { opacity: 1 });
 
       const tl = gsap.timeline({
         defaults: { ease: 'power2.inOut' },
         scrollTrigger: {
           trigger: sectionRef.current,
           start: 'top top',
-          end: '+=520%',
+          // ~0.7 экрана прокрутки на принцип — переход наступает быстро,
+          // а не после пяти «пустых» экранов.
+          end: '+=340%',
           pin: pinRef.current,
           pinSpacing: true,
           scrub: 0.6,
@@ -253,6 +260,11 @@ export function StorytellingScroll() {
           tl.to(tick, { color: 'rgba(245,241,250,0.25)', duration: tickDur, ease: 'power2.in' }, end - tickDur + CROSS * 0.5);
         }
       });
+
+      // ── SCROLL HINT: fades out as soon as the story starts ─────
+      if (hintRef.current) {
+        tl.to(hintRef.current, { opacity: 0, duration: PHASE * 0.4, ease: 'power2.out' }, 0);
+      }
 
       // ── CODA: fades in as the last phase begins ────────────────
       if (codaRef.current) {
@@ -412,6 +424,22 @@ export function StorytellingScroll() {
         {/* ── FG: coda + ticker + progress (bottom) ── */}
         <div className="absolute inset-x-6 bottom-10 z-20 lg:inset-x-16">
           <div className="mx-auto max-w-[1500px]">
+            {/* Scroll affordance — makes it obvious this is a scroll-through story
+                (fades out via GSAP once the user starts moving). */}
+            <div ref={hintRef} className="mb-5 flex justify-center">
+              <span className="inline-flex items-center gap-2.5 rounded-full border border-brand-lime/30 bg-brand-lime/[0.07] px-4 py-2">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-lime">{t.hint}</span>
+                <svg
+                  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  className="animate-bounce text-brand-lime"
+                  aria-hidden
+                >
+                  <path d="M12 5v14M19 12l-7 7-7-7" />
+                </svg>
+              </span>
+            </div>
+
             <p
               ref={codaRef}
               className="mb-7 text-center font-serif italic text-light/55 text-[13px] md:text-[14px]"

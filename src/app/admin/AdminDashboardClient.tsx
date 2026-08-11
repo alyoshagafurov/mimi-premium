@@ -15,18 +15,6 @@ type Stats = {
   totalClients: number;
 };
 type Crm = { status: string; count: number }[];
-type Longest = { businessName: string; days: number }[];
-
-/** «2 года 3 мес», «5 мес», «12 дн» — since a project joined. */
-function duration(days: number): string {
-  if (days >= 365) {
-    const y = Math.floor(days / 365);
-    const m = Math.floor((days % 365) / 30);
-    return `${y} г${m ? ` ${m} мес` : ''}`;
-  }
-  if (days >= 30) return `${Math.floor(days / 30)} мес`;
-  return `${days} дн`;
-}
 
 export function AdminDashboardClient({
   me,
@@ -34,14 +22,12 @@ export function AdminDashboardClient({
   stats,
   crm,
   revenueTrend,
-  longest,
 }: {
   me: string;
   showRevenue?: boolean;
   stats: Stats;
   crm: Crm;
   revenueTrend: { label: string; amount: number }[];
-  longest: Longest;
 }) {
   const tooltipStyle = {
     background: 'rgba(10,7,18,0.95)',
@@ -137,26 +123,6 @@ export function AdminDashboardClient({
         )}
       </div>
 
-      {/* Longest-standing partnerships */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.4 }}
-        className="glass-luxury rounded-2xl p-4 sm:rounded-3xl sm:p-7"
-      >
-        <h2 className="mb-4 font-display text-xl font-extrabold text-light sm:text-2xl">Дольше всех с нами</h2>
-        <div className="space-y-2">
-          {longest.map((r, i) => (
-            <div key={r.businessName + i} className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
-              <span className="truncate text-sm font-medium text-light">{r.businessName}</span>
-              <span className="shrink-0 text-[11px] text-light/50">{duration(r.days)}</span>
-            </div>
-          ))}
-          {!longest.length && (
-            <p className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-8 text-center text-sm text-light/55">Пока нет проектов.</p>
-          )}
-        </div>
-      </motion.div>
     </div>
   );
 }
