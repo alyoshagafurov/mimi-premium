@@ -63,7 +63,8 @@ export default async function AdminSalesPage() {
       year: pick(byYear, r.id),
       total: pick(byTotal, r.id),
     }))
-    .filter((r) => seesEveryone ? (r.total > 0 || r.role === 'SALES') : true)
+    // Everyone who can add leads is listed — including админ и опер. директор,
+    // even with a zero count.
     .sort((a, b) => b.month - a.month || b.total - a.total);
 
   return (

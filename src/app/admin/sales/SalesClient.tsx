@@ -7,9 +7,10 @@ import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { cn } from '@/lib/utils';
 import {
-  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGE_LABEL,
+  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGE_LABEL, ROLE_LABEL,
   type SalesStatus, type ClientPackage,
 } from '@/lib/roles';
+import type { Role } from '@prisma/client';
 
 type Lead = {
   id: string;
@@ -56,6 +57,26 @@ export function SalesClient({
   const [q, setQ] = useState('');
   // Admin can drill into one salesperson's leads by clicking their row.
   const [repFilter, setRepFilter] = useState<string | null>(null);
+  // Free date range — «сколько лидов добавлено» за произвольный период.
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+
+  const rangeActive = !!(from || to);
+  // Counted client-side from the leads already on the page — instant, no refetch.
+  const rangeCount = useMemo(() => {
+    if (!rangeActive) return null;
+    const start = from ? new Date(`${from}T00:00:00`).getTime() : -Infinity;
+    const end = to ? new Date(`${to}T23:59:59.999`).getTime() : Infinity;
+    const counts = new Map<string, number>();
+    let all = 0;
+    for (const l of leads) {
+      const t = new Date(l.createdAt).getTime();
+      if (t < start || t > end) continue;
+      all++;
+      if (l.createdById) counts.set(l.createdById, (counts.get(l.createdById) ?? 0) + 1);
+    }
+    return { counts, all };
+  }, [leads, from, to, rangeActive]);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -109,17 +130,29 @@ export function SalesClient({
           <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">
             {seesEveryone ? 'Лидов добавлено' : 'Мои лиды'}
           </p>
-          {repFilter && (
-            <button onClick={() => setRepFilter(null)} className="text-[11px] uppercase tracking-[0.14em] text-brand-lime">
-              Показать всех ×
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] uppercase tracking-[0.14em] text-light/35">Период</span>
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="input-glass !w-auto !py-1.5 !text-[12px]" />
+            <span className="text-light/30">—</span>
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input-glass !w-auto !py-1.5 !text-[12px]" />
+            {rangeActive && (
+              <button onClick={() => { setFrom(''); setTo(''); }} className="text-[11px] uppercase tracking-[0.14em] text-light/45 hover:text-brand-lime">
+                Сбросить
+              </button>
+            )}
+            {repFilter && (
+              <button onClick={() => setRepFilter(null)} className="text-[11px] uppercase tracking-[0.14em] text-brand-lime">
+                Показать всех ×
+              </button>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="text-[10px] uppercase tracking-[0.16em] text-light/40">
               <tr>
                 <th className="pb-3 text-left">Продажник</th>
+                {rangeActive && <th className="pb-3 text-right text-brand-lime">За период</th>}
                 <th className="pb-3 text-right">За день</th>
                 <th className="pb-3 text-right">За неделю</th>
                 <th className="pb-3 text-right">За месяц</th>
@@ -138,7 +171,15 @@ export function SalesClient({
                     repFilter === r.id && 'bg-brand-lime/[0.06]',
                   )}
                 >
-                  <td className="py-2.5 text-light/85">{r.name}</td>
+                  <td className="py-2.5">
+                    <span className="text-light/85">{r.name}</span>
+                    <span className="ml-2 text-[10px] uppercase tracking-[0.12em] text-light/35">
+                      {ROLE_LABEL[r.role as Role] ?? r.role}
+                    </span>
+                  </td>
+                  {rangeActive && (
+                    <td className="py-2.5 text-right font-mono text-brand-lime">{rangeCount?.counts.get(r.id) ?? 0}</td>
+                  )}
                   <td className="py-2.5 text-right font-mono text-brand-lime">{r.day}</td>
                   <td className="py-2.5 text-right font-mono text-light/70">{r.week}</td>
                   <td className="py-2.5 text-right font-mono text-light/70">{r.month}</td>
@@ -147,13 +188,18 @@ export function SalesClient({
                 </tr>
               ))}
               {!repStats.length && (
-                <tr><td colSpan={6} className="py-6 text-center text-light/40">Пока нет данных.</td></tr>
+                <tr><td colSpan={rangeActive ? 7 : 6} className="py-6 text-center text-light/40">Пока нет данных.</td></tr>
               )}
             </tbody>
           </table>
         </div>
+        {rangeActive && (
+          <p className="mt-3 text-[12px] text-light/70">
+            За выбранный период добавлено <span className="font-mono text-brand-lime">{rangeCount?.all ?? 0}</span> лидов.
+          </p>
+        )}
         {seesEveryone && (
-          <p className="mt-3 text-[11px] text-light/35">
+          <p className="mt-2 text-[11px] text-light/35">
             Нажмите на продажника, чтобы посмотреть только его лиды.
           </p>
         )}
