@@ -62,11 +62,16 @@ export function SalesClient({
   const [to, setTo] = useState('');
 
   const rangeActive = !!(from || to);
+  // End date is inclusive to end-of-day, so picking one day covers that whole day.
+  const bounds = useMemo(() => ({
+    start: from ? new Date(`${from}T00:00:00`).getTime() : -Infinity,
+    end: to ? new Date(`${to}T23:59:59.999`).getTime() : Infinity,
+  }), [from, to]);
+
   // Counted client-side from the leads already on the page — instant, no refetch.
   const rangeCount = useMemo(() => {
     if (!rangeActive) return null;
-    const start = from ? new Date(`${from}T00:00:00`).getTime() : -Infinity;
-    const end = to ? new Date(`${to}T23:59:59.999`).getTime() : Infinity;
+    const { start, end } = bounds;
     const counts = new Map<string, number>();
     let all = 0;
     for (const l of leads) {
@@ -76,18 +81,22 @@ export function SalesClient({
       if (l.createdById) counts.set(l.createdById, (counts.get(l.createdById) ?? 0) + 1);
     }
     return { counts, all };
-  }, [leads, from, to, rangeActive]);
+  }, [leads, bounds, rangeActive]);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return leads.filter((l) => {
       if (mine && l.assignedToId !== meId) return false;
       if (repFilter && l.createdById !== repFilter) return false;
+      if (rangeActive) {
+        const t = new Date(l.createdAt).getTime();
+        if (t < bounds.start || t > bounds.end) return false;
+      }
       if (!needle) return true;
       return [l.contactName, l.businessName, l.niche, l.phone, l.email, l.assignedToName ?? '']
         .join(' ').toLowerCase().includes(needle);
     });
-  }, [leads, mine, meId, q, repFilter]);
+  }, [leads, mine, meId, q, repFilter, rangeActive, bounds]);
 
   const byStatus = useMemo(() => {
     const map = new Map<SalesStatus, Lead[]>();
