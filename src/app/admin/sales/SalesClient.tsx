@@ -101,13 +101,30 @@ export function SalesClient({
     if (!periodText.trim()) { setBounds(null); return; }
     const parsed = parseRange(periodText);
     if (!parsed) {
-      toast.error('Не понял период. Например: 20.07.2026 - 25.07.2026');
+      toast.error('Не понял период. Наберите: 20 8 2026 — пробел ставит «/»');
       return;
     }
     setBounds(parsed);
   };
 
   const clearPeriod = () => { setPeriodText(''); setBounds(null); };
+
+  /**
+   * Space is the separator: «20» ␣ «8» ␣ «2026» → 20/8/2026, and one more space
+   * after a finished date starts the end of the range. Enter applies.
+   */
+  const onPeriodKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') { applyPeriod(); return; }
+    if (e.key !== ' ') return;
+    e.preventDefault();
+    const v = periodText;
+    if (!v.trim()) return;                              // ignore a leading space
+    if (v.endsWith('/') || v.endsWith(' - ')) return;   // never double a separator
+    const parts = v.split(' - ');
+    const slashes = (parts[parts.length - 1].match(/\//g) ?? []).length;
+    if (slashes < 2) setPeriodText(v + '/');            // день → месяц → год
+    else if (parts.length === 1) setPeriodText(v + ' - '); // date done → start the second
+  };
 
   // Counted client-side from the leads already on the page — instant, no refetch.
   const rangeCount = useMemo(() => {
@@ -187,9 +204,10 @@ export function SalesClient({
               inputMode="numeric"
               value={periodText}
               onChange={(e) => setPeriodText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && applyPeriod()}
-              placeholder="20.07.2026 - 25.07.2026"
-              className="input-glass !w-[220px] !py-1.5 !text-[12px]"
+              onKeyDown={onPeriodKey}
+              placeholder="20 8 2026 → 20/8/2026"
+              title="Пробел = разделитель: 20␣8␣2026␣25␣8␣2026"
+              className="input-glass !w-[230px] !py-1.5 !text-[12px]"
             />
             <button onClick={applyPeriod} className="btn-lime !px-4 !py-1.5 !text-[11px]">
               Показать
