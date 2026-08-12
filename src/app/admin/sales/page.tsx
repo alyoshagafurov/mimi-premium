@@ -1,19 +1,28 @@
 import { prisma } from '@/lib/prisma';
 import { getSafeSession } from '@/lib/session';
+import { canSeeRevenue } from '@/lib/roles';
 import { SalesClient } from './SalesClient';
 
 export default async function AdminSalesPage() {
   const session = await getSafeSession();
   const me = session?.user as any;
+  // Only the full ADMIN sees everyone's numbers; sales and the ops director
+  // see their own leads only.
+  const seesEveryone = canSeeRevenue(me?.role);
 
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfWeek = new Date(startOfDay);
   startOfWeek.setDate(startOfDay.getDate() - ((startOfDay.getDay() + 6) % 7)); // понедельник
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-  const [clients, reps, byDay, byWeek, byMonth, byTotal] = await Promise.all([
+  const scope = seesEveryone ? {} : { createdById: me?.id ?? '__none__' };
+  const since = (from: Date) => ({ ...scope, createdAt: { gte: from } });
+
+  const [clients, reps, byDay, byWeek, byMonth, byYear, byTotal] = await Promise.all([
     prisma.client.findMany({
+      where: scope,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, businessName: true, niche: true, contactName: true,
@@ -26,20 +35,23 @@ export default async function AdminSalesPage() {
       },
     }),
     prisma.user.findMany({
-      where: { role: { in: ['SALES', 'ADMIN', 'OPS_DIRECTOR'] } },
+      where: seesEveryone
+        ? { role: { in: ['SALES', 'ADMIN', 'OPS_DIRECTOR'] } }
+        : { id: me?.id ?? '__none__' },
       select: { id: true, name: true, role: true },
       orderBy: { name: 'asc' },
     }),
-    prisma.client.groupBy({ by: ['createdById'], where: { createdAt: { gte: startOfDay } }, _count: { _all: true } }),
-    prisma.client.groupBy({ by: ['createdById'], where: { createdAt: { gte: startOfWeek } }, _count: { _all: true } }),
-    prisma.client.groupBy({ by: ['createdById'], where: { createdAt: { gte: startOfMonth } }, _count: { _all: true } }),
-    prisma.client.groupBy({ by: ['createdById'], _count: { _all: true } }),
+    prisma.client.groupBy({ by: ['createdById'], where: since(startOfDay), _count: { _all: true } }),
+    prisma.client.groupBy({ by: ['createdById'], where: since(startOfWeek), _count: { _all: true } }),
+    prisma.client.groupBy({ by: ['createdById'], where: since(startOfMonth), _count: { _all: true } }),
+    prisma.client.groupBy({ by: ['createdById'], where: since(startOfYear), _count: { _all: true } }),
+    prisma.client.groupBy({ by: ['createdById'], where: scope, _count: { _all: true } }),
   ]);
 
   const pick = (rows: { createdById: string | null; _count: { _all: number } }[], id: string) =>
     rows.find((r) => r.createdById === id)?._count._all ?? 0;
 
-  // «Сколько лидов добавлено» по каждому продажнику — за день / неделю / месяц.
+  // «Сколько лидов добавлено» — за день / неделю / месяц / год.
   const repStats = reps
     .map((r) => ({
       id: r.id,
@@ -48,14 +60,16 @@ export default async function AdminSalesPage() {
       day: pick(byDay, r.id),
       week: pick(byWeek, r.id),
       month: pick(byMonth, r.id),
+      year: pick(byYear, r.id),
       total: pick(byTotal, r.id),
     }))
-    .filter((r) => r.total > 0 || r.role === 'SALES')
+    .filter((r) => seesEveryone ? (r.total > 0 || r.role === 'SALES') : true)
     .sort((a, b) => b.month - a.month || b.total - a.total);
 
   return (
     <SalesClient
       meId={me?.id ?? ''}
+      seesEveryone={seesEveryone}
       repStats={repStats}
       leads={clients.map((c) => ({
         id: c.id,
@@ -70,6 +84,7 @@ export default async function AdminSalesPage() {
         sourceUrl: c.sourceUrl,
         sourceCover: c.sourceCover,
         sourceNote: c.sourceNote,
+        createdById: c.createdBy?.id ?? null,
         createdByName: c.createdBy?.name ?? null,
         assignedToName: c.assignedTo?.name ?? null,
         assignedToId: c.assignedTo?.id ?? null,

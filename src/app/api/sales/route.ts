@@ -7,6 +7,7 @@ import { getSafeSession } from '@/lib/session';
 import { isAdminLike, SALES_STATUSES } from '@/lib/roles';
 import { normalizeEmail } from '@/lib/validation';
 import { logAudit } from '@/lib/audit';
+import { resolveVideoCover } from '@/lib/link-preview';
 
 const schema = z.object({
   firstName: z.string().min(1).max(80),
@@ -19,7 +20,6 @@ const schema = z.object({
   packageType: z.string().optional(),
   sourceType: z.enum(['VIDEO', 'OTHER']).default('OTHER'),
   sourceUrl: z.string().max(500).optional(),
-  sourceCover: z.string().optional(),
   sourceNote: z.string().max(500).optional(),
   comment: z.string().max(2000).optional(),
   assignedToId: z.string().optional(),
@@ -50,6 +50,11 @@ export async function POST(req: Request) {
       email = `lead-${randomUUID().slice(0, 8)}@lead.mimitj.agency`;
     }
 
+    // The cover is derived from the link — the salesperson never uploads one.
+    const sourceUrl = d.sourceUrl?.trim() || null;
+    const sourceCover =
+      d.sourceType === 'VIDEO' && sourceUrl ? await resolveVideoCover(sourceUrl) : null;
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -68,8 +73,8 @@ export async function POST(req: Request) {
             salesStatus: d.salesStatus as any,
             ...(d.packageType ? { packageType: d.packageType as any } : {}),
             sourceType: d.sourceType as any,
-            sourceUrl: d.sourceUrl?.trim() || null,
-            sourceCover: d.sourceCover || null,
+            sourceUrl,
+            sourceCover,
             sourceNote: d.sourceNote?.trim() || null,
             comment: d.comment?.trim() || null,
             createdById: me?.id ?? null,

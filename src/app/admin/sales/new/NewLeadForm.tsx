@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -14,7 +14,7 @@ const EMPTY = {
   salesStatus: 'NEW_LEAD' as string,
   packageType: 'NONE' as string,
   sourceType: 'VIDEO' as 'VIDEO' | 'OTHER',
-  sourceUrl: '', sourceCover: '' as string | null, sourceNote: '',
+  sourceUrl: '', sourceNote: '',
   comment: '',
   assignedToId: '',
 };
@@ -31,23 +31,9 @@ export function NewLeadForm({
   const router = useRouter();
   const [f, setF] = useState({ ...EMPTY, assignedToId: meId });
   const [busy, setBusy] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF((p) => ({ ...p, [k]: e.target.value }));
-
-  const pickCover = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) return toast.error('Файл больше 5 MB');
-    setUploading(true);
-    const form = new FormData();
-    form.append('file', file);
-    const r = await fetch('/api/admin/upload', { method: 'POST', body: form });
-    setUploading(false);
-    if (!r.ok) return toast.error('Не удалось загрузить обложку');
-    const d = await r.json();
-    setF((p) => ({ ...p, sourceCover: d.url }));
-  };
 
   const save = async () => {
     if (!f.firstName.trim()) return toast.error('Укажите имя лида');
@@ -144,39 +130,10 @@ export function NewLeadForm({
                   placeholder="https://www.instagram.com/reel/…"
                 />
               </div>
-              <div>
-                <label className="label-soft">Обложка видео</label>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => { const file = e.target.files?.[0]; if (file) pickCover(file); }}
-                />
-                <div className="mt-2 flex items-center gap-3">
-                  {f.sourceCover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.sourceCover} alt="" className="h-20 w-20 rounded-xl object-cover" />
-                  ) : (
-                    <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-white/15 text-[10px] text-light/35">
-                      нет
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-ghost !px-4 !py-2 !text-[11px]">
-                      {uploading ? 'Загружаем…' : 'Загрузить обложку'}
-                    </button>
-                    {f.sourceCover && (
-                      <button type="button" onClick={() => setF((p) => ({ ...p, sourceCover: '' }))} className="text-[11px] text-light/45 hover:text-rose-300">
-                        Убрать
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-2 text-[11px] text-light/40">
-                  Обложка показывается в карточке лида — по клику откроется само видео.
-                </p>
-              </div>
+              <p className="text-[11px] leading-relaxed text-light/40">
+                Обложку загружать не нужно — она подтянется с этой ссылки автоматически
+                и будет показана в карточке лида. По клику откроется само видео.
+              </p>
             </div>
           ) : (
             <div>

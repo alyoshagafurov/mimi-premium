@@ -5,6 +5,7 @@ import { isAdminLike } from '@/lib/roles';
 import { SALES_STATUSES, PACKAGES } from '@/lib/roles';
 import { notify } from '@/lib/notify';
 import { logAudit } from '@/lib/audit';
+import { resolveVideoCover } from '@/lib/link-preview';
 
 /**
  * Update the sales/CRM fields of a client.
@@ -43,10 +44,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (full) data.contactName = full;
   }
 
-  // Lead origin (video / other source).
+  // Lead origin (video / other source). The cover is always derived from the
+  // link — re-resolve it whenever the link changes.
   if (body.sourceType === 'VIDEO' || body.sourceType === 'OTHER') data.sourceType = body.sourceType;
-  if (typeof body.sourceUrl === 'string') data.sourceUrl = body.sourceUrl.trim() || null;
-  if ('sourceCover' in body) data.sourceCover = body.sourceCover || null;
+  if (typeof body.sourceUrl === 'string') {
+    const url = body.sourceUrl.trim() || null;
+    data.sourceUrl = url;
+    data.sourceCover = url ? await resolveVideoCover(url) : null;
+  }
   if (typeof body.sourceNote === 'string') data.sourceNote = body.sourceNote.trim() || null;
   if (typeof body.comment === 'string') data.comment = body.comment.trim() || null;
   if (typeof body.niche === 'string' && body.niche.trim()) data.niche = body.niche.trim();

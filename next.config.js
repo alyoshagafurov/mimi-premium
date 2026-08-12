@@ -11,6 +11,9 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https:",
+  // The CRM embeds the source video of a lead straight from its link.
+  // Without this, frame-src falls back to default-src 'self' and the embed is blocked.
+  "frame-src 'self' https://www.instagram.com https://instagram.com https://www.youtube.com https://www.youtube-nocookie.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

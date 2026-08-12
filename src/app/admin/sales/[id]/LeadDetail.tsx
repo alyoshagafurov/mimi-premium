@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { videoEmbed } from '@/lib/link-preview';
 import {
   SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL,
   type SalesStatus, type ClientPackage,
@@ -51,6 +52,7 @@ export function LeadDetail({
   const [pkg, setPkg] = useState(lead.packageType);
   const [owner, setOwner] = useState(lead.assignedToId);
   const [saving, setSaving] = useState(false);
+  const embed = videoEmbed(lead.sourceUrl);
 
   const patch = async (body: any, msg: string) => {
     setSaving(true);
@@ -121,25 +123,32 @@ export function LeadDetail({
           <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6">
             <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Откуда пришёл</p>
             {lead.sourceType === 'VIDEO' && lead.sourceUrl ? (
-              <a
-                href={lead.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] p-3 transition hover:border-brand-lime/40"
-              >
-                {lead.sourceCover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={lead.sourceCover} alt="" className="h-28 w-28 shrink-0 rounded-xl object-cover" />
-                ) : (
-                  <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-xl border border-dashed border-white/15 text-[11px] text-light/35">
-                    без обложки
+              <div className="space-y-3">
+                {embed ? (
+                  // The video itself, resolved from the link alone.
+                  <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-black">
+                    <iframe
+                      src={embed.src}
+                      loading="lazy"
+                      allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      allowFullScreen
+                      title="Видео, с которого пришёл лид"
+                      className={embed.kind === 'instagram' ? 'h-[560px] w-full' : 'aspect-video w-full'}
+                    />
                   </div>
-                )}
-                <div className="min-w-0">
-                  <div className="text-sm font-medium text-light group-hover:text-brand-lime">Видео, с которого пришёл лид</div>
-                  <div className="mt-1 text-[11px] text-light/40">Нажмите, чтобы открыть видео →</div>
-                </div>
-              </a>
+                ) : lead.sourceCover ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={lead.sourceCover} alt="" className="w-full rounded-2xl object-cover" />
+                ) : null}
+                <a
+                  href={lead.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex text-[12px] text-brand-lime hover:underline"
+                >
+                  Открыть видео в источнике →
+                </a>
+              </div>
             ) : (
               <p className="text-sm text-light/85">{lead.sourceNote || '—'}</p>
             )}

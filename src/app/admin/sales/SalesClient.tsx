@@ -24,6 +24,7 @@ type Lead = {
   sourceUrl: string | null;
   sourceCover: string | null;
   sourceNote: string | null;
+  createdById: string | null;
   createdByName: string | null;
   assignedToName: string | null;
   assignedToId: string | null;
@@ -32,7 +33,7 @@ type Lead = {
   reminderDone: boolean;
   createdAt: string;
 };
-type RepStat = { id: string; name: string; role: string; day: number; week: number; month: number; total: number };
+type RepStat = { id: string; name: string; role: string; day: number; week: number; month: number; year: number; total: number };
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -43,24 +44,29 @@ export function SalesClient({
   leads,
   repStats,
   meId,
+  seesEveryone,
 }: {
   leads: Lead[];
   repStats: RepStat[];
   meId: string;
+  seesEveryone: boolean;
 }) {
   const router = useRouter();
   const [mine, setMine] = useState(false);
   const [q, setQ] = useState('');
+  // Admin can drill into one salesperson's leads by clicking their row.
+  const [repFilter, setRepFilter] = useState<string | null>(null);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return leads.filter((l) => {
       if (mine && l.assignedToId !== meId) return false;
+      if (repFilter && l.createdById !== repFilter) return false;
       if (!needle) return true;
       return [l.contactName, l.businessName, l.niche, l.phone, l.email, l.assignedToName ?? '']
         .join(' ').toLowerCase().includes(needle);
     });
-  }, [leads, mine, meId, q]);
+  }, [leads, mine, meId, q, repFilter]);
 
   const byStatus = useMemo(() => {
     const map = new Map<SalesStatus, Lead[]>();
@@ -99,7 +105,16 @@ export function SalesClient({
 
       {/* ── Статистика по продажникам ── */}
       <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5">
-        <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Лидов добавлено</p>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">
+            {seesEveryone ? 'Лидов добавлено' : 'Мои лиды'}
+          </p>
+          {repFilter && (
+            <button onClick={() => setRepFilter(null)} className="text-[11px] uppercase tracking-[0.14em] text-brand-lime">
+              Показать всех ×
+            </button>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="text-[10px] uppercase tracking-[0.16em] text-light/40">
@@ -108,25 +123,40 @@ export function SalesClient({
                 <th className="pb-3 text-right">За день</th>
                 <th className="pb-3 text-right">За неделю</th>
                 <th className="pb-3 text-right">За месяц</th>
+                <th className="pb-3 text-right">За год</th>
                 <th className="pb-3 text-right">Всего</th>
               </tr>
             </thead>
             <tbody>
               {repStats.map((r) => (
-                <tr key={r.id} className="border-t border-white/5">
+                <tr
+                  key={r.id}
+                  onClick={() => seesEveryone && setRepFilter((cur) => (cur === r.id ? null : r.id))}
+                  className={cn(
+                    'border-t border-white/5',
+                    seesEveryone && 'cursor-pointer transition-colors hover:bg-white/[0.03]',
+                    repFilter === r.id && 'bg-brand-lime/[0.06]',
+                  )}
+                >
                   <td className="py-2.5 text-light/85">{r.name}</td>
                   <td className="py-2.5 text-right font-mono text-brand-lime">{r.day}</td>
                   <td className="py-2.5 text-right font-mono text-light/70">{r.week}</td>
                   <td className="py-2.5 text-right font-mono text-light/70">{r.month}</td>
+                  <td className="py-2.5 text-right font-mono text-light/70">{r.year}</td>
                   <td className="py-2.5 text-right font-mono text-light/45">{r.total}</td>
                 </tr>
               ))}
               {!repStats.length && (
-                <tr><td colSpan={5} className="py-6 text-center text-light/40">Пока нет данных.</td></tr>
+                <tr><td colSpan={6} className="py-6 text-center text-light/40">Пока нет данных.</td></tr>
               )}
             </tbody>
           </table>
         </div>
+        {seesEveryone && (
+          <p className="mt-3 text-[11px] text-light/35">
+            Нажмите на продажника, чтобы посмотреть только его лиды.
+          </p>
+        )}
       </div>
 
       {/* Due reminders */}
@@ -162,15 +192,17 @@ export function SalesClient({
           onChange={(e) => setQ(e.target.value)}
           className="input-glass max-w-sm"
         />
-        <button
-          onClick={() => setMine((v) => !v)}
-          className={cn(
-            'rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.14em] transition',
-            mine ? 'border-brand-lime bg-brand-lime text-[#0A0712]' : 'border-white/10 text-light/55 hover:text-light',
-          )}
-        >
-          Только мои
-        </button>
+        {seesEveryone && (
+          <button
+            onClick={() => setMine((v) => !v)}
+            className={cn(
+              'rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.14em] transition',
+              mine ? 'border-brand-lime bg-brand-lime text-[#0A0712]' : 'border-white/10 text-light/55 hover:text-light',
+            )}
+          >
+            Только мои
+          </button>
+        )}
         <span className="chip-lime">{visible.length} лидов</span>
       </div>
 
