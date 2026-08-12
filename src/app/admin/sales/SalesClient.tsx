@@ -1,16 +1,17 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { cn } from '@/lib/utils';
 import {
-  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL,
+  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGE_LABEL,
   type SalesStatus, type ClientPackage,
 } from '@/lib/roles';
 
-type Row = {
+type Lead = {
   id: string;
   businessName: string;
   niche: string;
@@ -19,139 +20,130 @@ type Row = {
   email: string;
   salesStatus: SalesStatus;
   packageType: ClientPackage;
-  comment: string;
+  sourceType: 'VIDEO' | 'OTHER';
+  sourceUrl: string | null;
+  sourceCover: string | null;
+  sourceNote: string | null;
+  createdByName: string | null;
+  assignedToName: string | null;
+  assignedToId: string | null;
   reminderAt: string | null;
   reminderNote: string;
   reminderDone: boolean;
   createdAt: string;
 };
+type RepStat = { id: string; name: string; role: string; day: number; week: number; month: number; total: number };
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
 const fmtDateTime = (iso: string) =>
   new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-function toLocalInput(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-const emptyLead = {
-  name: '',
-  phone: '',
-  businessName: '',
-  niche: '',
-  salesStatus: 'NEW_LEAD' as SalesStatus,
-};
-
-export function SalesClient({ clients }: { clients: Row[] }) {
+export function SalesClient({
+  leads,
+  repStats,
+  meId,
+}: {
+  leads: Lead[];
+  repStats: RepStat[];
+  meId: string;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState<Row | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [draft, setDraft] = useState<Partial<Row>>({});
-  const [creating, setCreating] = useState(false);
-  const [lead, setLead] = useState(emptyLead);
-  const [busy, setBusy] = useState(false);
+  const [mine, setMine] = useState(false);
+  const [q, setQ] = useState('');
+
+  const visible = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return leads.filter((l) => {
+      if (mine && l.assignedToId !== meId) return false;
+      if (!needle) return true;
+      return [l.contactName, l.businessName, l.niche, l.phone, l.email, l.assignedToName ?? '']
+        .join(' ').toLowerCase().includes(needle);
+    });
+  }, [leads, mine, meId, q]);
 
   const byStatus = useMemo(() => {
-    const map = new Map<SalesStatus, Row[]>();
+    const map = new Map<SalesStatus, Lead[]>();
     for (const s of SALES_STATUSES) map.set(s, []);
-    for (const c of clients) map.get(c.salesStatus)?.push(c);
+    for (const l of visible) map.get(l.salesStatus)?.push(l);
     return map;
-  }, [clients]);
+  }, [visible]);
 
-  // Reminders that are due (and not yet marked done)
   const dueReminders = useMemo(
-    () => clients.filter((c) => c.reminderAt && !c.reminderDone && new Date(c.reminderAt) <= new Date()),
-    [clients],
+    () => visible.filter((l) => l.reminderAt && !l.reminderDone && new Date(l.reminderAt) <= new Date()),
+    [visible],
   );
 
-  const openCard = (c: Row) => {
-    setOpen(c);
-    setDraft({
-      salesStatus: c.salesStatus,
-      packageType: c.packageType,
-      contactName: c.contactName,
-      niche: c.niche,
-      comment: c.comment,
-      reminderAt: c.reminderAt,
-      reminderNote: c.reminderNote,
-    });
-  };
-
-  const patch = async (id: string, body: any, msg = 'Сохранено') => {
+  const closeReminder = async (id: string) => {
     const r = await fetch(`/api/sales/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ reminderDone: true }),
     });
-    if (!r.ok) {
-      const d = await r.json().catch(() => ({}));
-      toast.error(d.error || 'Не удалось сохранить');
-      return false;
-    }
-    toast.success(msg);
-    router.refresh();
-    return true;
-  };
-
-  const save = async () => {
-    if (!open) return;
-    setSaving(true);
-    const ok = await patch(open.id, draft);
-    setSaving(false);
-    if (ok) setOpen(null);
-  };
-
-  const createLead = async () => {
-    if (!lead.name.trim()) {
-      toast.error('Укажите имя лида');
-      return;
-    }
-    setBusy(true);
-    const r = await fetch('/api/clients', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(lead),
-    });
-    setBusy(false);
-    if (r.ok) {
-      toast.success('Лид добавлен');
-      setCreating(false);
-      setLead(emptyLead);
-      router.refresh();
-    } else {
-      const d = await r.json().catch(() => ({}));
-      toast.error(d.error || 'Не удалось добавить лид');
-    }
+    if (r.ok) { toast.success('Напоминание закрыто'); router.refresh(); }
+    else toast.error('Не удалось обновить');
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Sales"
+        eyebrow="CRM"
         title={<>Продажи</>}
-        subtitle="Статусы клиентов, пакеты, комментарии и напоминания перезвонить."
+        subtitle="Лиды, их источники, владельцы и напоминания."
         action={
-          <button onClick={() => setCreating(true)} className="btn-lime !px-5 !py-3 !text-[11px]">
+          <Link href="/admin/sales/new" className="btn-lime !px-5 !py-3 !text-[11px]">
             + Новый лид
-          </button>
+          </Link>
         }
       />
+
+      {/* ── Статистика по продажникам ── */}
+      <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Лидов добавлено</p>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead className="text-[10px] uppercase tracking-[0.16em] text-light/40">
+              <tr>
+                <th className="pb-3 text-left">Продажник</th>
+                <th className="pb-3 text-right">За день</th>
+                <th className="pb-3 text-right">За неделю</th>
+                <th className="pb-3 text-right">За месяц</th>
+                <th className="pb-3 text-right">Всего</th>
+              </tr>
+            </thead>
+            <tbody>
+              {repStats.map((r) => (
+                <tr key={r.id} className="border-t border-white/5">
+                  <td className="py-2.5 text-light/85">{r.name}</td>
+                  <td className="py-2.5 text-right font-mono text-brand-lime">{r.day}</td>
+                  <td className="py-2.5 text-right font-mono text-light/70">{r.week}</td>
+                  <td className="py-2.5 text-right font-mono text-light/70">{r.month}</td>
+                  <td className="py-2.5 text-right font-mono text-light/45">{r.total}</td>
+                </tr>
+              ))}
+              {!repStats.length && (
+                <tr><td colSpan={5} className="py-6 text-center text-light/40">Пока нет данных.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Due reminders */}
       {dueReminders.length > 0 && (
         <div className="rounded-3xl border border-brand-orange/30 bg-brand-orange/[0.06] p-5">
           <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Напоминания — пора связаться</p>
           <div className="mt-3 space-y-2">
-            {dueReminders.map((c) => (
-              <div key={c.id} className="flex flex-wrap items-center gap-3 text-sm">
-                <span className="font-medium text-light">{c.contactName || c.businessName}</span>
-                {c.phone && <a href={`tel:${c.phone}`} className="font-mono text-[12px] text-brand-lime">{c.phone}</a>}
-                <span className="text-light/55">{c.reminderNote || 'перезвонить'}</span>
-                <span className="text-[11px] text-light/40">{fmtDateTime(c.reminderAt!)}</span>
+            {dueReminders.map((l) => (
+              <div key={l.id} className="flex flex-wrap items-center gap-3 text-sm">
+                <Link href={`/admin/sales/${l.id}`} className="font-medium text-light hover:text-brand-lime">
+                  {l.contactName}
+                </Link>
+                {l.phone && <a href={`tel:${l.phone}`} className="font-mono text-[12px] text-brand-lime">{l.phone}</a>}
+                <span className="text-light/55">{l.reminderNote || 'перезвонить'}</span>
+                <span className="text-[11px] text-light/40">{fmtDateTime(l.reminderAt!)}</span>
                 <button
-                  onClick={() => patch(c.id, { reminderDone: true }, 'Напоминание закрыто')}
+                  onClick={() => closeReminder(l.id)}
                   className="ml-auto text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime"
                 >
                   Выполнено
@@ -161,6 +153,26 @@ export function SalesClient({ clients }: { clients: Row[] }) {
           </div>
         </div>
       )}
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          placeholder="Поиск по имени, телефону, бизнесу…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="input-glass max-w-sm"
+        />
+        <button
+          onClick={() => setMine((v) => !v)}
+          className={cn(
+            'rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.14em] transition',
+            mine ? 'border-brand-lime bg-brand-lime text-[#0A0712]' : 'border-white/10 text-light/55 hover:text-light',
+          )}
+        >
+          Только мои
+        </button>
+        <span className="chip-lime">{visible.length} лидов</span>
+      </div>
 
       {/* Board */}
       <div className="grid gap-4 lg:grid-cols-5">
@@ -173,24 +185,35 @@ export function SalesClient({ clients }: { clients: Row[] }) {
                 <span className="text-[11px] text-light/40">{list.length}</span>
               </div>
               <div className="space-y-2">
-                {list.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => openCard(c)}
-                    className="block w-full rounded-2xl border border-white/[0.06] bg-ink/40 p-3 text-left transition-colors hover:border-brand-lime/30"
+                {list.map((l) => (
+                  <Link
+                    key={l.id}
+                    href={`/admin/sales/${l.id}`}
+                    className="block rounded-2xl border border-white/[0.06] bg-ink/40 p-3 transition-colors hover:border-brand-lime/30"
                   >
-                    <div className="truncate text-sm font-medium text-light">{c.contactName || c.businessName}</div>
-                    <div className="truncate text-[11px] text-light/45">{c.businessName} · {c.niche}</div>
-                    {c.packageType !== 'NONE' && (
+                    <div className="flex items-start gap-2.5">
+                      {l.sourceType === 'VIDEO' && l.sourceCover ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={l.sourceCover} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium text-light">{l.contactName}</div>
+                        <div className="truncate text-[11px] text-light/45">{l.businessName} · {l.niche}</div>
+                      </div>
+                    </div>
+                    {l.packageType !== 'NONE' && (
                       <span className="mt-2 inline-block rounded-full border border-brand-lime/30 bg-brand-lime/[0.06] px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-brand-lime">
-                        {PACKAGE_LABEL[c.packageType]}
+                        {PACKAGE_LABEL[l.packageType]}
                       </span>
                     )}
-                    {c.reminderAt && !c.reminderDone && (
-                      <div className="mt-2 text-[10px] text-brand-orange">⏰ {fmtDateTime(c.reminderAt)}</div>
+                    {l.reminderAt && !l.reminderDone && (
+                      <div className="mt-2 text-[10px] text-brand-orange">⏰ {fmtDateTime(l.reminderAt)}</div>
                     )}
-                    <div className="mt-2 text-[10px] uppercase tracking-[0.12em] text-light/25">с {fmtDate(c.createdAt)}</div>
-                  </button>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[10px] text-light/30">
+                      <span className="uppercase tracking-[0.12em]">с {fmtDate(l.createdAt)}</span>
+                      {l.assignedToName && <span className="text-brand-lime/70">· {l.assignedToName}</span>}
+                    </div>
+                  </Link>
                 ))}
                 {list.length === 0 && <p className="px-1 py-3 text-[11px] text-light/25">Пусто</p>}
               </div>
@@ -198,116 +221,6 @@ export function SalesClient({ clients }: { clients: Row[] }) {
           );
         })}
       </div>
-
-      {/* Edit panel */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4" onClick={() => setOpen(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/[0.08] bg-ink2 p-6">
-            <h3 className="font-display text-xl font-bold text-light">{open.businessName}</h3>
-            <p className="mt-1 text-[12px] text-light/45">
-              {open.email}{open.phone ? ` · ${open.phone}` : ''} · с {fmtDate(open.createdAt)}
-            </p>
-
-            <div className="mt-5 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label-soft">Статус</label>
-                  <select className="input-glass" value={draft.salesStatus} onChange={(e) => setDraft({ ...draft, salesStatus: e.target.value as SalesStatus })}>
-                    {SALES_STATUSES.map((s) => <option key={s} value={s}>{SALES_STATUS_LABEL[s]}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="label-soft">Пакет</label>
-                  <select className="input-glass" value={draft.packageType} onChange={(e) => setDraft({ ...draft, packageType: e.target.value as ClientPackage })}>
-                    {PACKAGES.map((p) => <option key={p} value={p}>{PACKAGE_LABEL[p]}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label-soft">Имя Фамилия</label>
-                  <input className="input-glass" value={draft.contactName ?? ''} onChange={(e) => setDraft({ ...draft, contactName: e.target.value })} />
-                </div>
-                <div>
-                  <label className="label-soft">Ниша</label>
-                  <input className="input-glass" value={draft.niche ?? ''} onChange={(e) => setDraft({ ...draft, niche: e.target.value })} />
-                </div>
-              </div>
-              <div>
-                <label className="label-soft">Комментарий</label>
-                <textarea className="input-glass min-h-[80px]" value={draft.comment ?? ''} onChange={(e) => setDraft({ ...draft, comment: e.target.value })} />
-              </div>
-              <div className="rounded-2xl border border-white/[0.06] p-4">
-                <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-brand-orange">Напоминание</p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="label-soft">Когда напомнить</label>
-                    <input
-                      type="datetime-local"
-                      className="input-glass"
-                      value={draft.reminderAt ? toLocalInput(new Date(draft.reminderAt)) : ''}
-                      onChange={(e) => setDraft({ ...draft, reminderAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                    />
-                  </div>
-                  <div>
-                    <label className="label-soft">Что сделать</label>
-                    <input className="input-glass" placeholder="перезвонить" value={draft.reminderNote ?? ''} onChange={(e) => setDraft({ ...draft, reminderNote: e.target.value })} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => setOpen(null)} className="btn-ghost">Отмена</button>
-              <button onClick={save} disabled={saving} className="btn-lime disabled:opacity-60">{saving ? 'Сохраняем…' : 'Сохранить'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* New lead */}
-      {creating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4" onClick={() => setCreating(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/[0.08] bg-ink2 p-6">
-            <h3 className="font-display text-xl font-bold text-light">Новый лид</h3>
-            <p className="mt-1 text-[12px] text-light/45">Появится на доске. Email и пароль для входа можно задать позже в карточке клиента.</p>
-
-            <div className="mt-5 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label-soft">Имя Фамилия</label>
-                  <input className="input-glass" value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
-                </div>
-                <div>
-                  <label className="label-soft">Телефон</label>
-                  <input className="input-glass" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label-soft">Бизнес</label>
-                  <input className="input-glass" value={lead.businessName} onChange={(e) => setLead({ ...lead, businessName: e.target.value })} />
-                </div>
-                <div>
-                  <label className="label-soft">Ниша</label>
-                  <input className="input-glass" value={lead.niche} onChange={(e) => setLead({ ...lead, niche: e.target.value })} />
-                </div>
-              </div>
-              <div>
-                <label className="label-soft">Статус</label>
-                <select className="input-glass" value={lead.salesStatus} onChange={(e) => setLead({ ...lead, salesStatus: e.target.value as SalesStatus })}>
-                  {SALES_STATUSES.map((s) => <option key={s} value={s}>{SALES_STATUS_LABEL[s]}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => setCreating(false)} className="btn-ghost">Отмена</button>
-              <button onClick={createLead} disabled={busy} className="btn-lime disabled:opacity-60">{busy ? 'Добавляем…' : 'Добавить лид'}</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getSafeSession } from '@/lib/session';
 import { isAdminLike } from '@/lib/roles';
 import { SALES_STATUSES, PACKAGES } from '@/lib/roles';
+import { notify } from '@/lib/notify';
+import { logAudit } from '@/lib/audit';
 
 /**
  * Update the sales/CRM fields of a client.
@@ -26,6 +28,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.packageType = body.packageType;
   }
   if (typeof body.contactName === 'string') data.contactName = body.contactName.trim() || null;
+
+  // Lead identity — keep contactName (used across the board) in sync.
+  if (typeof body.firstName === 'string' || typeof body.lastName === 'string') {
+    const existing = await prisma.client.findUnique({
+      where: { id: params.id },
+      select: { firstName: true, lastName: true },
+    });
+    const first = (typeof body.firstName === 'string' ? body.firstName : existing?.firstName ?? '').trim();
+    const last = (typeof body.lastName === 'string' ? body.lastName : existing?.lastName ?? '').trim();
+    data.firstName = first || null;
+    data.lastName = last || null;
+    const full = [first, last].filter(Boolean).join(' ');
+    if (full) data.contactName = full;
+  }
+
+  // Lead origin (video / other source).
+  if (body.sourceType === 'VIDEO' || body.sourceType === 'OTHER') data.sourceType = body.sourceType;
+  if (typeof body.sourceUrl === 'string') data.sourceUrl = body.sourceUrl.trim() || null;
+  if ('sourceCover' in body) data.sourceCover = body.sourceCover || null;
+  if (typeof body.sourceNote === 'string') data.sourceNote = body.sourceNote.trim() || null;
   if (typeof body.comment === 'string') data.comment = body.comment.trim() || null;
   if (typeof body.niche === 'string' && body.niche.trim()) data.niche = body.niche.trim();
   if ('reminderAt' in body) {
@@ -41,10 +63,46 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.techSpec = body.techSpec.trim() || null;
   }
 
+  // ── Transfer: hand the lead to another salesperson ──────────────
+  // The notes stay on the lead, so the new owner inherits the full history.
+  let transfer: { from: string; to: string; toId: string } | null = null;
+  if (typeof body.assignedToId === 'string' && body.assignedToId) {
+    const current = await prisma.client.findUnique({
+      where: { id: params.id },
+      select: { assignedToId: true, contactName: true, assignedTo: { select: { name: true } } },
+    });
+    if (current && current.assignedToId !== body.assignedToId) {
+      const next = await prisma.user.findUnique({
+        where: { id: body.assignedToId },
+        select: { id: true, name: true, role: true },
+      });
+      if (!next) return NextResponse.json({ error: 'Сотрудник не найден' }, { status: 400 });
+      data.assignedToId = next.id;
+      transfer = { from: current.assignedTo?.name ?? '—', to: next.name, toId: next.id };
+    }
+  }
+
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: 'Нечего обновлять' }, { status: 400 });
   }
 
   const client = await prisma.client.update({ where: { id: params.id }, data });
+
+  if (transfer) {
+    const summary = `Лид передан: ${transfer.from} → ${transfer.to}`;
+    // Visible in the lead's notes feed so the new owner sees who had it before.
+    await prisma.activity.create({
+      data: { kind: 'NOTE', body: summary, clientId: params.id, authorId: (session!.user as any).id ?? null },
+    });
+    await notify({
+      userId: transfer.toId,
+      kind: 'LEAD',
+      title: 'Вам передали лид',
+      body: client.contactName ?? client.businessName,
+      link: `/admin/sales/${params.id}`,
+    }).catch(() => {});
+    await logAudit({ action: 'updated', entity: 'lead', entityId: params.id, summary });
+  }
+
   return NextResponse.json({ ok: true, client: { id: client.id } });
 }

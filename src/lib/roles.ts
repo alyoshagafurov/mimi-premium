@@ -6,8 +6,8 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 
 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
-  | 'dashboard' | 'clients' | 'projects' | 'sales' | 'tasks'
-  | 'calendar' | 'team' | 'audit' | 'settings';
+  | 'dashboard' | 'clients' | 'projects' | 'sales'
+  | 'calendar' | 'team' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
@@ -148,10 +148,10 @@ export function visibleCategories(role?: string | null): EventCategory[] {
 /** Sections each specialised staff role may open (beyond calendar + projects). */
 const ROLE_SECTIONS: Record<string, AdminSection[]> = {
   SALES: ['calendar', 'projects', 'sales'],
-  DESIGNER: ['calendar', 'projects', 'tasks'],
-  DEVELOPER: ['calendar', 'projects', 'tasks'],
-  VIDEOGRAPHER: ['calendar', 'projects', 'tasks'],
-  MONTAGE: ['calendar', 'projects', 'tasks'],
+  DESIGNER: ['calendar', 'projects'],
+  DEVELOPER: ['calendar', 'projects'],
+  VIDEOGRAPHER: ['calendar', 'projects'],
+  MONTAGE: ['calendar', 'projects'],
 };
 
 export function canAccessSection(role: string | null | undefined, section: AdminSection): boolean {
@@ -166,8 +166,8 @@ export function sectionFromPath(pathname: string): AdminSection {
   if (pathname === '/admin' || pathname === '/admin/') return 'dashboard';
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
-    clients: 'clients', projects: 'projects', sales: 'sales', tasks: 'tasks',
-    calendar: 'calendar', team: 'team', audit: 'audit', settings: 'settings',
+    clients: 'clients', projects: 'projects', sales: 'sales',
+    calendar: 'calendar', team: 'team', settings: 'settings',
   };
   return map[seg] ?? 'dashboard';
 }

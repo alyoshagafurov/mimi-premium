@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ensureAdmin } from '@/lib/api-guard';
+import { ensureStaff } from '@/lib/api-guard';
 import { prisma } from '@/lib/prisma';
 import { slugify } from '@/lib/slug';
 
@@ -8,7 +8,7 @@ const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', '
 
 /** Admin-only image upload → stored + recorded in the Media Library. Returns { url, id }. */
 export async function POST(req: Request) {
-  const admin = await ensureAdmin();
+  const admin = await ensureStaff();
   if (!admin) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
 
   const form = await req.formData();

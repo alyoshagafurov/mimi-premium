@@ -75,9 +75,9 @@ async function runReminders() {
     const dateStr = t.dueDate!.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
     const body = `${t.title} — до ${dateStr}`;
     if (t.ownerId) {
-      await notify({ userId: t.ownerId, kind: 'TASK', title: 'Задача к сроку', body, link: '/admin/tasks' });
+      await notify({ userId: t.ownerId, kind: 'TASK', title: 'Задача к сроку', body, link: '/admin/sales' });
     } else {
-      await notifyAdmins({ kind: 'TASK', title: 'Задача к сроку', body, link: '/admin/tasks' });
+      await notifyAdmins({ kind: 'TASK', title: 'Задача к сроку', body, link: '/admin/sales' });
     }
     await prisma.task.update({ where: { id: t.id }, data: { remindedAt: now } });
     tasks++;
