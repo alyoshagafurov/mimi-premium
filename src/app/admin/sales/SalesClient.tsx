@@ -38,6 +38,40 @@ type RepStat = { id: string; name: string; role: string; day: number; week: numb
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
+/**
+ * Parse a hand-typed period: «20.07.2026 - 25.07.2026», «20.07.2026» (один день),
+ * «20.07 - 25.07» (текущий год). Any of . / - work inside a date; the two dates
+ * are simply the first two date-like tokens found.
+ */
+function parseRange(text: string): { start: number; end: number } | null {
+  const tokens = text.match(/\d{1,2}[./-]\d{1,2}(?:[./-]\d{2,4})?/g);
+  if (!tokens?.length) return null;
+
+  const toDate = (raw: string): Date | null => {
+    const m = raw.match(/^(\d{1,2})[./-](\d{1,2})(?:[./-](\d{2,4}))?$/);
+    if (!m) return null;
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    let year = m[3] ? Number(m[3]) : new Date().getFullYear();
+    if (year < 100) year += 2000;
+    const d = new Date(year, month - 1, day);
+    // reject impossible dates like 31.02
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    return d;
+  };
+
+  const a = toDate(tokens[0]);
+  if (!a) return null;
+  const b = tokens[1] ? toDate(tokens[1]) : a; // one date = that single day
+  if (!b) return null;
+
+  const [lo, hi] = a <= b ? [a, b] : [b, a]; // tolerate a reversed range
+  return {
+    start: new Date(lo.getFullYear(), lo.getMonth(), lo.getDate(), 0, 0, 0, 0).getTime(),
+    end: new Date(hi.getFullYear(), hi.getMonth(), hi.getDate(), 23, 59, 59, 999).getTime(),
+  };
+}
+
 const fmtDateTime = (iso: string) =>
   new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -57,20 +91,27 @@ export function SalesClient({
   const [q, setQ] = useState('');
   // Admin can drill into one salesperson's leads by clicking their row.
   const [repFilter, setRepFilter] = useState<string | null>(null);
-  // Free date range — «сколько лидов добавлено» за произвольный период.
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  // Free date range, typed by hand and applied on click (not while typing).
+  const [periodText, setPeriodText] = useState('');
+  const [bounds, setBounds] = useState<{ start: number; end: number } | null>(null);
 
-  const rangeActive = !!(from || to);
-  // End date is inclusive to end-of-day, so picking one day covers that whole day.
-  const bounds = useMemo(() => ({
-    start: from ? new Date(`${from}T00:00:00`).getTime() : -Infinity,
-    end: to ? new Date(`${to}T23:59:59.999`).getTime() : Infinity,
-  }), [from, to]);
+  const rangeActive = bounds !== null;
+
+  const applyPeriod = () => {
+    if (!periodText.trim()) { setBounds(null); return; }
+    const parsed = parseRange(periodText);
+    if (!parsed) {
+      toast.error('Не понял период. Например: 20.07.2026 - 25.07.2026');
+      return;
+    }
+    setBounds(parsed);
+  };
+
+  const clearPeriod = () => { setPeriodText(''); setBounds(null); };
 
   // Counted client-side from the leads already on the page — instant, no refetch.
   const rangeCount = useMemo(() => {
-    if (!rangeActive) return null;
+    if (!bounds) return null;
     const { start, end } = bounds;
     const counts = new Map<string, number>();
     let all = 0;
@@ -88,7 +129,7 @@ export function SalesClient({
     return leads.filter((l) => {
       if (mine && l.assignedToId !== meId) return false;
       if (repFilter && l.createdById !== repFilter) return false;
-      if (rangeActive) {
+      if (bounds) {
         const t = new Date(l.createdAt).getTime();
         if (t < bounds.start || t > bounds.end) return false;
       }
@@ -96,7 +137,7 @@ export function SalesClient({
       return [l.contactName, l.businessName, l.niche, l.phone, l.email, l.assignedToName ?? '']
         .join(' ').toLowerCase().includes(needle);
     });
-  }, [leads, mine, meId, q, repFilter, rangeActive, bounds]);
+  }, [leads, mine, meId, q, repFilter, bounds]);
 
   const byStatus = useMemo(() => {
     const map = new Map<SalesStatus, Lead[]>();
@@ -141,11 +182,20 @@ export function SalesClient({
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[10px] uppercase tracking-[0.14em] text-light/35">Период</span>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="input-glass !w-auto !py-1.5 !text-[12px]" />
-            <span className="text-light/30">—</span>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input-glass !w-auto !py-1.5 !text-[12px]" />
+            <input
+              type="text"
+              inputMode="numeric"
+              value={periodText}
+              onChange={(e) => setPeriodText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && applyPeriod()}
+              placeholder="20.07.2026 - 25.07.2026"
+              className="input-glass !w-[220px] !py-1.5 !text-[12px]"
+            />
+            <button onClick={applyPeriod} className="btn-lime !px-4 !py-1.5 !text-[11px]">
+              Показать
+            </button>
             {rangeActive && (
-              <button onClick={() => { setFrom(''); setTo(''); }} className="text-[11px] uppercase tracking-[0.14em] text-light/45 hover:text-brand-lime">
+              <button onClick={clearPeriod} className="text-[11px] uppercase tracking-[0.14em] text-light/45 hover:text-brand-lime">
                 Сбросить
               </button>
             )}
