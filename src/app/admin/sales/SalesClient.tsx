@@ -230,7 +230,12 @@ export function SalesClient({
                       ) : null}
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium text-light">{l.contactName}</div>
-                        <div className="truncate text-[11px] text-light/45">{l.businessName} · {l.niche}</div>
+                        {(l.businessName !== l.contactName || l.niche !== 'Не указана') && (
+                          <div className="truncate text-[11px] text-light/45">
+                            {[l.businessName !== l.contactName ? l.businessName : '', l.niche !== 'Не указана' ? l.niche : '']
+                              .filter(Boolean).join(' · ')}
+                          </div>
+                        )}
                       </div>
                     </div>
                     {l.packageType !== 'NONE' && (

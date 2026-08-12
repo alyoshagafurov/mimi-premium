@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 
 const EMPTY = {
   firstName: '', lastName: '', phone: '', email: '',
-  businessName: '', niche: '',
   salesStatus: 'NEW_LEAD' as string,
   packageType: 'NONE' as string,
   sourceType: 'VIDEO' as 'VIDEO' | 'OTHER',
@@ -85,14 +84,6 @@ export function NewLeadForm({
             <div>
               <label className="label-soft">Email</label>
               <input className="input-glass" type="email" value={f.email} onChange={set('email')} />
-            </div>
-            <div>
-              <label className="label-soft">Бизнес</label>
-              <input className="input-glass" value={f.businessName} onChange={set('businessName')} />
-            </div>
-            <div>
-              <label className="label-soft">Ниша</label>
-              <input className="input-glass" value={f.niche} onChange={set('niche')} />
             </div>
           </div>
         </div>
@@ -177,7 +168,7 @@ export function NewLeadForm({
 
         {/* ── Заметка ── */}
         <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6">
-          <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Первая заметка</p>
+          <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Заметка</p>
           <textarea
             className="input-glass min-h-[140px]"
             value={f.comment}

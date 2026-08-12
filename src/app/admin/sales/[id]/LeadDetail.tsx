@@ -53,6 +53,11 @@ export function LeadDetail({
   const [owner, setOwner] = useState(lead.assignedToId);
   const [saving, setSaving] = useState(false);
   const embed = videoEmbed(lead.sourceUrl);
+  // Leads no longer capture business/niche, so these hold placeholders
+  // (business = the person's name, niche = «Не указана»). Show them only for
+  // real records — e.g. a lead that already became a partner.
+  const hasBusiness = !!lead.businessName && lead.businessName !== lead.contactName;
+  const hasNiche = !!lead.niche && lead.niche !== 'Не указана';
 
   const patch = async (body: any, msg: string) => {
     setSaving(true);
@@ -95,7 +100,7 @@ export function LeadDetail({
       <PageHeader
         eyebrow="Лид"
         title={<>{lead.contactName}</>}
-        subtitle={`${lead.businessName} · ${lead.niche}`}
+        subtitle={[hasBusiness ? lead.businessName : '', hasNiche ? lead.niche : ''].filter(Boolean).join(' · ')}
       />
 
       <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
@@ -113,8 +118,8 @@ export function LeadDetail({
               label="Email"
               value={lead.email.endsWith('@lead.mimitj.agency') ? '—' : <a href={`mailto:${lead.email}`} className="text-brand-lime">{lead.email}</a>}
             />
-            <Row label="Бизнес" value={lead.businessName} />
-            <Row label="Ниша" value={lead.niche} />
+            {hasBusiness && <Row label="Бизнес" value={lead.businessName} />}
+            {hasNiche && <Row label="Ниша" value={lead.niche} />}
             <Row label="Добавлен" value={fmt(lead.createdAt)} />
             <Row label="Кто добавил" value={lead.createdByName} />
           </div>
@@ -218,7 +223,7 @@ export function LeadDetail({
 
           {lead.comment && (
             <div className="mt-5 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
-              <div className="mb-1 text-[11px] text-light/40">Первая заметка</div>
+              <div className="mb-1 text-[11px] text-light/40">Заметка</div>
               <p className="whitespace-pre-wrap text-sm text-light/85">{lead.comment}</p>
             </div>
           )}
