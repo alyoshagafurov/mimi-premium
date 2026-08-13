@@ -9,7 +9,7 @@ import { SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL } from '@/l
 import { cn } from '@/lib/utils';
 
 const EMPTY = {
-  firstName: '', lastName: '', phone: '', email: '',
+  firstName: '', lastName: '', phone: '', email: '', telegram: '', instagram: '',
   salesStatus: 'NEW_LEAD' as string,
   packageType: 'NONE' as string,
   sourceType: 'VIDEO' as 'VIDEO' | 'OTHER',
@@ -84,6 +84,14 @@ export function NewLeadForm({
             <div>
               <label className="label-soft">Email</label>
               <input className="input-glass" type="email" value={f.email} onChange={set('email')} />
+            </div>
+            <div>
+              <label className="label-soft">Telegram</label>
+              <input className="input-glass" value={f.telegram} onChange={set('telegram')} placeholder="@username" />
+            </div>
+            <div>
+              <label className="label-soft">Instagram</label>
+              <input className="input-glass" value={f.instagram} onChange={set('instagram')} placeholder="@username" />
             </div>
           </div>
         </div>

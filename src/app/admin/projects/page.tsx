@@ -5,9 +5,12 @@ import { PageHeader } from '@/components/admin/PageHeader';
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'Активен', ARCHIVED: 'В архиве' };
 
 export default async function AdminProjectsPage() {
+  // Только партнёры: новый лид сюда не попадает, пока админ не переведёт его
+  // в статус «Партнёр» в карточке лида (или пока не отмечена оплата).
   const clients = await prisma.client.findMany({
+    where: { salesStatus: 'PARTNER' },
     include: { owner: { select: { name: true, email: true, phone: true } } },
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
   });
 
   return (
@@ -16,7 +19,7 @@ export default async function AdminProjectsPage() {
 
       {clients.length === 0 ? (
         <p className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-10 text-center text-light/50">
-          Пока нет проектов.
+          Пока нет проектов. Лид появится здесь, когда получит статус «Партнёр».
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

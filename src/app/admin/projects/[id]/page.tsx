@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { isAdminLike, SALES_STATUS_LABEL, PACKAGE_LABEL, type SalesStatus, type ClientPackage } from '@/lib/roles';
+import { telegramUrl, instagramUrl } from '@/lib/utils';
 import { TechSpec } from './TechSpec';
 import { ProductionStatus } from './ProductionStatus';
 import { ProjectNotes } from './ProjectNotes';
@@ -72,14 +73,26 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
           <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Контакты для связи</p>
           <Row label="Имя" value={c.owner.name} />
           <Row label="Телефон" value={c.owner.phone} />
-          <Row label="Email" value={c.owner.email} />
+          <Row
+            label="Telegram"
+            value={c.telegram ? <a href={telegramUrl(c.telegram)} target="_blank" rel="noreferrer" className="text-brand-lime hover:underline">{c.telegram}</a> : ''}
+          />
+          <Row
+            label="Instagram"
+            value={c.instagram ? <a href={instagramUrl(c.instagram)} target="_blank" rel="noreferrer" className="text-brand-lime hover:underline">{c.instagram}</a> : ''}
+          />
           <div className="mt-5 flex flex-wrap gap-3">
             {waPhone && (
               <a href={`https://wa.me/${waPhone}`} target="_blank" rel="noreferrer" className="btn-lime !px-5 !py-2.5 !text-[12px]">
                 WhatsApp
               </a>
             )}
-            <a href={`mailto:${c.owner.email}`} className="btn-ghost !px-5 !py-2.5 !text-[12px]">Написать email</a>
+            {c.telegram && (
+              <a href={telegramUrl(c.telegram)} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5 !text-[12px]">Telegram</a>
+            )}
+            {c.instagram && (
+              <a href={instagramUrl(c.instagram)} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5 !text-[12px]">Instagram</a>
+            )}
           </div>
         </div>
       </div>

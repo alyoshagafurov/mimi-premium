@@ -109,6 +109,21 @@ export function SalesClient({
 
   const clearPeriod = () => { setPeriodText(''); setBounds(null); };
 
+  // ⋯ menu on a lead card
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+
+  const removeLead = async (l: Lead) => {
+    if (!confirm(`Удалить лид «${l.contactName}»? Вместе с ним удалятся его заметки.`)) return;
+    setMenuFor(null);
+    const r = await fetch(`/api/sales/${l.id}`, { method: 'DELETE' });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      return toast.error(d.error || 'Не удалось удалить лид');
+    }
+    toast.success('Лид удалён');
+    router.refresh();
+  };
+
   /**
    * Space is the separator: «20» ␣ «8» ␣ «2026» → 20/8/2026, and one more space
    * after a finished date starts the end of the range. Enter applies.
@@ -344,9 +359,35 @@ export function SalesClient({
                   <Link
                     key={l.id}
                     href={`/admin/sales/${l.id}`}
-                    className="block rounded-2xl border border-white/[0.06] bg-ink/40 p-3 transition-colors hover:border-brand-lime/30"
+                    className="relative block rounded-2xl border border-white/[0.06] bg-ink/40 p-3 transition-colors hover:border-brand-lime/30"
                   >
-                    <div className="flex items-start gap-2.5">
+                    {/* ⋯ — действия с лидом */}
+                    <button
+                      type="button"
+                      aria-label="Действия"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuFor((cur) => (cur === l.id ? null : l.id)); }}
+                      className="absolute right-1.5 top-1.5 z-20 rounded-lg px-1.5 py-0.5 text-light/35 transition hover:bg-white/[0.06] hover:text-light"
+                    >
+                      ⋯
+                    </button>
+                    {menuFor === l.id && (
+                      <>
+                        <span
+                          className="fixed inset-0 z-20"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuFor(null); }}
+                        />
+                        <div className="absolute right-1.5 top-8 z-30 min-w-[150px] overflow-hidden rounded-xl border border-white/10 bg-ink2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeLead(l); }}
+                            className="block w-full px-3.5 py-2.5 text-left text-[12px] text-rose-300 transition hover:bg-rose-400/10"
+                          >
+                            Удалить лид
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex items-start gap-2.5 pr-6">
                       {l.sourceType === 'VIDEO' && l.sourceCover ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={l.sourceCover} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />

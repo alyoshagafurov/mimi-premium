@@ -21,6 +21,8 @@ const schema = z.object({
   sourceType: z.enum(['VIDEO', 'OTHER']).default('OTHER'),
   sourceUrl: z.string().max(500).optional(),
   sourceNote: z.string().max(500).optional(),
+  telegram: z.string().max(120).optional(),
+  instagram: z.string().max(120).optional(),
   comment: z.string().max(2000).optional(),
   assignedToId: z.string().optional(),
 });
@@ -75,6 +77,8 @@ export async function POST(req: Request) {
             sourceType: d.sourceType as any,
             sourceUrl,
             sourceCover,
+            telegram: d.telegram?.trim() || null,
+            instagram: d.instagram?.trim() || null,
             sourceNote: d.sourceNote?.trim() || null,
             comment: d.comment?.trim() || null,
             createdById: me?.id ?? null,

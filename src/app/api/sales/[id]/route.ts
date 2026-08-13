@@ -53,6 +53,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.sourceCover = url ? await resolveVideoCover(url) : null;
   }
   if (typeof body.sourceNote === 'string') data.sourceNote = body.sourceNote.trim() || null;
+  if (typeof body.telegram === 'string') data.telegram = body.telegram.trim() || null;
+  if (typeof body.instagram === 'string') data.instagram = body.instagram.trim() || null;
   if (typeof body.comment === 'string') data.comment = body.comment.trim() || null;
   if (typeof body.niche === 'string' && body.niche.trim()) data.niche = body.niche.trim();
   if ('reminderAt' in body) {
@@ -110,4 +112,44 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   return NextResponse.json({ ok: true, client: { id: client.id } });
+}
+
+/**
+ * Delete a lead. Removing the owning user cascades to the client and its notes.
+ * Everyone who can add a lead (sales, admin, ops) can delete one, so a mistaken
+ * entry is fixable by whoever made it.
+ */
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  const session = await getSafeSession();
+  const me = session?.user as any;
+  const role = me?.role as string | undefined;
+  const adminLike = isAdminLike(role);
+  if (!adminLike && role !== 'SALES') {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+
+  const client = await prisma.client.findUnique({
+    where: { id: params.id },
+    select: {
+      ownerId: true, businessName: true, contactName: true,
+      salesStatus: true, createdById: true, assignedToId: true,
+    },
+  });
+  if (!client) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+
+  // Anyone who can add a lead can remove it — a wrong entry must be fixable by
+  // the person who made it. A converted partner is a real client, not a lead,
+  // so that one stays admin-only.
+  if (!adminLike && client.salesStatus === 'PARTNER') {
+    return NextResponse.json({ error: 'Партнёра удаляет только администратор' }, { status: 403 });
+  }
+
+  await prisma.user.delete({ where: { id: client.ownerId } });
+  await logAudit({
+    action: 'deleted',
+    entity: 'lead',
+    entityId: params.id,
+    summary: `Удалён лид «${client.contactName ?? client.businessName}»`,
+  });
+  return NextResponse.json({ ok: true });
 }

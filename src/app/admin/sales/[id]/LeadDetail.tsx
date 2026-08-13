@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { videoEmbed } from '@/lib/link-preview';
+import { telegramUrl, instagramUrl } from '@/lib/utils';
 import {
   SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL,
   type SalesStatus, type ClientPackage,
@@ -17,6 +18,7 @@ type Lead = {
   salesStatus: SalesStatus; packageType: ClientPackage;
   sourceType: 'VIDEO' | 'OTHER';
   sourceUrl: string | null; sourceCover: string | null; sourceNote: string | null;
+  telegram: string | null; instagram: string | null;
   comment: string;
   createdByName: string | null; assignedToId: string; assignedToName: string | null;
   reminderAt: string | null; reminderNote: string; createdAt: string;
@@ -117,6 +119,14 @@ export function LeadDetail({
             <Row
               label="Email"
               value={lead.email.endsWith('@lead.mimitj.agency') ? '—' : <a href={`mailto:${lead.email}`} className="text-brand-lime">{lead.email}</a>}
+            />
+            <Row
+              label="Telegram"
+              value={lead.telegram ? <a href={telegramUrl(lead.telegram)} target="_blank" rel="noreferrer" className="text-brand-lime hover:underline">{lead.telegram}</a> : ''}
+            />
+            <Row
+              label="Instagram"
+              value={lead.instagram ? <a href={instagramUrl(lead.instagram)} target="_blank" rel="noreferrer" className="text-brand-lime hover:underline">{lead.instagram}</a> : ''}
             />
             {hasBusiness && <Row label="Бизнес" value={lead.businessName} />}
             {hasNiche && <Row label="Ниша" value={lead.niche} />}

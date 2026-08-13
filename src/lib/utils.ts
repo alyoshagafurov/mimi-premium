@@ -200,3 +200,9 @@ export const isToday = (d?: string | Date | null) => {
   const t = new Date();
   return date.getFullYear() === t.getFullYear() && date.getMonth() === t.getMonth() && date.getDate() === t.getDate();
 };
+
+/** Contact handles — accept «@name», «name» or a full URL and always link out. */
+export const telegramUrl = (v: string) =>
+  /^https?:\/\//i.test(v) ? v : `https://t.me/${v.replace(/^@/, '')}`;
+export const instagramUrl = (v: string) =>
+  /^https?:\/\//i.test(v) ? v : `https://instagram.com/${v.replace(/^@/, '')}`;

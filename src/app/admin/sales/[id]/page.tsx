@@ -51,6 +51,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         sourceUrl: lead.sourceUrl,
         sourceCover: lead.sourceCover,
         sourceNote: lead.sourceNote,
+        telegram: lead.telegram,
+        instagram: lead.instagram,
         comment: lead.comment ?? '',
         createdByName: lead.createdBy?.name ?? null,
         assignedToId: lead.assignedTo?.id ?? '',

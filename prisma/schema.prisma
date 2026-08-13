@@ -249,6 +249,8 @@ model Client {
   sourceUrl   String? // link to the video the lead came from
   sourceCover String? // uploaded cover image of that video
   sourceNote  String? // free-text source when it isn't a video
+  telegram    String? // @username или ссылка
+  instagram   String? // @username или ссылка
 
   // Ownership: who first added the lead vs. who works it now (transferable).
   createdById  String?
