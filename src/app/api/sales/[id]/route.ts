@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSafeSession } from '@/lib/session';
-import { isAdminLike } from '@/lib/roles';
+import { isAdminLike, canWorkLeads } from '@/lib/roles';
 import { SALES_STATUSES, PACKAGES } from '@/lib/roles';
 import { notify } from '@/lib/notify';
 import { logAudit } from '@/lib/audit';
@@ -15,7 +15,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const session = await getSafeSession();
   const role = (session?.user as any)?.role as string | undefined;
   const adminLike = isAdminLike(role);
-  if (!adminLike && role !== 'SALES') {
+  if (!canWorkLeads(role)) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
@@ -124,7 +124,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const me = session?.user as any;
   const role = me?.role as string | undefined;
   const adminLike = isAdminLike(role);
-  if (!adminLike && role !== 'SALES') {
+  if (!canWorkLeads(role)) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

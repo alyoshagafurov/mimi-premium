@@ -21,6 +21,17 @@ export function isStaff(role?: string | null): boolean {
 export function isAdminLike(role?: string | null): boolean {
   return role === 'ADMIN' || role === 'OPS_DIRECTOR';
 }
+/**
+ * Roles that work the CRM: they may add leads and see every lead on the board.
+ * Personal lead *statistics* are still scoped — only ADMIN sees everyone's
+ * numbers (see canSeeRevenue).
+ */
+export const LEAD_ROLES: Role[] = ['ADMIN', 'OPS_DIRECTOR', 'SALES', 'DEVELOPER'];
+
+export function canWorkLeads(role?: string | null): boolean {
+  return !!role && (LEAD_ROLES as string[]).includes(role);
+}
+
 /** Only the full ADMIN sees company revenue figures. */
 export function canSeeRevenue(role?: string | null): boolean {
   return role === 'ADMIN';
@@ -149,7 +160,7 @@ export function visibleCategories(role?: string | null): EventCategory[] {
 const ROLE_SECTIONS: Record<string, AdminSection[]> = {
   SALES: ['calendar', 'projects', 'sales'],
   DESIGNER: ['calendar', 'projects'],
-  DEVELOPER: ['calendar', 'projects'],
+  DEVELOPER: ['calendar', 'projects', 'sales'],
   VIDEOGRAPHER: ['calendar', 'projects'],
   MONTAGE: ['calendar', 'projects'],
 };

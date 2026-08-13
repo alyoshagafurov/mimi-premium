@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSafeSession } from '@/lib/session';
-import { isAdminLike, SALES_STATUSES } from '@/lib/roles';
+import { canWorkLeads, SALES_STATUSES } from '@/lib/roles';
 import { normalizeEmail } from '@/lib/validation';
 import { logAudit } from '@/lib/audit';
 import { resolveVideoCover } from '@/lib/link-preview';
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const session = await getSafeSession();
   const me = session?.user as any;
   const role = me?.role as string | undefined;
-  if (!isAdminLike(role) && role !== 'SALES') {
+  if (!canWorkLeads(role)) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

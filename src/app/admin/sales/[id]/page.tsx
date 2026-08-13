@@ -1,14 +1,14 @@
 import { notFound, redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isAdminLike } from '@/lib/roles';
+import { canWorkLeads, LEAD_ROLES } from '@/lib/roles';
 import { LeadDetail } from './LeadDetail';
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
   const session = await getSafeSession();
   const me = session?.user as any;
   const role = me?.role as string | undefined;
-  if (!isAdminLike(role) && role !== 'SALES') redirect('/admin');
+  if (!canWorkLeads(role)) redirect('/admin');
 
   const [lead, reps] = await Promise.all([
     prisma.client.findUnique({
@@ -26,7 +26,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
       },
     }),
     prisma.user.findMany({
-      where: { role: { in: ['SALES', 'ADMIN', 'OPS_DIRECTOR'] } },
+      where: { role: { in: LEAD_ROLES } },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
