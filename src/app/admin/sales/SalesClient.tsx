@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { cn } from '@/lib/utils';
 import {
-  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGE_LABEL, ROLE_LABEL,
+  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL, ROLE_LABEL,
   type SalesStatus, type ClientPackage,
 } from '@/lib/roles';
 import type { Role } from '@prisma/client';
@@ -107,7 +107,39 @@ export function SalesClient({
     setBounds(parsed);
   };
 
-  const clearPeriod = () => { setPeriodText(''); setBounds(null); };
+  const clearPeriod = () => { setPeriodText(''); setBounds(null); setCalFrom(''); setCalTo(''); };
+
+  // Package filter — empty set means «все пакеты».
+  const [packages, setPackages] = useState<Set<string>>(new Set());
+  const [pkgOpen, setPkgOpen] = useState(false);
+  const togglePackage = (p: string) =>
+    setPackages((cur) => {
+      const next = new Set(cur);
+      next.has(p) ? next.delete(p) : next.add(p);
+      return next;
+    });
+
+  // Calendar popover — an alternative to typing the period by hand.
+  const [calOpen, setCalOpen] = useState(false);
+  const [calFrom, setCalFrom] = useState('');
+  const [calTo, setCalTo] = useState('');
+
+  /** ISO (yyyy-mm-dd) → d/m/yyyy, the same shape the text field uses. */
+  const isoToRu = (iso: string) => {
+    const [y, m, d] = iso.split('-');
+    return `${Number(d)}/${Number(m)}/${y}`;
+  };
+  const applyCalendar = (nextFrom: string, nextTo: string) => {
+    setCalFrom(nextFrom);
+    setCalTo(nextTo);
+    if (!nextFrom && !nextTo) return;
+    const a = nextFrom || nextTo;
+    const b = nextTo || nextFrom;
+    const text = a === b ? isoToRu(a) : `${isoToRu(a)} - ${isoToRu(b)}`;
+    setPeriodText(text);
+    const parsed = parseRange(text);
+    if (parsed) setBounds(parsed);
+  };
 
   // ⋯ menu on a lead card
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -165,11 +197,12 @@ export function SalesClient({
         const t = new Date(l.createdAt).getTime();
         if (t < bounds.start || t > bounds.end) return false;
       }
+      if (packages.size && !packages.has(l.packageType)) return false;
       if (!needle) return true;
       return [l.contactName, l.businessName, l.niche, l.phone, l.email, l.assignedToName ?? '']
         .join(' ').toLowerCase().includes(needle);
     });
-  }, [leads, mine, meId, q, repFilter, bounds]);
+  }, [leads, mine, meId, q, repFilter, bounds, packages]);
 
   const byStatus = useMemo(() => {
     const map = new Map<SalesStatus, Lead[]>();
@@ -224,6 +257,89 @@ export function SalesClient({
               title="Пробел = разделитель: 20␣8␣2026␣25␣8␣2026"
               className="input-glass !w-[230px] !py-1.5 !text-[12px]"
             />
+            {/* Календарь — альтернатива ручному вводу */}
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Выбрать даты в календаре"
+                onClick={() => setCalOpen((v) => !v)}
+                className={cn(
+                  'rounded-xl border px-2.5 py-1.5 text-[13px] transition',
+                  calOpen ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+                )}
+              >
+                🗓
+              </button>
+              {calOpen && (
+                <>
+                  <span className="fixed inset-0 z-20" onClick={() => setCalOpen(false)} />
+                  <div className="absolute left-0 top-10 z-30 w-[230px] rounded-2xl border border-white/10 bg-ink2 p-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                    <label className="label-soft">С какого числа</label>
+                    <input
+                      type="date"
+                      value={calFrom}
+                      onChange={(e) => applyCalendar(e.target.value, calTo)}
+                      className="input-glass !py-1.5 !text-[12px]"
+                    />
+                    <label className="label-soft mt-3 block">По какое</label>
+                    <input
+                      type="date"
+                      value={calTo}
+                      onChange={(e) => applyCalendar(calFrom, e.target.value)}
+                      className="input-glass !py-1.5 !text-[12px]"
+                    />
+                    <p className="mt-2 text-[10px] leading-relaxed text-light/35">
+                      Одна дата — этот день. Можно и просто набрать период вручную.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Пакет — можно выбрать несколько; пусто = все */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setPkgOpen((v) => !v)}
+                className={cn(
+                  'rounded-xl border px-3 py-1.5 text-[12px] transition',
+                  packages.size ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+                )}
+              >
+                Пакет{packages.size ? ` · ${packages.size}` : ''}
+              </button>
+              {pkgOpen && (
+                <>
+                  <span className="fixed inset-0 z-20" onClick={() => setPkgOpen(false)} />
+                  <div className="absolute left-0 top-10 z-30 max-h-[300px] w-[220px] overflow-y-auto rounded-2xl border border-white/10 bg-ink2 p-2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                    {PACKAGES.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => togglePackage(p)}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]"
+                      >
+                        <span className={cn(
+                          'flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]',
+                          packages.has(p) ? 'border-brand-lime bg-brand-lime text-[#0A0712]' : 'border-white/20 text-transparent',
+                        )}>✓</span>
+                        <span className={packages.has(p) ? 'text-light' : 'text-light/65'}>{PACKAGE_LABEL[p]}</span>
+                      </button>
+                    ))}
+                    {packages.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPackages(new Set())}
+                        className="mt-1 w-full rounded-lg px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.14em] text-light/45 hover:text-brand-lime"
+                      >
+                        Сбросить пакеты
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
             <button onClick={applyPeriod} className="btn-lime !px-4 !py-1.5 !text-[11px]">
               Показать
             </button>
