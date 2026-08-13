@@ -5,7 +5,22 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { ROLE_LABEL, ASSIGNABLE_ROLES } from '@/lib/roles';
+import { passwordRules } from '@/lib/validation';
 import type { Role } from '@prisma/client';
+
+/** Live checklist — the same rules the API enforces, so nothing is a surprise. */
+function PasswordRules({ value }: { value: string }) {
+  return (
+    <ul className="mt-2 space-y-1">
+      {passwordRules(value).map((r) => (
+        <li key={r.id} className={`flex items-center gap-2 text-[11px] ${r.ok ? 'text-brand-lime' : 'text-light/40'}`}>
+          <span>{r.ok ? '✓' : '○'}</span>
+          {r.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 type Staff = { id: string; name: string; email: string; phone: string | null; role: Role };
 
@@ -16,6 +31,9 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [pwFor, setPwFor] = useState<Staff | null>(null);
+  const [pw, setPw] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((p) => ({ ...p, [k]: v }));
 
   const create = async () => {
@@ -50,16 +68,24 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
     router.refresh();
   };
 
-  const resetPassword = async (id: string) => {
-    const password = prompt('Новый пароль (мин. 6 символов):');
-    if (!password) return;
-    const r = await fetch(`/api/admin/team/${id}`, {
+  const savePassword = async () => {
+    if (!pwFor) return;
+    setPwSaving(true);
+    const r = await fetch(`/api/admin/team/${pwFor.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password: pw }),
     });
-    if (!r.ok) return toast.error('Не удалось сменить пароль');
-    toast.success('Пароль обновлён');
+    setPwSaving(false);
+    if (!r.ok) {
+      // Surface the API's real reason (e.g. which rule failed) instead of a
+      // generic failure — that's why changing a password "just didn't work".
+      const d = await r.json().catch(() => ({}));
+      return toast.error(d.error || 'Не удалось сменить пароль');
+    }
+    toast.success(`Пароль для «${pwFor.name}» обновлён`);
+    setPwFor(null);
+    setPw('');
   };
 
   const remove = async (id: string) => {
@@ -81,7 +107,10 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
           <input className="input-glass" placeholder="Имя Фамилия" value={form.name} onChange={(e) => set('name', e.target.value)} />
           <input className="input-glass" placeholder="Email (логин)" value={form.email} onChange={(e) => set('email', e.target.value)} />
           <input className="input-glass" placeholder="Телефон (необязательно)" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
-          <input className="input-glass" type="text" placeholder="Пароль" value={form.password} onChange={(e) => set('password', e.target.value)} />
+          <div>
+            <input className="input-glass" type="text" placeholder="Пароль" value={form.password} onChange={(e) => set('password', e.target.value)} />
+            {form.password && <PasswordRules value={form.password} />}
+          </div>
           <select className="input-glass" value={form.role} onChange={(e) => set('role', e.target.value as Role)}>
             {ASSIGNABLE_ROLES.map((r) => (
               <option key={r} value={r}>{ROLE_LABEL[r]}</option>
@@ -118,7 +147,7 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
                     <option key={r} value={r}>{ROLE_LABEL[r]}</option>
                   ))}
                 </select>
-                <button onClick={() => resetPassword(s.id)} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
+                <button onClick={() => { setPwFor(s); setPw(''); }} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
                   Пароль
                 </button>
                 {s.id !== meId && (
@@ -131,6 +160,37 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
           </div>
         )}
       </div>
+
+      {/* Смена пароля сотрудника */}
+      {pwFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4" onClick={() => setPwFor(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-ink2 p-6">
+            <h3 className="font-display text-xl font-bold text-light">Новый пароль</h3>
+            <p className="mt-1 text-[12px] text-light/45">{pwFor.name} · {pwFor.email}</p>
+
+            <div className="mt-5">
+              <label className="label-soft">Пароль</label>
+              <input
+                className="input-glass"
+                type="text"
+                autoFocus
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && savePassword()}
+                placeholder="Например: Mimi2026!"
+              />
+              <PasswordRules value={pw} />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setPwFor(null)} className="btn-ghost">Отмена</button>
+              <button onClick={savePassword} disabled={pwSaving || !pw} className="btn-lime disabled:opacity-50">
+                {pwSaving ? 'Сохраняем…' : 'Сохранить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
