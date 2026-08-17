@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { canWorkLeads, LEAD_ROLES } from '@/lib/roles';
+import { canWorkLeads, isAdminLike, LEAD_ROLES } from '@/lib/roles';
 import { LeadDetail } from './LeadDetail';
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
@@ -34,6 +34,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     }),
   ]);
   if (!lead) notFound();
+  // Продажник/разработчик работают только со своими лидами — чужой не открыть
+  // даже по прямой ссылке.
+  if (!isAdminLike(role) && lead.assignedToId !== me?.id) notFound();
 
   return (
     <LeadDetail

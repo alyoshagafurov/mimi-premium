@@ -80,11 +80,13 @@ export function SalesClient({
   repStats,
   meId,
   seesEveryone,
+  seesAllLeads,
 }: {
   leads: Lead[];
   repStats: RepStat[];
   meId: string;
   seesEveryone: boolean;
+  seesAllLeads: boolean;
 }) {
   const router = useRouter();
   const [mine, setMine] = useState(false);
@@ -109,6 +111,14 @@ export function SalesClient({
 
   const clearPeriod = () => { setPeriodText(''); setBounds(null); setCalFrom(''); setCalTo(''); };
 
+  /** What the «Период» button shows: the chosen range, or just the word. */
+  const asDate = (ms: number) => new Date(ms).toLocaleDateString('ru-RU');
+  const periodLabel = bounds
+    ? (asDate(bounds.start) === asDate(bounds.end)
+        ? asDate(bounds.start)
+        : `${asDate(bounds.start)} — ${asDate(bounds.end)}`)
+    : 'Период';
+
   // Package filter — empty set means «все пакеты».
   const [packages, setPackages] = useState<Set<string>>(new Set());
   const [pkgOpen, setPkgOpen] = useState(false);
@@ -119,8 +129,7 @@ export function SalesClient({
       return next;
     });
 
-  // Calendar popover — an alternative to typing the period by hand.
-  const [calOpen, setCalOpen] = useState(false);
+  // Date inputs inside the period popover.
   const [calFrom, setCalFrom] = useState('');
   const [calTo, setCalTo] = useState('');
 
@@ -143,6 +152,8 @@ export function SalesClient({
 
   // ⋯ menu on a lead card
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const [respOpen, setRespOpen] = useState(false);
 
   const removeLead = async (l: Lead) => {
     if (!confirm(`Удалить лид «${l.contactName}»? Вместе с ним удалятся его заметки.`)) return;
@@ -192,7 +203,7 @@ export function SalesClient({
     const needle = q.trim().toLowerCase();
     return leads.filter((l) => {
       if (mine && l.assignedToId !== meId) return false;
-      if (repFilter && l.createdById !== repFilter) return false;
+      if (repFilter && l.assignedToId !== repFilter) return false;
       if (bounds) {
         const t = new Date(l.createdAt).getTime();
         if (t < bounds.start || t > bounds.end) return false;
@@ -246,112 +257,97 @@ export function SalesClient({
             {seesEveryone ? 'Лидов добавлено' : 'Мои лиды'}
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] uppercase tracking-[0.14em] text-light/35">Период</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={periodText}
-              onChange={(e) => setPeriodText(e.target.value)}
-              onKeyDown={onPeriodKey}
-              placeholder="20 8 2026 → 20/8/2026"
-              title="Пробел = разделитель: 20␣8␣2026␣25␣8␣2026"
-              className="input-glass !w-[230px] !py-1.5 !text-[12px]"
-            />
-            {/* Календарь — альтернатива ручному вводу */}
+            {/* ── ПЕРИОД: календарь и ручной ввод в одной кнопке ── */}
             <div className="relative">
               <button
                 type="button"
-                aria-label="Выбрать даты в календаре"
-                onClick={() => setCalOpen((v) => !v)}
+                onClick={() => setPeriodOpen((v) => !v)}
                 className={cn(
-                  'rounded-xl border px-2.5 py-1.5 text-[13px] transition',
-                  calOpen ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+                  'flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[12px] transition',
+                  bounds ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
                 )}
               >
-                🗓
+                <span>🗓</span>
+                {periodLabel}
               </button>
-              {calOpen && (
+              {periodOpen && (
                 <>
-                  <span className="fixed inset-0 z-20" onClick={() => setCalOpen(false)} />
-                  <div className="absolute left-0 top-10 z-30 w-[230px] rounded-2xl border border-white/10 bg-ink2 p-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                  <span className="fixed inset-0 z-20" onClick={() => setPeriodOpen(false)} />
+                  <div className="absolute right-0 top-10 z-30 w-[260px] rounded-2xl border border-white/10 bg-ink2 p-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
                     <label className="label-soft">С какого числа</label>
-                    <input
-                      type="date"
-                      value={calFrom}
-                      onChange={(e) => applyCalendar(e.target.value, calTo)}
-                      className="input-glass !py-1.5 !text-[12px]"
-                    />
+                    <input type="date" value={calFrom} onChange={(e) => applyCalendar(e.target.value, calTo)} className="input-glass !py-1.5 !text-[12px]" />
                     <label className="label-soft mt-3 block">По какое</label>
+                    <input type="date" value={calTo} onChange={(e) => applyCalendar(calFrom, e.target.value)} className="input-glass !py-1.5 !text-[12px]" />
+
+                    <div className="my-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-light/25">
+                      <span className="h-px flex-1 bg-white/10" />или вручную<span className="h-px flex-1 bg-white/10" />
+                    </div>
                     <input
-                      type="date"
-                      value={calTo}
-                      onChange={(e) => applyCalendar(calFrom, e.target.value)}
+                      type="text"
+                      inputMode="numeric"
+                      value={periodText}
+                      onChange={(e) => setPeriodText(e.target.value)}
+                      onKeyDown={onPeriodKey}
+                      placeholder="20 8 2026 → 20/8/2026"
+                      title="Пробел ставит «/»"
                       className="input-glass !py-1.5 !text-[12px]"
                     />
-                    <p className="mt-2 text-[10px] leading-relaxed text-light/35">
-                      Одна дата — этот день. Можно и просто набрать период вручную.
-                    </p>
+                    <div className="mt-3 flex gap-2">
+                      <button onClick={() => { applyPeriod(); setPeriodOpen(false); }} className="btn-lime flex-1 !px-3 !py-1.5 !text-[11px]">
+                        Показать
+                      </button>
+                      {bounds && (
+                        <button onClick={() => { clearPeriod(); setPeriodOpen(false); }} className="btn-ghost !px-3 !py-1.5 !text-[11px]">
+                          Сбросить
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
             </div>
 
-            {/* Пакет — можно выбрать несколько; пусто = все */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setPkgOpen((v) => !v)}
-                className={cn(
-                  'rounded-xl border px-3 py-1.5 text-[12px] transition',
-                  packages.size ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+            {/* ── ОТВЕТСТВЕННЫЙ ── */}
+            {seesAllLeads && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setRespOpen((v) => !v)}
+                  className={cn(
+                    'rounded-xl border px-3 py-1.5 text-[12px] transition',
+                    repFilter ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+                  )}
+                >
+                  {repFilter ? (repStats.find((r) => r.id === repFilter)?.name ?? 'Ответственный') : 'Ответственный'}
+                </button>
+                {respOpen && (
+                  <>
+                    <span className="fixed inset-0 z-20" onClick={() => setRespOpen(false)} />
+                    <div className="absolute right-0 top-10 z-30 max-h-[300px] w-[230px] overflow-y-auto rounded-2xl border border-white/10 bg-ink2 p-2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                      <button
+                        type="button"
+                        onClick={() => { setRepFilter(null); setRespOpen(false); }}
+                        className={cn('block w-full rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]', !repFilter && 'text-brand-lime')}
+                      >
+                        Все ответственные
+                      </button>
+                      {repStats.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => { setRepFilter(r.id); setRespOpen(false); }}
+                          className={cn('block w-full rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]', repFilter === r.id ? 'text-brand-lime' : 'text-light/70')}
+                        >
+                          {r.name}
+                          <span className="ml-2 text-[10px] uppercase tracking-[0.1em] text-light/30">
+                            {ROLE_LABEL[r.role as Role] ?? r.role}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
-              >
-                Пакет{packages.size ? ` · ${packages.size}` : ''}
-              </button>
-              {pkgOpen && (
-                <>
-                  <span className="fixed inset-0 z-20" onClick={() => setPkgOpen(false)} />
-                  <div className="absolute left-0 top-10 z-30 max-h-[300px] w-[220px] overflow-y-auto rounded-2xl border border-white/10 bg-ink2 p-2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
-                    {PACKAGES.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => togglePackage(p)}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]"
-                      >
-                        <span className={cn(
-                          'flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]',
-                          packages.has(p) ? 'border-brand-lime bg-brand-lime text-[#0A0712]' : 'border-white/20 text-transparent',
-                        )}>✓</span>
-                        <span className={packages.has(p) ? 'text-light' : 'text-light/65'}>{PACKAGE_LABEL[p]}</span>
-                      </button>
-                    ))}
-                    {packages.size > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setPackages(new Set())}
-                        className="mt-1 w-full rounded-lg px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.14em] text-light/45 hover:text-brand-lime"
-                      >
-                        Сбросить пакеты
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <button onClick={applyPeriod} className="btn-lime !px-4 !py-1.5 !text-[11px]">
-              Показать
-            </button>
-            {rangeActive && (
-              <button onClick={clearPeriod} className="text-[11px] uppercase tracking-[0.14em] text-light/45 hover:text-brand-lime">
-                Сбросить
-              </button>
-            )}
-            {repFilter && (
-              <button onClick={() => setRepFilter(null)} className="text-[11px] uppercase tracking-[0.14em] text-brand-lime">
-                Показать всех ×
-              </button>
+              </div>
             )}
           </div>
         </div>

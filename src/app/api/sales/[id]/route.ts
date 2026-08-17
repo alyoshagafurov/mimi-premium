@@ -19,6 +19,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
+  // A rep may only touch leads assigned to them; admin/ops may touch any.
+  if (!adminLike) {
+    const own = await prisma.client.findUnique({
+      where: { id: params.id },
+      select: { assignedToId: true },
+    });
+    if (!own || own.assignedToId !== (session?.user as any)?.id) {
+      return NextResponse.json({ error: 'Это не ваш лид' }, { status: 403 });
+    }
+  }
+
   const body = await req.json().catch(() => ({}));
   const data: any = {};
 
@@ -137,11 +148,14 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   });
   if (!client) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
-  // Anyone who can add a lead can remove it — a wrong entry must be fixable by
-  // the person who made it. A converted partner is a real client, not a lead,
-  // so that one stays admin-only.
-  if (!adminLike && client.salesStatus === 'PARTNER') {
-    return NextResponse.json({ error: 'Партнёра удаляет только администратор' }, { status: 403 });
+  if (!adminLike) {
+    if (client.assignedToId !== me?.id) {
+      return NextResponse.json({ error: 'Это не ваш лид' }, { status: 403 });
+    }
+    // A converted partner is a real client, not a lead — admin only.
+    if (client.salesStatus === 'PARTNER') {
+      return NextResponse.json({ error: 'Партнёра удаляет только администратор' }, { status: 403 });
+    }
   }
 
   await prisma.user.delete({ where: { id: client.ownerId } });

@@ -1,14 +1,18 @@
 import { prisma } from '@/lib/prisma';
 import { getSafeSession } from '@/lib/session';
-import { canSeeRevenue, LEAD_ROLES } from '@/lib/roles';
+import { canSeeRevenue, isAdminLike, LEAD_ROLES } from '@/lib/roles';
 import { SalesClient } from './SalesClient';
 
 export default async function AdminSalesPage() {
   const session = await getSafeSession();
   const me = session?.user as any;
-  // Everyone with CRM access sees every lead on the board; only the full ADMIN
-  // sees everyone's personal lead *statistics*.
+  // Админ и операционный директор видят все лиды; продажник и разработчик —
+  // только те, за которые они отвечают. Смена ответственного передаёт лид вместе
+  // с видимостью.
+  const seesAllLeads = isAdminLike(me?.role);
+  // Only the full ADMIN sees everyone's personal lead statistics.
   const seesEveryone = canSeeRevenue(me?.role);
+  const leadScope = seesAllLeads ? {} : { assignedToId: me?.id ?? '__none__' };
 
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -17,11 +21,12 @@ export default async function AdminSalesPage() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-  const since = (from: Date) => ({ createdAt: { gte: from } });
+  const since = (from: Date) => ({ ...leadScope, createdAt: { gte: from } });
 
   const [clients, reps, byDay, byWeek, byMonth, byYear, byTotal] = await Promise.all([
     prisma.client.findMany({
-    relationLoadStrategy: 'join',
+      relationLoadStrategy: 'join',
+      where: leadScope,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, businessName: true, niche: true, contactName: true,
@@ -35,7 +40,7 @@ export default async function AdminSalesPage() {
     }),
     prisma.user.findMany({
     relationLoadStrategy: 'join',
-      where: seesEveryone ? { role: { in: LEAD_ROLES } } : { id: me?.id ?? '__none__' },
+      where: seesAllLeads ? { role: { in: LEAD_ROLES } } : { id: me?.id ?? '__none__' },
       select: { id: true, name: true, role: true },
       orderBy: { name: 'asc' },
     }),
@@ -43,7 +48,7 @@ export default async function AdminSalesPage() {
     prisma.client.groupBy({ by: ['createdById'], where: since(startOfWeek), _count: { _all: true } }),
     prisma.client.groupBy({ by: ['createdById'], where: since(startOfMonth), _count: { _all: true } }),
     prisma.client.groupBy({ by: ['createdById'], where: since(startOfYear), _count: { _all: true } }),
-    prisma.client.groupBy({ by: ['createdById'], _count: { _all: true } }),
+    prisma.client.groupBy({ by: ['createdById'], where: leadScope, _count: { _all: true } }),
   ]);
 
   const pick = (rows: { createdById: string | null; _count: { _all: number } }[], id: string) =>
@@ -69,6 +74,7 @@ export default async function AdminSalesPage() {
     <SalesClient
       meId={me?.id ?? ''}
       seesEveryone={seesEveryone}
+      seesAllLeads={seesAllLeads}
       repStats={repStats}
       leads={clients.map((c) => ({
         id: c.id,
