@@ -24,6 +24,8 @@ type Event = {
   clientName: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
+  done: boolean;
+  myNotes: { id: string; body: string; createdAt: string }[];
 };
 
 const KIND_LABEL: Record<Kind, string> = {
@@ -87,6 +89,43 @@ export function CalendarClient({
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'ALL' | EventCategory>('ALL');
   const [hover, setHover] = useState<{ e: Event; x: number; y: number; flip: boolean } | null>(null);
+  const [open, setOpen] = useState<Event | null>(null);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  /** Выполнено / в процессе — доступно каждому сотруднику по своим событиям. */
+  const toggleDone = async (e: Event) => {
+    setBusy(true);
+    const r = await fetch(`/api/calendar/${e.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done: !e.done }),
+    });
+    setBusy(false);
+    if (!r.ok) { toast.error('Не удалось обновить'); return; }
+    setOpen((cur) => (cur ? { ...cur, done: !e.done } : cur));
+    toast.success(!e.done ? 'Отмечено выполненным' : 'Возвращено в работу');
+    router.refresh();
+  };
+
+  /** Заметка на событии — попадает и сюда, и в раздел «Заметки». */
+  const addNote = async (e: Event) => {
+    const body = noteDraft.trim();
+    if (!body) return;
+    setBusy(true);
+    const r = await fetch(`/api/calendar/${e.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body }),
+    });
+    setBusy(false);
+    if (!r.ok) { toast.error('Не удалось сохранить заметку'); return; }
+    const n = await r.json();
+    setOpen((cur) => (cur ? { ...cur, myNotes: [n, ...cur.myNotes] } : cur));
+    setNoteDraft('');
+    toast.success('Заметка сохранена — она есть и в разделе «Заметки»');
+    router.refresh();
+  };
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((p) => ({ ...p, [k]: v }));
 
   // Open the form with sensible default date/time so the date is never empty
@@ -240,12 +279,16 @@ export function CalendarClient({
                         });
                       }}
                       onMouseLeave={() => setHover(null)}
-                      onClick={() => canManage && remove(e.id)}
+                      onClick={() => { setHover(null); setNoteDraft(''); setOpen(e); }}
                       className={cn(
-                        'block w-full cursor-pointer truncate rounded-md border border-brand-lime/40 bg-brand-lime/[0.12] px-1.5 py-0.5 text-left text-[10px] font-medium text-brand-lime transition-colors hover:bg-brand-lime/20',
+                        'block w-full cursor-pointer truncate rounded-md border px-1.5 py-0.5 text-left text-[10px] font-medium transition-colors',
+                        e.done
+                          // выполнено — приглушённое и зачёркнутое, видно с первого взгляда
+                          ? 'border-white/10 bg-white/[0.04] text-light/35 line-through'
+                          : 'border-brand-lime/40 bg-brand-lime/[0.12] text-brand-lime hover:bg-brand-lime/20',
                       )}
                     >
-                      {fmtTime(e.startAt)} {chipLabel(e)}
+                      {e.done ? '✓ ' : ''}{fmtTime(e.startAt)} {chipLabel(e)}
                     </div>
                   ))}
                   {list.length > 4 && <div className="text-[10px] text-light/40">+ ещё {list.length - 4}</div>}
@@ -358,6 +401,92 @@ export function CalendarClient({
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* ── Карточка события: статус + заметки ── */}
+      {open && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/80 p-4" onClick={() => setOpen(null)}>
+          <div onClick={(ev) => ev.stopPropagation()} className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/[0.08] bg-ink2 p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-light/50">
+                {CATEGORY_LABEL[open.category]}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.16em] text-brand-orange">{KIND_LABEL[open.kind]}</span>
+              {/* Крупный, однозначный признак состояния */}
+              <span className={cn(
+                'ml-auto rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.14em]',
+                open.done
+                  ? 'border-brand-lime/40 bg-brand-lime/10 text-brand-lime'
+                  : 'border-brand-orange/40 bg-brand-orange/10 text-brand-orange',
+              )}>
+                {open.done ? '✓ Выполнено' : '● В процессе'}
+              </span>
+            </div>
+
+            <h3 className="mt-3 font-display text-xl font-bold leading-tight text-light">{open.title}</h3>
+            <p className="mt-1 text-[12px] text-light/50">
+              {fmtDate(open.startAt)}, {fmtTime(open.startAt)}{open.endAt ? `–${fmtTime(open.endAt)}` : ''}
+              {open.clientName ? ` · ${open.clientName}` : ''}
+              {open.assigneeName ? ` · ${open.assigneeName}` : ''}
+            </p>
+            {open.description && (
+              <p className="mt-3 whitespace-pre-wrap border-t border-white/[0.06] pt-3 text-[13px] leading-relaxed text-light/65">
+                {open.description}
+              </p>
+            )}
+
+            <button
+              onClick={() => toggleDone(open)}
+              disabled={busy}
+              className={cn(
+                'mt-5 w-full rounded-2xl border px-4 py-3 text-[12px] uppercase tracking-[0.14em] transition disabled:opacity-50',
+                open.done
+                  ? 'border-white/15 text-light/60 hover:border-brand-orange/40 hover:text-brand-orange'
+                  : 'border-brand-lime bg-brand-lime text-[#0A0712] hover:opacity-90',
+              )}
+            >
+              {open.done ? 'Вернуть в работу' : '✓ Отметить выполненным'}
+            </button>
+
+            {/* Заметки — личные, дублируются в разделе «Заметки» */}
+            <div className="mt-6 border-t border-white/[0.06] pt-5">
+              <p className="mb-3 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Мои заметки по событию</p>
+              <textarea
+                value={noteDraft}
+                onChange={(ev) => setNoteDraft(ev.target.value)}
+                rows={2}
+                placeholder="Что нужно помнить по этому событию…"
+                className="input-glass min-h-[70px]"
+              />
+              <div className="mt-2 flex justify-end">
+                <button onClick={() => addNote(open)} disabled={busy || !noteDraft.trim()} className="btn-lime !px-4 !py-1.5 !text-[11px] disabled:opacity-50">
+                  Добавить
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {open.myNotes.length === 0 && <p className="text-[12px] text-light/35">Заметок пока нет.</p>}
+                {open.myNotes.map((n) => (
+                  <div key={n.id} className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-2">
+                    <div className="text-[10px] text-light/35">
+                      {new Date(n.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-[13px] text-light/85">{n.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-between gap-3">
+              {canManage && (
+                <button onClick={() => { remove(open.id); setOpen(null); }} className="text-[11px] uppercase tracking-[0.14em] text-light/35 hover:text-rose-400">
+                  Удалить событие
+                </button>
+              )}
+              <button onClick={() => setOpen(null)} className="btn-ghost ml-auto !px-5 !py-2 !text-[11px]">Закрыть</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
