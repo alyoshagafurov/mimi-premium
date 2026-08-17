@@ -142,64 +142,82 @@ export function PeopleClient({ meId, canManage, people }: { meId: string; canMan
       </div>
       )}
 
-      {/* List */}
-      <div className="overflow-hidden rounded-3xl border border-white/[0.06]">
-        {staff.length === 0 ? (
-          <p className="p-8 text-center text-light/50">Пока нет сотрудников.</p>
-        ) : (
-          <div className="divide-y divide-white/[0.05]">
-            {staff.map((s) => (
-              <div key={s.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
-                <Link href={`/admin/people/${s.id}`} className="shrink-0"><UserAvatar name={s.name} avatar={s.avatar} size={40} /></Link>
-                <Link href={`/admin/people/${s.id}`} className="min-w-0 flex-1 group">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-medium text-light group-hover:text-brand-lime">{s.name}</span>
-                    {!s.approved && (
-                      <span className="rounded-full border border-brand-orange/40 bg-brand-orange/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-brand-orange">
-                        ждёт одобрения
-                      </span>
-                    )}
+      {/* Карточки коллег */}
+      {staff.length === 0 ? (
+        <p className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-10 text-center text-light/50">
+          Пока нет сотрудников.
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {staff.map((s) => (
+            <div
+              key={s.id}
+              className="flex flex-col rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 transition-colors hover:border-brand-lime/25"
+            >
+              <Link href={`/admin/people/${s.id}`} className="group flex items-center gap-4">
+                <UserAvatar name={s.name} avatar={s.avatar} size={56} />
+                <div className="min-w-0">
+                  <div className="truncate font-display text-lg font-bold text-light group-hover:text-brand-lime">
+                    {s.name}
                   </div>
-                  <div className="truncate text-[12px] text-light/45">
-                    {s.email}{s.phone ? ` · ${s.phone}` : ''}{s.jobTitle ? ` · ${s.jobTitle}` : ''}
+                  <div className="truncate text-[11px] uppercase tracking-[0.14em] text-brand-orange">
+                    {s.jobTitle || ROLE_LABEL[s.role]}
                   </div>
-                </Link>
-                {canManage && (<>
-                <select
-                  className="input-glass !w-auto !py-2 text-[13px]"
-                  value={s.role}
-                  disabled={s.id === meId}
-                  onChange={(e) => changeRole(s.id, e.target.value as Role)}
-                >
-                  {ASSIGNABLE_ROLES.map((r) => (
-                    <option key={r} value={r}>{ROLE_LABEL[r]}</option>
-                  ))}
-                </select>
-                {s.approved ? (
-                  s.id !== meId && (
-                    <button onClick={() => setApproved(s, false)} className="text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-brand-orange">
-                      Отозвать
-                    </button>
-                  )
-                ) : (
-                  <button onClick={() => setApproved(s, true)} className="btn-lime !px-4 !py-1.5 !text-[11px]">
-                    ✓ Одобрить
-                  </button>
-                )}
-                <button onClick={() => { setPwFor(s); setPw(''); }} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
-                  Пароль
-                </button>
-                {s.id !== meId && (
-                  <button onClick={() => remove(s.id)} className="text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-rose-400">
-                    Удалить
-                  </button>
-                )}
-                </>)}
+                  {!s.approved && (
+                    <span className="mt-1.5 inline-block rounded-full border border-brand-orange/40 bg-brand-orange/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-brand-orange">
+                      ждёт одобрения
+                    </span>
+                  )}
+                </div>
+              </Link>
+
+              {s.bio && (
+                <p className="mt-4 line-clamp-3 text-[13px] leading-relaxed text-light/60">{s.bio}</p>
+              )}
+
+              <div className="mt-4 space-y-1 border-t border-white/[0.05] pt-4 text-[12px]">
+                <div className="truncate text-light/55">{s.email}</div>
+                {s.phone && <a href={`tel:${s.phone}`} className="block font-mono text-brand-lime">{s.phone}</a>}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+
+              {/* Управление — только админ / опер. директор */}
+              {canManage && (
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.05] pt-4">
+                  <select
+                    className="input-glass !w-auto !py-1.5 !text-[12px]"
+                    value={s.role}
+                    disabled={s.id === meId}
+                    onChange={(e) => changeRole(s.id, e.target.value as Role)}
+                  >
+                    {ASSIGNABLE_ROLES.map((r) => (
+                      <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                    ))}
+                  </select>
+                  {s.approved ? (
+                    s.id !== meId && (
+                      <button onClick={() => setApproved(s, false)} className="text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-brand-orange">
+                        Отозвать
+                      </button>
+                    )
+                  ) : (
+                    <button onClick={() => setApproved(s, true)} className="btn-lime !px-4 !py-1.5 !text-[11px]">
+                      ✓ Одобрить
+                    </button>
+                  )}
+                  <button onClick={() => { setPwFor(s); setPw(''); }} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
+                    Пароль
+                  </button>
+                  {s.id !== meId && (
+                    <button onClick={() => remove(s.id)} className="ml-auto text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-rose-400">
+                      Удалить
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Смена пароля сотрудника */}
       {pwFor && (
