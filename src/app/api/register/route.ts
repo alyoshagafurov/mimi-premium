@@ -89,7 +89,7 @@ export async function POST(req: Request) {
         kind: 'SYSTEM',
         title: 'Новый сотрудник ждёт одобрения',
         body: `${name} — ${ROLE_LABEL[role]}`,
-        link: '/admin/team',
+        link: '/admin/people',
       }).catch(() => {});
       const sentStaff = await sendVerificationCode({ id: user.id, email, name });
       if (!sentStaff) {

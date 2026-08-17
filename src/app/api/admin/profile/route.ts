@@ -12,6 +12,7 @@ const schema = z.object({
   password: z.string().min(8).optional(),
   jobTitle: z.string().max(80).optional(),
   bio: z.string().max(1000).optional(),
+  banner: z.string().nullable().optional(),
 });
 
 export async function PATCH(req: Request) {

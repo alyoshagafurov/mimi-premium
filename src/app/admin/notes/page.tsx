@@ -27,6 +27,8 @@ export default async function AdminNotesPage() {
         eventId: n.event?.id ?? null,
         eventTitle: n.event?.title ?? null,
         eventAt: n.event?.startAt.toISOString() ?? null,
+        remindAt: n.remindAt?.toISOString() ?? null,
+        remindText: n.remindText ?? '',
       }))}
     />
   );

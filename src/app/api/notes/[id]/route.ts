@@ -14,15 +14,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const me = session.user as any;
   if (!(await mine(params.id, me.id))) return NextResponse.json({ error: 'Это не ваша заметка' }, { status: 403 });
 
-  const { body } = await req.json().catch(() => ({ body: '' }));
-  const text = String(body ?? '').trim();
-  if (!text) return NextResponse.json({ error: 'Пустая заметка' }, { status: 400 });
+  const payload = await req.json().catch(() => ({}));
+  const data: any = {};
+  if (typeof payload.body === 'string') {
+    const text = payload.body.trim();
+    if (!text) return NextResponse.json({ error: 'Пустая заметка' }, { status: 400 });
+    data.body = text.slice(0, 2000);
+  }
+  if ('remindAt' in payload) {
+    data.remindAt = payload.remindAt ? new Date(payload.remindAt) : null;
+    data.remindedAt = null; // новое время — напомнить заново
+  }
+  if ('remindText' in payload) {
+    data.remindText = String(payload.remindText ?? '').trim().slice(0, 300) || null;
+  }
+  if (!Object.keys(data).length) return NextResponse.json({ error: 'Нечего обновлять' }, { status: 400 });
 
-  const note = await prisma.staffNote.update({
-    where: { id: params.id },
-    data: { body: text.slice(0, 2000) },
+  const note = await prisma.staffNote.update({ where: { id: params.id }, data });
+  return NextResponse.json({
+    id: note.id,
+    body: note.body,
+    remindAt: note.remindAt?.toISOString() ?? null,
+    remindText: note.remindText,
   });
-  return NextResponse.json({ id: note.id, body: note.body });
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {

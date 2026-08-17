@@ -7,7 +7,7 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
   | 'dashboard' | 'clients' | 'projects' | 'sales'
-  | 'calendar' | 'notes' | 'people' | 'team' | 'settings';
+  | 'calendar' | 'notes' | 'people' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
@@ -178,7 +178,7 @@ export function sectionFromPath(pathname: string): AdminSection {
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
     clients: 'clients', projects: 'projects', sales: 'sales',
-    calendar: 'calendar', notes: 'notes', people: 'people', team: 'team', settings: 'settings',
+    calendar: 'calendar', notes: 'notes', people: 'people', team: 'people', settings: 'settings',
   };
   return map[seg] ?? 'dashboard';
 }

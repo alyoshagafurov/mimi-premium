@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { AvatarUploader } from '@/components/ui/AvatarUploader';
+import { ImageUpload } from '@/components/admin/ImageUpload';
 
 export function SettingsClient({
   user,
 }: {
-  user: { id: string; name: string; email: string; phone: string; avatar: string | null; jobTitle: string; bio: string };
+  user: { id: string; name: string; email: string; phone: string; avatar: string | null; jobTitle: string; bio: string; banner: string | null };
 }) {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -22,6 +23,20 @@ export function SettingsClient({
     confirm: '',
   });
   const [saving, setSaving] = useState(false);
+  const [banner, setBanner] = useState<string | null>(user.banner);
+
+  /** Обложка сохраняется сразу — отдельно от формы. */
+  const saveBanner = async (url: string | null) => {
+    setBanner(url);
+    const res = await fetch('/api/admin/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ banner: url }),
+    });
+    if (!res.ok) { toast.error('Не удалось сохранить обложку'); return; }
+    toast.success(url ? 'Обложка обновлена' : 'Обложка убрана');
+    router.refresh();
+  };
 
   const onChange = (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -81,6 +96,25 @@ export function SettingsClient({
         <div className="mt-5 border-b border-white/[0.06] pb-6">
           <label className="label-soft">Фото профиля</label>
           <div className="mt-2"><AvatarUploader name={user.name} avatar={user.avatar} /></div>
+
+          <div className="mt-6">
+            <label className="label-soft">Обложка профиля</label>
+            {banner && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={banner} alt="" className="mt-2 h-28 w-full rounded-2xl object-cover" />
+            )}
+            <div className="mt-2 flex items-center gap-3">
+              <ImageUpload label="" value={banner} onChange={saveBanner} />
+              {banner && (
+                <button type="button" onClick={() => saveBanner(null)} className="text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-rose-400">
+                  Убрать
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-[11px] text-light/40">
+              Необязательно. Широкая картинка — она встанет фоном сверху профиля.
+            </p>
+          </div>
         </div>
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>

@@ -6,6 +6,29 @@ export async function GET() {
   const session = await getSafeSession();
   if (!session?.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const userId = (session.user as any).id;
+
+  // Напоминания по заметкам срабатывают в выбранную минуту, а не ждут суточного
+  // крона: превращаем наступившие в уведомления прямо здесь.
+  const due = await prisma.staffNote.findMany({
+    where: { authorId: userId, remindAt: { not: null, lte: new Date() }, remindedAt: null },
+    select: { id: true, body: true, remindText: true },
+  });
+  if (due.length) {
+    await prisma.notification.createMany({
+      data: due.map((n) => ({
+        userId,
+        kind: 'TASK' as const,
+        title: 'Напоминание по заметке',
+        body: n.remindText || n.body.slice(0, 140),
+        link: '/admin/notes',
+      })),
+    });
+    await prisma.staffNote.updateMany({
+      where: { id: { in: due.map((n) => n.id) } },
+      data: { remindedAt: new Date() },
+    });
+  }
+
   const [items, unread] = await Promise.all([
     prisma.notification.findMany({
       where: { userId },

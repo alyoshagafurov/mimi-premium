@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
@@ -30,7 +31,8 @@ type Staff = {
 
 const EMPTY = { name: '', email: '', phone: '', password: '', role: 'VIDEOGRAPHER' as Role };
 
-export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
+export function PeopleClient({ meId, canManage, people }: { meId: string; canManage: boolean; people: Staff[] }) {
+  const staff = people;
   const router = useRouter();
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -114,9 +116,10 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Team" title={<>Сотрудники</>} subtitle="Учётные записи команды и их роли в системе." />
+      <PageHeader eyebrow="Team" title={<>Команда</>} subtitle="Профили коллег и управление доступом." />
 
       {/* Create */}
+      {canManage && (
       <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6">
         <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Новый сотрудник</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -137,6 +140,7 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
           </button>
         </div>
       </div>
+      )}
 
       {/* List */}
       <div className="overflow-hidden rounded-3xl border border-white/[0.06]">
@@ -146,10 +150,10 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
           <div className="divide-y divide-white/[0.05]">
             {staff.map((s) => (
               <div key={s.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
-                <UserAvatar name={s.name} avatar={s.avatar} size={40} />
-                <div className="min-w-0 flex-1">
+                <Link href={`/admin/people/${s.id}`} className="shrink-0"><UserAvatar name={s.name} avatar={s.avatar} size={40} /></Link>
+                <Link href={`/admin/people/${s.id}`} className="min-w-0 flex-1 group">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-medium text-light">{s.name}</span>
+                    <span className="truncate text-sm font-medium text-light group-hover:text-brand-lime">{s.name}</span>
                     {!s.approved && (
                       <span className="rounded-full border border-brand-orange/40 bg-brand-orange/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-brand-orange">
                         ждёт одобрения
@@ -159,7 +163,8 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
                   <div className="truncate text-[12px] text-light/45">
                     {s.email}{s.phone ? ` · ${s.phone}` : ''}{s.jobTitle ? ` · ${s.jobTitle}` : ''}
                   </div>
-                </div>
+                </Link>
+                {canManage && (<>
                 <select
                   className="input-glass !w-auto !py-2 text-[13px]"
                   value={s.role}
@@ -189,6 +194,7 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
                     Удалить
                   </button>
                 )}
+                </>)}
               </div>
             ))}
           </div>

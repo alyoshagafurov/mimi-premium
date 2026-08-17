@@ -83,7 +83,25 @@ async function runReminders() {
     tasks++;
   }
 
-  return { payments, events, tasks };
+  // ── Напоминания по личным заметкам ────────────────────────
+  let notes = 0;
+  const dueNotes = await prisma.staffNote.findMany({
+    where: { remindAt: { not: null, lte: now }, remindedAt: null },
+    select: { id: true, body: true, remindText: true, authorId: true },
+  });
+  for (const n of dueNotes) {
+    await notify({
+      userId: n.authorId,
+      kind: 'TASK',
+      title: 'Напоминание по заметке',
+      body: n.remindText || n.body.slice(0, 140),
+      link: '/admin/notes',
+    });
+    await prisma.staffNote.update({ where: { id: n.id }, data: { remindedAt: now } });
+    notes++;
+  }
+
+  return { payments, events, tasks, notes };
 }
 
 // Vercel Cron hits this daily with `Authorization: Bearer ${CRON_SECRET}`.

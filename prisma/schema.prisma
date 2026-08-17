@@ -187,6 +187,8 @@ model User {
   /// Профиль: чем занимается и пара слов о себе — видно другим сотрудникам.
   jobTitle      String?
   bio           String?
+  /// Обложка профиля (как в соцсетях). Необязательна.
+  banner        String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -515,17 +517,22 @@ model CalendarEvent {
 /// Личные заметки сотрудника. Заметка, оставленная на событии календаря,
 /// хранится здесь же и показывается и в календаре, и в разделе «Заметки».
 model StaffNote {
-  id        String         @id @default(cuid())
-  authorId  String
-  author    User           @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  body      String
-  eventId   String?
-  event     CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id         String         @id @default(cuid())
+  authorId   String
+  author     User           @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  body       String
+  eventId    String?
+  event      CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  /// Напоминание по заметке: когда и каким текстом уведомить автора.
+  remindAt   DateTime?
+  remindText String?
+  remindedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   @@index([authorId, createdAt])
   @@index([eventId])
+  @@index([remindAt, remindedAt])
 }
 
 model TaskTemplate {

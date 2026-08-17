@@ -22,6 +22,7 @@ type Event = {
   endAt: string | null;
   clientId: string | null;
   clientName: string | null;
+  ownerId: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
   done: boolean;
@@ -69,6 +70,7 @@ const EMPTY = {
 
 export function CalendarClient({
   role,
+  meId,
   canManage,
   categories,
   events,
@@ -76,6 +78,7 @@ export function CalendarClient({
   staff,
 }: {
   role: string;
+  meId: string;
   canManage: boolean;
   categories: EventCategory[];
   events: Event[];
@@ -88,6 +91,8 @@ export function CalendarClient({
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'ALL' | EventCategory>('ALL');
+  /** Сотруднику доступны три календаря: всё агентство / его направление / личный. */
+  const [scope, setScope] = useState<'ALL' | 'MINE_CATEGORY' | 'PERSONAL'>('ALL');
   const [hover, setHover] = useState<{ e: Event; x: number; y: number; flip: boolean } | null>(null);
   const [open, setOpen] = useState<Event | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
@@ -141,8 +146,13 @@ export function CalendarClient({
 
   const showTabs = categories.length > 1;
   const shownEvents = useMemo(
-    () => (tab === 'ALL' ? events : events.filter((e) => e.category === tab)),
-    [events, tab],
+    () => {
+      if (canManage) return tab === 'ALL' ? events : events.filter((e) => e.category === tab);
+      if (scope === 'MINE_CATEGORY') return events.filter((e) => (categories as string[]).includes(e.category));
+      if (scope === 'PERSONAL') return events.filter((e) => e.ownerId === meId || e.assigneeId === meId);
+      return events;
+    },
+    [events, tab, scope, canManage, categories, meId],
   );
 
   const days = useMemo(() => {
@@ -213,6 +223,28 @@ export function CalendarClient({
         subtitle="Встречи, съёмки, запуски, дедлайны и оплаты команды."
       />
 
+      {/* Сотрудник: три календаря */}
+      {!canManage && (
+        <div className="flex flex-wrap gap-2">
+          {([
+            { v: 'ALL', label: 'Все события' },
+            { v: 'MINE_CATEGORY', label: 'Моё направление' },
+            { v: 'PERSONAL', label: 'Мой календарь' },
+          ] as const).map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setScope(o.v)}
+              className={cn(
+                'rounded-full border px-4 py-1.5 text-[11px] uppercase tracking-[0.14em] transition-colors',
+                scope === o.v ? 'border-brand-lime/50 bg-brand-lime/[0.08] text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+              )}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Category tabs (admin / ops see all teams) */}
       {showTabs && (
         <div className="flex flex-wrap gap-2">
@@ -225,7 +257,7 @@ export function CalendarClient({
           >
             Все
           </button>
-          {categories.map((c) => (
+          {categories.filter((c) => c !== 'GENERAL').map((c) => (
             <button
               key={c}
               onClick={() => setTab(c)}

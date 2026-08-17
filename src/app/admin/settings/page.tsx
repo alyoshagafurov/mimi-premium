@@ -10,7 +10,7 @@ export default async function AdminSettingsPage() {
   if (!user) redirect('/auth/login?callbackUrl=/admin/settings');
   return (
     <SettingsClient
-      user={{ id: user.id, name: user.name, email: user.email, phone: user.phone ?? '', avatar: user.avatar ?? null, jobTitle: user.jobTitle ?? '', bio: user.bio ?? '' }}
+      user={{ id: user.id, name: user.name, email: user.email, phone: user.phone ?? '', avatar: user.avatar ?? null, jobTitle: user.jobTitle ?? '', bio: user.bio ?? '', banner: user.banner ?? null }}
     />
   );
 }

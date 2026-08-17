@@ -13,10 +13,8 @@ export default async function AdminCalendarPage() {
   const [events, clients, staff] = await Promise.all([
     prisma.calendarEvent.findMany({
     relationLoadStrategy: 'join',
-      // Сотрудник видит все события своей категории И все свои события.
-      where: canManage
-        ? {}
-        : { OR: [{ category: { in: cats } }, { ownerId: me?.id }, { assigneeId: me?.id }] },
+      // Все события: сотрудник переключает «все / моё направление / личный»
+      // прямо в интерфейсе, поэтому фильтр здесь не нужен.
       orderBy: { startAt: 'asc' },
       include: {
         client: { select: { id: true, businessName: true } },
@@ -45,6 +43,7 @@ export default async function AdminCalendarPage() {
   return (
     <CalendarClient
       role={role}
+      meId={me?.id ?? ''}
       canManage={canManage}
       categories={cats}
       clients={clients}
@@ -58,6 +57,7 @@ export default async function AdminCalendarPage() {
         startAt: e.startAt.toISOString(),
         endAt: e.endAt?.toISOString() ?? null,
         clientId: e.clientId ?? null,
+        ownerId: e.ownerId ?? null,
         clientName: e.client?.businessName ?? null,
         assigneeId: e.assigneeId ?? null,
         assigneeName: e.assignee?.name ?? null,

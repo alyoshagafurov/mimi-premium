@@ -13,6 +13,8 @@ type Note = {
   eventId: string | null;
   eventTitle: string | null;
   eventAt: string | null;
+  remindAt: string | null;
+  remindText: string;
 };
 
 const fmt = (iso: string) =>
@@ -23,6 +25,9 @@ export function NotesClient({ notes: initial }: { notes: Note[] }) {
   const [notes, setNotes] = useState(initial);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  // Необязательное напоминание к новой заметке.
+  const [remindAt, setRemindAt] = useState('');
+  const [remindText, setRemindText] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
 
@@ -33,13 +38,19 @@ export function NotesClient({ notes: initial }: { notes: Note[] }) {
     const r = await fetch('/api/notes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body }),
+      body: JSON.stringify({
+        body,
+        remindAt: remindAt ? new Date(remindAt).toISOString() : null,
+        remindText: remindText.trim() || null,
+      }),
     });
     setBusy(false);
     if (!r.ok) return toast.error('Не удалось сохранить');
     const n = await r.json();
     setNotes((xs) => [{ ...n, eventTitle: null, eventAt: null }, ...xs]);
     setDraft('');
+    setRemindAt('');
+    setRemindText('');
   };
 
   const save = async (id: string) => {
@@ -80,6 +91,26 @@ export function NotesClient({ notes: initial }: { notes: Note[] }) {
           rows={3}
           className="input-glass min-h-[90px]"
         />
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="label-soft">Напомнить (необязательно)</label>
+            <input
+              type="datetime-local"
+              value={remindAt}
+              onChange={(e) => setRemindAt(e.target.value)}
+              className="input-glass !py-1.5 !text-[12px]"
+            />
+          </div>
+          <div>
+            <label className="label-soft">Текст напоминания</label>
+            <input
+              value={remindText}
+              onChange={(e) => setRemindText(e.target.value)}
+              placeholder="Что вам напомнить в это время"
+              className="input-glass !py-1.5 !text-[12px]"
+            />
+          </div>
+        </div>
         <div className="mt-3 flex justify-end">
           <button onClick={add} disabled={busy || !draft.trim()} className="btn-lime !px-5 !py-2 !text-[12px] disabled:opacity-50">
             {busy ? 'Сохраняем…' : 'Добавить заметку'}
@@ -99,6 +130,12 @@ export function NotesClient({ notes: initial }: { notes: Note[] }) {
           <div key={n.id} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
             <div className="mb-2 flex flex-wrap items-center gap-3 text-[11px] text-light/40">
               <span>{fmt(n.createdAt)}</span>
+              {n.remindAt && (
+                <span className="rounded-full border border-brand-orange/40 bg-brand-orange/10 px-2.5 py-0.5 text-brand-orange">
+                  ⏰ {new Date(n.remindAt).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  {n.remindText ? ` · ${n.remindText}` : ''}
+                </span>
+              )}
               {n.eventId && (
                 <Link
                   href="/admin/calendar"
