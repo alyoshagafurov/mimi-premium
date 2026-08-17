@@ -4,6 +4,7 @@ import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { isAdminLike, SALES_STATUS_LABEL, PACKAGE_LABEL, type SalesStatus, type ClientPackage } from '@/lib/roles';
 import { telegramUrl, instagramUrl } from '@/lib/utils';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { TechSpec } from './TechSpec';
 import { ProductionStatus } from './ProductionStatus';
 import { ProjectNotes } from './ProjectNotes';
@@ -28,7 +29,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
     relationLoadStrategy: 'join',
     where: { id: params.id },
     include: {
-      owner: { select: { name: true, email: true, phone: true } },
+      owner: { select: { name: true, email: true, phone: true, avatar: true } },
       activities: {
         where: { kind: 'NOTE' },
         orderBy: { createdAt: 'desc' },
@@ -46,6 +47,12 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
       <div>
         <Link href="/admin/projects" className="text-xs uppercase tracking-[0.18em] text-light/45 hover:text-brand-lime">← Проекты</Link>
         <div className="mt-4 flex flex-wrap items-center gap-3">
+          {c.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={c.logo} alt="" width={48} height={48} className="h-12 w-12 rounded-2xl object-cover" />
+          ) : (
+            <UserAvatar name={c.businessName} avatar={c.owner.avatar} size={48} />
+          )}
           <h1 className="font-display text-3xl font-extrabold text-light sm:text-4xl">{c.businessName}</h1>
           <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${c.status === 'ACTIVE' ? 'border-brand-lime/30 bg-brand-lime/[0.06] text-brand-lime' : 'border-white/10 text-light/45'}`}>
             {STATUS_LABEL[c.status] ?? c.status}

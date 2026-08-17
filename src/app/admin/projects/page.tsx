@@ -1,6 +1,16 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { UserAvatar } from '@/components/ui/UserAvatar';
+
+/** Логотип проекта, если он загружен; иначе — фото клиента или буква. */
+function ProjectAvatar({ name, logo, avatar }: { name: string; logo: string | null; avatar: string | null }) {
+  if (logo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-2xl object-cover" />;
+  }
+  return <UserAvatar name={name} avatar={avatar} size={44} />;
+}
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'Активен', ARCHIVED: 'В архиве' };
 
@@ -10,7 +20,7 @@ export default async function AdminProjectsPage() {
   const clients = await prisma.client.findMany({
     relationLoadStrategy: 'join',
     where: { salesStatus: 'PARTNER' },
-    include: { owner: { select: { name: true, email: true, phone: true } } },
+    include: { owner: { select: { name: true, email: true, phone: true, avatar: true } } },
     orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
   });
 
@@ -31,12 +41,18 @@ export default async function AdminProjectsPage() {
               className="group flex flex-col rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 transition-colors hover:border-brand-lime/30"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase tracking-[0.18em] text-brand-orange">{c.niche || 'Ниша не указана'}</span>
+                <span className="truncate text-[10px] uppercase tracking-[0.18em] text-brand-orange">{c.niche || 'Ниша не указана'}</span>
                 <span className={`rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] ${c.status === 'ACTIVE' ? 'border-brand-lime/30 bg-brand-lime/[0.06] text-brand-lime' : 'border-white/10 text-light/45'}`}>
                   {STATUS_LABEL[c.status] ?? c.status}
                 </span>
               </div>
-              <h3 className="mt-3 font-display text-lg font-extrabold leading-tight text-light group-hover:text-brand-lime">{c.businessName}</h3>
+              {/* Логотип проекта (его ставит админ) или фото клиента */}
+              <div className="mt-4 flex items-center gap-3">
+                <ProjectAvatar name={c.businessName} logo={c.logo} avatar={c.owner.avatar} />
+                <h3 className="min-w-0 flex-1 truncate font-display text-lg font-extrabold leading-tight text-light group-hover:text-brand-lime">
+                  {c.businessName}
+                </h3>
+              </div>
               <div className="mt-4 space-y-1 text-[12px] text-light/55">
                 <div>{c.owner.name}</div>
                 {c.owner.phone && <div className="font-mono text-light/45">{c.owner.phone}</div>}

@@ -9,20 +9,23 @@ import { AvatarUploader } from '@/components/ui/AvatarUploader';
 export function SettingsClient({
   user,
 }: {
-  user: { id: string; name: string; email: string; phone: string; avatar: string | null };
+  user: { id: string; name: string; email: string; phone: string; avatar: string | null; jobTitle: string; bio: string };
 }) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
     phone: user.phone,
+    jobTitle: user.jobTitle,
+    bio: user.bio,
     password: '',
     confirm: '',
   });
   const [saving, setSaving] = useState(false);
 
-  const onChange = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const onChange = (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +46,8 @@ export function SettingsClient({
           name: form.name,
           email: form.email,
           phone: form.phone,
+          jobTitle: form.jobTitle,
+          bio: form.bio,
           password: form.password || undefined,
         }),
       });
@@ -89,6 +94,19 @@ export function SettingsClient({
           <div className="md:col-span-2">
             <label className="label-soft">Телефон</label>
             <input className="input-glass" value={form.phone} onChange={onChange('phone')} />
+          </div>
+          <div>
+            <label className="label-soft">Должность</label>
+            <input className="input-glass" value={form.jobTitle} onChange={onChange('jobTitle')} placeholder="Например: старший видеограф" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="label-soft">О себе</label>
+            <textarea
+              className="input-glass min-h-[90px]"
+              value={form.bio}
+              onChange={onChange('bio')}
+              placeholder="Пара слов о себе — это увидят коллеги в профиле."
+            />
           </div>
         </div>
 

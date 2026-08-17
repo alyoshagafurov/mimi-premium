@@ -7,7 +7,7 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
   | 'dashboard' | 'clients' | 'projects' | 'sales'
-  | 'calendar' | 'notes' | 'team' | 'settings';
+  | 'calendar' | 'notes' | 'people' | 'team' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
@@ -158,11 +158,11 @@ export function visibleCategories(role?: string | null): EventCategory[] {
  */
 /** Sections each specialised staff role may open (beyond calendar + projects). */
 const ROLE_SECTIONS: Record<string, AdminSection[]> = {
-  SALES: ['calendar', 'notes', 'projects', 'sales'],
-  DESIGNER: ['calendar', 'notes', 'projects'],
-  DEVELOPER: ['calendar', 'notes', 'projects', 'sales'],
-  VIDEOGRAPHER: ['calendar', 'notes', 'projects'],
-  MONTAGE: ['calendar', 'notes', 'projects'],
+  SALES: ['calendar', 'notes', 'people', 'settings', 'projects', 'sales'],
+  DESIGNER: ['calendar', 'notes', 'people', 'settings', 'projects'],
+  DEVELOPER: ['calendar', 'notes', 'people', 'settings', 'projects', 'sales'],
+  VIDEOGRAPHER: ['calendar', 'notes', 'people', 'settings', 'projects'],
+  MONTAGE: ['calendar', 'notes', 'people', 'settings', 'projects'],
 };
 
 export function canAccessSection(role: string | null | undefined, section: AdminSection): boolean {
@@ -178,7 +178,7 @@ export function sectionFromPath(pathname: string): AdminSection {
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
     clients: 'clients', projects: 'projects', sales: 'sales',
-    calendar: 'calendar', notes: 'notes', team: 'team', settings: 'settings',
+    calendar: 'calendar', notes: 'notes', people: 'people', team: 'team', settings: 'settings',
   };
   return map[seg] ?? 'dashboard';
 }
