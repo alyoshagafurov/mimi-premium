@@ -11,6 +11,7 @@ export default async function AdminCalendarPage() {
 
   const [events, clients, staff] = await Promise.all([
     prisma.calendarEvent.findMany({
+    relationLoadStrategy: 'join',
       where: { category: { in: cats } },
       orderBy: { startAt: 'asc' },
       include: {
@@ -19,10 +20,12 @@ export default async function AdminCalendarPage() {
       },
     }),
     canManage
-      ? prisma.client.findMany({ select: { id: true, businessName: true }, orderBy: { businessName: 'asc' } })
+      ? prisma.client.findMany({
+    relationLoadStrategy: 'join', select: { id: true, businessName: true }, orderBy: { businessName: 'asc' } })
       : Promise.resolve([]),
     canManage
       ? prisma.user.findMany({
+    relationLoadStrategy: 'join',
           where: { role: { not: 'CLIENT' } },
           select: { id: true, name: true },
           orderBy: { name: 'asc' },

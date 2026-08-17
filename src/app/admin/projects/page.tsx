@@ -8,6 +8,7 @@ export default async function AdminProjectsPage() {
   // Только партнёры: новый лид сюда не попадает, пока админ не переведёт его
   // в статус «Партнёр» в карточке лида (или пока не отмечена оплата).
   const clients = await prisma.client.findMany({
+    relationLoadStrategy: 'join',
     where: { salesStatus: 'PARTNER' },
     include: { owner: { select: { name: true, email: true, phone: true } } },
     orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],

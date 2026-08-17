@@ -12,6 +12,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
   const [lead, reps] = await Promise.all([
     prisma.client.findUnique({
+    relationLoadStrategy: 'join',
       where: { id: params.id },
       include: {
         owner: { select: { name: true, email: true, phone: true } },
@@ -26,6 +27,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
       },
     }),
     prisma.user.findMany({
+    relationLoadStrategy: 'join',
       where: { role: { in: LEAD_ROLES } },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },

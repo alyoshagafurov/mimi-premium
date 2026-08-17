@@ -21,6 +21,7 @@ export default async function AdminSalesPage() {
 
   const [clients, reps, byDay, byWeek, byMonth, byYear, byTotal] = await Promise.all([
     prisma.client.findMany({
+    relationLoadStrategy: 'join',
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, businessName: true, niche: true, contactName: true,
@@ -33,6 +34,7 @@ export default async function AdminSalesPage() {
       },
     }),
     prisma.user.findMany({
+    relationLoadStrategy: 'join',
       where: seesEveryone ? { role: { in: LEAD_ROLES } } : { id: me?.id ?? '__none__' },
       select: { id: true, name: true, role: true },
       orderBy: { name: 'asc' },

@@ -6,9 +6,10 @@ import { ClientCrmPanel } from './ClientCrmPanel';
 export default async function AdminClientManagePage({ params }: { params: { id: string } }) {
   const [client, team] = await Promise.all([
     prisma.client.findUnique({
+    relationLoadStrategy: 'join',
       where: { id: params.id },
       include: {
-        owner: true,
+        owner: { select: { id: true, name: true, email: true, phone: true, avatar: true, tariff: true, tariffEnd: true } },
         reports: {
           orderBy: [{ year: 'desc' }, { month: 'desc' }],
           include: {

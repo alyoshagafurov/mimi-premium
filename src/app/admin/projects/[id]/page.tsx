@@ -25,6 +25,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
   const adminLike = isAdminLike(role);
 
   const c = await prisma.client.findUnique({
+    relationLoadStrategy: 'join',
     where: { id: params.id },
     include: {
       owner: { select: { name: true, email: true, phone: true } },

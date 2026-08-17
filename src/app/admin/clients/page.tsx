@@ -4,8 +4,13 @@ import { ClientsClient } from './ClientsClient';
 export default async function AdminClientsPage() {
   // Клиенты = converted partners only (leads live on the Продажи board).
   const clients = await prisma.client.findMany({
+    relationLoadStrategy: 'join',
     where: { salesStatus: 'PARTNER' },
-    include: { owner: true, _count: { select: { reports: true } } },
+    include: {
+      // only what the list renders — never pull password hashes into the page
+      owner: { select: { name: true, email: true, phone: true, avatar: true, tariff: true } },
+      _count: { select: { reports: true } },
+    },
     // Active projects first, then archived; newest first within each group.
     orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
   });

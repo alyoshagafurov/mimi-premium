@@ -15,6 +15,7 @@ export default async function DashboardPage() {
   if (!session?.user) redirect('/auth/login');
 
   const user = await prisma.user.findUnique({
+    relationLoadStrategy: 'join',
     where: { id: (session.user as any).id },
     include: {
       client: {
