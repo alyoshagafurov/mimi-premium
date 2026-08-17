@@ -9,6 +9,11 @@ import { prisma } from '@/lib/prisma';
  * тёплым. Открыт без авторизации специально — наружу ничего не отдаёт, только
  * ok/время, и стоит один `select 1`.
  */
+// Без этого Next кэширует ответ маршрута, Vercel отдаёт x-vercel-cache: HIT —
+// и функция вообще не выполняется. Тогда keep-alive не будит базу, а замер
+// показывает одно и то же число из кэша.
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const t0 = Date.now();
   try {
