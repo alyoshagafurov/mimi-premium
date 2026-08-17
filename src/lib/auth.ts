@@ -57,7 +57,10 @@ export const authOptions: NextAuthOptions = {
       // Credentials: block until the email is confirmed.
       if (account?.provider === 'credentials') {
         const dbUser = await prisma.user.findUnique({ where: { email: (user.email ?? '').toLowerCase() } });
-        return !!dbUser?.emailVerified;
+        if (!dbUser?.emailVerified) return false;
+        // Сотрудник, зарегистрировавшийся сам, ждёт одобрения администратора.
+        if (dbUser.role !== 'CLIENT' && !dbUser.approvedAt) return '/auth/login?error=pending';
+        return true;
       }
       // Google: upsert the account; Google has already verified the email.
       if (account?.provider === 'google') {

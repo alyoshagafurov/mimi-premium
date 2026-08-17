@@ -66,6 +66,13 @@ function LoginInner() {
       redirect: false,
     });
     setLoading(false);
+    // Сотрудник подтвердил почту, но админ ещё не одобрил доступ.
+    const pending = res?.url?.includes('error=pending') || res?.error === 'pending';
+    if (pending) {
+      toast.error('Аккаунт ждёт одобрения администратора. Мы сообщим, когда доступ откроют.');
+      setFailed(true);
+      return;
+    }
     if (res?.error) {
       toast.error(t.errorLogin);
       setFailed(true);

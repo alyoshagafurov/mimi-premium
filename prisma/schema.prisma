@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   // Load relations with a single SQL JOIN instead of one extra round-trip per
   // relation. Measured on the real DB: /admin/clients went from ~12s to ~0.4s.
   previewFeatures = ["relationJoins"]
@@ -181,6 +181,12 @@ model User {
   tariffEnd     DateTime?
   avatar        String?
   emailVerified DateTime? // null = not yet confirmed
+  /// Сотрудник, зарегистрировавшийся сам, ждёт одобрения админа.
+  /// null у не-клиента = доступ ещё не подтверждён.
+  approvedAt    DateTime?
+  /// Профиль: чем занимается и пара слов о себе — видно другим сотрудникам.
+  jobTitle      String?
+  bio           String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

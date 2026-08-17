@@ -10,6 +10,8 @@ import { Logo } from '@/components/ui/Logo';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
+import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
+import type { Role } from '@prisma/client';
 import { passwordRules, isStrongPassword, emailProblem, phoneProblem } from '@/lib/validation';
 
 const ru = {
@@ -69,6 +71,9 @@ export default function RegisterPage() {
   const t = useCopy(COPY);
   const router = useRouter();
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
+  // Клиент или сотрудник агентства — сотрудник дополнительно выбирает должность.
+  const [asStaff, setAsStaff] = useState(false);
+  const [staffRole, setStaffRole] = useState<Role>('VIDEOGRAPHER');
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'form' | 'code'>('form');
@@ -99,7 +104,10 @@ export default function RegisterPage() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email: form.email, phone: form.phone, password: form.password }),
+        body: JSON.stringify({
+          name: form.name, email: form.email, phone: form.phone, password: form.password,
+          ...(asStaff ? { role: staffRole } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'failed');
@@ -121,6 +129,11 @@ export default function RegisterPage() {
 
   // Sign in with the credentials we still hold in state, then go to the cabinet.
   const finishLogin = async () => {
+    if (asStaff) {
+      toast.success('Почта подтверждена. Осталось дождаться одобрения администратора.');
+      router.push('/auth/login?pending=1');
+      return;
+    }
     const signed = await signIn('credentials', { email: form.email, password: form.password, redirect: false });
     if (signed?.error) {
       toast.error(t.errAutoLogin);
@@ -219,6 +232,46 @@ export default function RegisterPage() {
         ) : (
         <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <GoogleButton />
+
+          {/* Клиент или сотрудник агентства */}
+          <div className="md:col-span-2">
+            <label className="label-soft">Я регистрируюсь как</label>
+            <div className="mt-1 flex gap-2">
+              {[
+                { v: false, label: 'Клиент' },
+                { v: true, label: 'Сотрудник агентства' },
+              ].map((o) => (
+                <button
+                  key={String(o.v)}
+                  type="button"
+                  onClick={() => setAsStaff(o.v)}
+                  className={
+                    'rounded-full border px-4 py-2 text-[12px] transition ' +
+                    (asStaff === o.v
+                      ? 'border-brand-lime bg-brand-lime text-[#0A0712]'
+                      : 'border-white/10 text-light/55 hover:text-light')
+                  }
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {asStaff && (
+            <div className="md:col-span-2">
+              <label className="label-soft">Должность</label>
+              <select className="input-glass" value={staffRole} onChange={(e) => setStaffRole(e.target.value as Role)}>
+                {ASSIGNABLE_ROLES.filter((r) => r !== 'ADMIN').map((r) => (
+                  <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                ))}
+              </select>
+              <p className="mt-2 text-[11px] leading-relaxed text-light/45">
+                После подтверждения почты доступ откроется, когда вашу заявку одобрит администратор.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="label-soft">{t.labelName}</label>
             <input required className="input-glass" value={form.name} onChange={onChange('name')} onBlur={blur('name')} placeholder={t.placeholderName} />

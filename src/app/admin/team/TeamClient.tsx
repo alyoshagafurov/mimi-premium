@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { ROLE_LABEL, ASSIGNABLE_ROLES } from '@/lib/roles';
 import { passwordRules } from '@/lib/validation';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { Role } from '@prisma/client';
 
 /** Live checklist — the same rules the API enforces, so nothing is a surprise. */
@@ -22,7 +23,10 @@ function PasswordRules({ value }: { value: string }) {
   );
 }
 
-type Staff = { id: string; name: string; email: string; phone: string | null; role: Role };
+type Staff = {
+  id: string; name: string; email: string; phone: string | null; role: Role;
+  approved: boolean; avatar: string | null; jobTitle: string; bio: string;
+};
 
 const EMPTY = { name: '', email: '', phone: '', password: '', role: 'VIDEOGRAPHER' as Role };
 
@@ -88,6 +92,18 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
     setPw('');
   };
 
+  const setApproved = async (s: Staff, approved: boolean) => {
+    if (!approved && !confirm(`Отозвать доступ у «${s.name}»?`)) return;
+    const r = await fetch(`/api/admin/team/${s.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approved }),
+    });
+    if (!r.ok) return toast.error('Не удалось обновить доступ');
+    toast.success(approved ? `${s.name} допущен(а) к работе` : 'Доступ отозван');
+    router.refresh();
+  };
+
   const remove = async (id: string) => {
     if (!confirm('Удалить сотрудника?')) return;
     const r = await fetch(`/api/admin/team/${id}`, { method: 'DELETE' });
@@ -130,12 +146,19 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
           <div className="divide-y divide-white/[0.05]">
             {staff.map((s) => (
               <div key={s.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lime-gradient font-display text-base font-extrabold text-[#0A0712]">
-                  {s.name.charAt(0).toUpperCase()}
-                </div>
+                <UserAvatar name={s.name} avatar={s.avatar} size={40} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-light">{s.name}</div>
-                  <div className="truncate text-[12px] text-light/45">{s.email}{s.phone ? ` · ${s.phone}` : ''}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate text-sm font-medium text-light">{s.name}</span>
+                    {!s.approved && (
+                      <span className="rounded-full border border-brand-orange/40 bg-brand-orange/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-brand-orange">
+                        ждёт одобрения
+                      </span>
+                    )}
+                  </div>
+                  <div className="truncate text-[12px] text-light/45">
+                    {s.email}{s.phone ? ` · ${s.phone}` : ''}{s.jobTitle ? ` · ${s.jobTitle}` : ''}
+                  </div>
                 </div>
                 <select
                   className="input-glass !w-auto !py-2 text-[13px]"
@@ -147,6 +170,17 @@ export function TeamClient({ meId, staff }: { meId: string; staff: Staff[] }) {
                     <option key={r} value={r}>{ROLE_LABEL[r]}</option>
                   ))}
                 </select>
+                {s.approved ? (
+                  s.id !== meId && (
+                    <button onClick={() => setApproved(s, false)} className="text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-brand-orange">
+                      Отозвать
+                    </button>
+                  )
+                ) : (
+                  <button onClick={() => setApproved(s, true)} className="btn-lime !px-4 !py-1.5 !text-[11px]">
+                    ✓ Одобрить
+                  </button>
+                )}
                 <button onClick={() => { setPwFor(s); setPw(''); }} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
                   Пароль
                 </button>

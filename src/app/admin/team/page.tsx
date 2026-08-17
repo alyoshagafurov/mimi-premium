@@ -11,7 +11,7 @@ export default async function AdminTeamPage() {
   const staff = await prisma.user.findMany({
     where: { role: { not: 'CLIENT' } },
     orderBy: { createdAt: 'asc' },
-    select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true, approvedAt: true, avatar: true, jobTitle: true, bio: true },
   });
 
   return (
@@ -23,6 +23,10 @@ export default async function AdminTeamPage() {
         email: s.email,
         phone: s.phone,
         role: s.role,
+        approved: s.approvedAt !== null,
+        avatar: s.avatar,
+        jobTitle: s.jobTitle ?? '',
+        bio: s.bio ?? '',
       }))}
     />
   );

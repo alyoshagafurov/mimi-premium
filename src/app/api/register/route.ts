@@ -11,13 +11,18 @@ import {
 } from '@/lib/validation';
 import { domainCanReceiveMail } from '@/lib/email-dns';
 import { sendVerificationCode } from '@/lib/email-verify';
-import { notifySales } from '@/lib/notify';
+import { notifySales, notifyAdmins } from '@/lib/notify';
+import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
+import type { Role } from '@prisma/client';
 
 const schema = z.object({
   name: z.string().min(2).max(80),
   email: z.string().max(160),
   phone: z.string().max(40),
   password: z.string().max(200),
+  /// Сотрудник выбирает свою должность; клиент её не присылает.
+  role: z.enum(ASSIGNABLE_ROLES as unknown as [string, ...string[]]).optional(),
+  jobTitle: z.string().max(80).optional(),
 });
 
 export async function POST(req: Request) {
@@ -54,8 +59,11 @@ export async function POST(req: Request) {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return NextResponse.json({ error: 'Email уже занят' }, { status: 400 });
 
-    // Public self-registration ALWAYS creates a CLIENT. Admin accounts are
-    // provisioned via the seed/console only — never through this endpoint.
+    // Кандидат в сотрудники выбирает должность сам, но ADMIN через эту форму
+    // получить нельзя — иначе кто угодно выдал бы себе полные права.
+    const wantsStaff = !!data.role && data.role !== 'ADMIN';
+    const role = (wantsStaff ? data.role : 'CLIENT') as Role;
+
     const password = await bcrypt.hash(data.password, 12);
     const name = data.name.trim();
 
@@ -65,12 +73,30 @@ export async function POST(req: Request) {
         password,
         name,
         phone,
-        role: 'CLIENT',
+        role,
+        jobTitle: data.jobTitle?.trim() || null,
+        // Сотрудник ждёт одобрения админа; клиенту одобрение не нужно.
+        approvedAt: wantsStaff ? null : new Date(),
         // Business name / niche are collected later (onboarding brief or by the
         // sales team in the CRM), so we seed the profile with a placeholder.
-        client: { create: { businessName: name, niche: 'Не указана' } },
+        ...(wantsStaff ? {} : { client: { create: { businessName: name, niche: 'Не указана' } } }),
       },
     });
+
+    if (wantsStaff) {
+      // Кандидат ждёт одобрения — сообщаем администраторам.
+      notifyAdmins({
+        kind: 'SYSTEM',
+        title: 'Новый сотрудник ждёт одобрения',
+        body: `${name} — ${ROLE_LABEL[role]}`,
+        link: '/admin/team',
+      }).catch(() => {});
+      const sentStaff = await sendVerificationCode({ id: user.id, email, name });
+      if (!sentStaff) {
+        await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+      }
+      return NextResponse.json({ id: user.id, role, needsVerification: sentStaff, needsApproval: true });
+    }
 
     // A self-registered client is a fresh CRM lead — alert the sales team so it
     // gets picked up. Never let a notification failure block registration.
