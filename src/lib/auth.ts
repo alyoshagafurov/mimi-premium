@@ -86,7 +86,21 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // Аватар держим в токене, чтобы layout не ходил в базу на каждый переход.
+      // `trigger === 'update'` — это session.update() после смены фото.
+      if (!user && trigger === 'update' && token.id) {
+        const fresh = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { avatar: true, name: true, role: true },
+        });
+        if (fresh) {
+          token.avatar = fresh.avatar;
+          token.name = fresh.name;
+          token.role = fresh.role;
+        }
+        return token;
+      }
       // On sign-in, resolve our real DB id/role/tariff by email (works for both
       // credentials and Google, whose `user` is the OAuth profile).
       if (user) {
@@ -97,6 +111,8 @@ export const authOptions: NextAuthOptions = {
             token.id = dbUser.id;
             token.role = dbUser.role;
             token.tariff = dbUser.tariff;
+            token.avatar = dbUser.avatar;
+            token.name = dbUser.name;
           }
         }
       }
@@ -107,6 +123,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
         (session.user as any).tariff = token.tariff;
+        (session.user as any).avatar = token.avatar ?? null;
       }
       return session;
     },

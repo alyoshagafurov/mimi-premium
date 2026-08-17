@@ -41,6 +41,16 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  experimental: {
+    /**
+     * Кэш клиентской навигации. Функции живут в Вашингтоне, а пользователи в
+     * Душанбе — каждый поход на сервер стоит ~800 мс только на дорогу. С этим
+     * возврат в уже открытый раздел рендерится из памяти браузера, без запроса.
+     * 60 с для динамических страниц: свежесть данных не страдает (мутации всё
+     * равно вызывают router.refresh()), а переходы становятся мгновенными.
+     */
+    staleTimes: { dynamic: 60, static: 300 },
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [{ protocol: 'https', hostname: '**' }],

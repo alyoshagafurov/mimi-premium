@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
-import { prisma } from '@/lib/prisma';
 import { Sidebar, MobileTopbar } from '@/components/admin/Sidebar';
 import { isStaff } from '@/lib/roles';
 
@@ -12,9 +11,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!session?.user) redirect('/auth/login?callbackUrl=/admin');
   const role = (session.user as any).role as string;
   if (!isStaff(role)) redirect('/dashboard');
-  const me = await prisma.user.findUnique({ where: { id: (session.user as any).id }, select: { avatar: true } });
+  // Аватар и имя приходят из токена — на каждый переход это минус один
+  // поход в базу (а он стоит ~800 мс дороги до Вашингтона).
   const name = session.user.name ?? 'Admin';
-  const avatar = me?.avatar ?? null;
+  const avatar = ((session.user as any).avatar as string | null) ?? null;
 
   return (
     <div className="relative min-h-screen">
