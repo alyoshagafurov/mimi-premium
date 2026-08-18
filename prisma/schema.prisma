@@ -239,10 +239,7 @@ model Client {
   owner        User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   businessName String
   niche        String
-  logo         String? // uploaded project logo/icon (URL or data-URI)
-  /// Старое base64-значение logo, сохранённое при переносе в Blob.
-  /// Держим до проверки миграции, потом чистим — тогда таблица и похудеет.
-  logoLegacy   String?
+  logo         String? // ссылка на картинку в Vercel Blob
   status       ClientStatus @default(ACTIVE)
 
   // Onboarding brief
