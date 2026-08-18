@@ -23,15 +23,21 @@ export async function POST(req: Request) {
 
   const base = slugify(file.name.replace(/\.[^.]+$/, '')) || 'image';
 
-  let url: string;
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const { put } = await import('@vercel/blob');
-    const blob = await put(`cms/${Date.now()}-${base}`, file, { access: 'public', addRandomSuffix: true });
-    url = blob.url;
-  } else {
-    const buf = Buffer.from(await file.arrayBuffer());
-    url = `data:${file.type || 'image/png'};base64,${buf.toString('base64')}`;
+  /**
+   * Картинки всегда идут в Blob. Раньше при отсутствии токена был молчаливый
+   * откат в base64 прямо в БД — так в Client.logo и накопилось 16 МБ, из-за
+   * чего страница «Клиенты» тащила их при каждой загрузке. Теперь без токена
+   * загрузка честно падает с понятной ошибкой, а не портит базу незаметно.
+   */
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json(
+      { error: 'Хранилище картинок не настроено (BLOB_READ_WRITE_TOKEN). Обратитесь к разработчику.' },
+      { status: 503 },
+    );
   }
+  const { put } = await import('@vercel/blob');
+  const blob = await put(`cms/${Date.now()}-${base}`, file, { access: 'public', addRandomSuffix: true });
+  const url = blob.url;
 
   const asset = await prisma.mediaAsset.create({
     data: { url, name: file.name, folder, mime: file.type || null, size: file.size },

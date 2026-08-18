@@ -240,6 +240,9 @@ model Client {
   businessName String
   niche        String
   logo         String? // uploaded project logo/icon (URL or data-URI)
+  /// Старое base64-значение logo, сохранённое при переносе в Blob.
+  /// Держим до проверки миграции, потом чистим — тогда таблица и похудеет.
+  logoLegacy   String?
   status       ClientStatus @default(ACTIVE)
 
   // Onboarding brief
