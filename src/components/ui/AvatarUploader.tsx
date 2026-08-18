@@ -2,14 +2,12 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { UserAvatar } from './UserAvatar';
 
 /** Upload / change / remove the current user's profile photo. */
 export function AvatarUploader({ name, avatar }: { name: string; avatar: string | null }) {
   const router = useRouter();
-  const { update } = useSession();
   const [current, setCurrent] = useState<string | null>(avatar);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -24,7 +22,6 @@ export function AvatarUploader({ name, avatar }: { name: string; avatar: string 
       if (!r.ok) throw new Error(data.error || 'Не удалось загрузить');
       setCurrent(data.url);
       toast.success('Фото обновлено');
-      await update();   // подтянуть новое фото в сессию
       router.refresh();
     } catch (e: any) {
       toast.error(e.message);
@@ -40,7 +37,6 @@ export function AvatarUploader({ name, avatar }: { name: string; avatar: string 
       if (!r.ok) throw new Error();
       setCurrent(null);
       toast.success('Фото удалено');
-      await update();
       router.refresh();
     } catch {
       toast.error('Не удалось удалить');
