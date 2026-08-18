@@ -75,12 +75,18 @@ export const authOptions: NextAuthOptions = {
               name,
               role: 'CLIENT',
               emailVerified: new Date(),
+              approvedAt: new Date(), // клиенту одобрение не требуется
               avatar: (profile as any)?.picture ?? null,
               client: { create: { businessName: name, niche: 'Не указана' } },
             },
           });
         } else if (!existing.emailVerified) {
           await prisma.user.update({ where: { email }, data: { emailVerified: new Date() } });
+        }
+        // Вход через Google не должен обходить одобрение администратора:
+        // иначе сотрудник, ждущий подтверждения, зайдёт мимо гейта.
+        if (existing && existing.role !== 'CLIENT' && !existing.approvedAt) {
+          return '/auth/login?error=pending';
         }
         return true;
       }
