@@ -75,9 +75,27 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   });
 }
 
+/**
+ * Удалить событие. Админ/опер. директор — любое; остальные — только те, что
+ * завели сами. Событие, назначенное админом, сотрудник удалить не может:
+ * оно общее, и его пропажа задела бы других.
+ */
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const me = await ensureAdminLike();
-  if (!me) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  const session = await ensureStaff();
+  if (!session) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  const me = session.user as any;
+
+  if (!isAdminLike(me.role)) {
+    const ev = await prisma.calendarEvent.findUnique({
+      where: { id: params.id },
+      select: { ownerId: true },
+    });
+    if (!ev) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    if (ev.ownerId !== me.id) {
+      return NextResponse.json({ error: 'Это событие добавили не вы' }, { status: 403 });
+    }
+  }
+
   await prisma.calendarEvent.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { ensureAdminLike } from '@/lib/api-guard';
-import { isStaff, visibleCategories } from '@/lib/roles';
+import { ensureAdminLike, ensureStaff } from '@/lib/api-guard';
+import { isStaff, isAdminLike, visibleCategories } from '@/lib/roles';
 
 export async function GET(req: Request) {
   const session = await getSafeSession();
@@ -29,24 +29,40 @@ export async function GET(req: Request) {
   return NextResponse.json({ events });
 }
 
+/**
+ * Создать событие.
+ *   • админ / опер. директор — любое, любому исполнителю и проекту;
+ *   • остальные сотрудники — только себе, в свой календарь. Категорию тоже
+ *     не выбирают произвольно: берём первую из доступных их роли, иначе чужие
+ *     направления засорялись бы личными событиями.
+ */
 export async function POST(req: Request) {
-  const session = await ensureAdminLike();
+  const session = await ensureStaff();
   if (!session) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   const me = session.user as any;
+  const adminLike = isAdminLike(me.role);
+
   const body = await req.json();
   if (!body.title || !body.startAt) {
     return NextResponse.json({ error: 'Название и дата обязательны' }, { status: 400 });
   }
+
+  const myCats = visibleCategories(me.role);
+  const category = adminLike
+    ? (body.category ?? 'GENERAL')
+    : ((myCats as string[]).includes(body.category) ? body.category : (myCats[0] ?? 'GENERAL'));
+
   const ev = await prisma.calendarEvent.create({
     data: {
       title: body.title,
       description: body.description ?? null,
       kind: body.kind ?? 'MEETING',
-      category: body.category ?? 'GENERAL',
+      category,
       startAt: new Date(body.startAt),
       endAt: body.endAt ? new Date(body.endAt) : null,
-      clientId: body.clientId ?? null,
-      assigneeId: body.assigneeId ?? null,
+      clientId: adminLike ? (body.clientId ?? null) : null,
+      // Сотрудник заводит событие только себе — оно попадёт в «Мой календарь».
+      assigneeId: adminLike ? (body.assigneeId ?? null) : me.id,
       ownerId: me.id,
     },
   });

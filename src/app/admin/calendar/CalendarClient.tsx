@@ -279,7 +279,9 @@ export function CalendarClient({
           <button onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} className="rounded-lg border border-white/10 px-3 py-1 text-sm text-light/70 hover:text-brand-lime">→</button>
           <button onClick={() => setCursor(new Date())} className="ml-2 rounded-lg border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.15em] text-light/55 hover:text-brand-lime">Сегодня</button>
         </div>
-        {canManage && <button onClick={openForm} className="btn-lime">+ Событие</button>}
+        {(canManage || scope === 'PERSONAL') && (
+          <button onClick={openForm} className="btn-lime">+ Событие</button>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/[0.06]">
@@ -362,7 +364,7 @@ export function CalendarClient({
       )}
 
       {/* Create form (managers only) */}
-      {showForm && canManage && (
+      {showForm && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -398,22 +400,30 @@ export function CalendarClient({
                     {Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                   </select>
                 </div>
+                {canManage && (
+                  <div>
+                    <label className="label-soft">Календарь (команда)</label>
+                    <select className="input-glass" value={form.category} onChange={(e) => set('category', e.target.value as EventCategory)}>
+                      {(['GENERAL','VIDEO','DESIGN','SALES','TARGET','WEB'] as EventCategory[]).map((c) => (
+                        <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+              {canManage ? (
                 <div>
-                  <label className="label-soft">Календарь (команда)</label>
-                  <select className="input-glass" value={form.category} onChange={(e) => set('category', e.target.value as EventCategory)}>
-                    {(['GENERAL','VIDEO','DESIGN','SALES','TARGET','WEB'] as EventCategory[]).map((c) => (
-                      <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>
-                    ))}
+                  <label className="label-soft">Ответственный</label>
+                  <select className="input-glass" value={form.assigneeId} onChange={(e) => set('assigneeId', e.target.value)}>
+                    <option value="">Не назначен</option>
+                    {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className="label-soft">Ответственный</label>
-                <select className="input-glass" value={form.assigneeId} onChange={(e) => set('assigneeId', e.target.value)}>
-                  <option value="">Не назначен</option>
-                  {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </div>
+              ) : (
+                <p className="text-[11px] text-light/40">
+                  Событие появится в вашем календаре. Другие сотрудники его не увидят.
+                </p>
+              )}
               <input className="input-glass" placeholder="Название" value={form.title} onChange={(e) => set('title', e.target.value)} />
               <textarea className="input-glass min-h-[60px]" placeholder="Описание" value={form.description} onChange={(e) => set('description', e.target.value)} />
               <div className="grid grid-cols-2 gap-3">
@@ -510,7 +520,7 @@ export function CalendarClient({
             </div>
 
             <div className="mt-6 flex justify-between gap-3">
-              {canManage && (
+              {(canManage || open.ownerId === meId) && (
                 <button onClick={() => { remove(open.id); setOpen(null); }} className="text-[11px] uppercase tracking-[0.14em] text-light/35 hover:text-rose-400">
                   Удалить событие
                 </button>
