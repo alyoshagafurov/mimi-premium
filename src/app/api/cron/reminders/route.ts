@@ -49,14 +49,14 @@ async function runReminders() {
   // ── Calendar events in the next 24 hours ─────────────────────
   const upcomingEvents = await prisma.calendarEvent.findMany({
     where: { startAt: { gte: now, lte: new Date(now.getTime() + DAY) }, OR: notRemindedToday },
-    include: { client: { select: { ownerId: true } } },
+    include: { client: { select: { ownerId: true } }, assignees: { select: { id: true } } },
   });
   for (const e of upcomingEvents) {
     const when = e.startAt.toLocaleString('ru-RU', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' });
     const body = `${e.title} — ${when}`;
     const staff = new Set<string>();
     if (e.ownerId) staff.add(e.ownerId);
-    if (e.assigneeId) staff.add(e.assigneeId);
+    for (const a of e.assignees) staff.add(a.id);
     for (const uid of staff) {
       await notify({ userId: uid, kind: 'TASK', title: 'Скоро событие', body, link: '/admin/calendar' });
     }

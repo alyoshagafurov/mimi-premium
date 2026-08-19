@@ -23,8 +23,8 @@ type Event = {
   clientId: string | null;
   clientName: string | null;
   ownerId: string | null;
-  assigneeId: string | null;
-  assigneeName: string | null;
+  assigneeIds: string[];
+  assigneeNames: string[];
   done: boolean;
   myNotes: { id: string; body: string; createdAt: string }[];
 };
@@ -65,7 +65,8 @@ const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 const EMPTY = {
   title: '', description: '', kind: 'MEETING' as Kind, category: 'GENERAL' as EventCategory,
-  startAt: '', endAt: '', clientId: '', assigneeId: '',
+  assigneeIds: [] as string[],
+  startAt: '', endAt: '', clientId: '',
 };
 
 export function CalendarClient({
@@ -149,7 +150,7 @@ export function CalendarClient({
     () => {
       if (canManage) return tab === 'ALL' ? events : events.filter((e) => e.category === tab);
       if (scope === 'MINE_CATEGORY') return events.filter((e) => (categories as string[]).includes(e.category));
-      if (scope === 'PERSONAL') return events.filter((e) => e.ownerId === meId || e.assigneeId === meId);
+      if (scope === 'PERSONAL') return events.filter((e) => e.ownerId === meId || e.assigneeIds.includes(meId));
       return events;
     },
     [events, tab, scope, canManage, categories, meId],
@@ -189,7 +190,7 @@ export function CalendarClient({
       const r = await fetch('/api/calendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, title: form.title.trim(), clientId: form.clientId || null, assigneeId: form.assigneeId || null, endAt: form.endAt || null }),
+        body: JSON.stringify({ ...form, title: form.title.trim(), clientId: form.clientId || null, endAt: form.endAt || null }),
       });
       if (!r.ok) throw new Error();
       toast.success('Событие добавлено');
@@ -212,7 +213,11 @@ export function CalendarClient({
 
   const chipLabel = (e: Event) => {
     const main = e.clientName || e.title;
-    return e.assigneeName ? `${main} · ${e.assigneeName}` : main;
+    // В плашке дня места мало: показываем первого ответственного и «+N».
+    const who = e.assigneeNames.length
+      ? e.assigneeNames[0] + (e.assigneeNames.length > 1 ? ` +${e.assigneeNames.length - 1}` : '')
+      : '';
+    return who ? `${main} · ${who}` : main;
   };
 
   return (
@@ -313,7 +318,7 @@ export function CalendarClient({
                         });
                       }}
                       onMouseLeave={() => setHover(null)}
-                      onClick={() => { setHover(null); setNoteDraft(''); setOpen(e); }}
+                      onClick={() => { setHover(null); router.push(`/admin/calendar/${e.id}`); }}
                       className={cn(
                         'block w-full cursor-pointer truncate rounded-md border px-1.5 py-0.5 text-left text-[10px] font-medium transition-colors',
                         e.done
@@ -334,202 +339,33 @@ export function CalendarClient({
       </div>
 
       {/* Hover popover — full event info */}
+      {/* Ховер — только короткая справка; всё остальное на странице события */}
       {hover && (
         <div
           style={{ position: 'fixed', left: hover.x, top: hover.y, transform: hover.flip ? 'translateY(-100%)' : undefined, zIndex: 60 }}
-          className="pointer-events-none w-[280px] rounded-2xl border border-brand-lime/25 bg-ink2/95 p-4 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+          className="pointer-events-none w-[260px] rounded-2xl border border-white/10 bg-ink2/95 p-3.5 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl"
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="rounded-full border border-brand-lime/30 bg-brand-lime/[0.08] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-brand-lime">
-              {CATEGORY_LABEL[hover.e.category]}
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              'rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.12em]',
+              hover.e.done ? 'border-brand-lime/40 text-brand-lime' : 'border-brand-orange/40 text-brand-orange',
+            )}>
+              {hover.e.done ? '✓ выполнено' : 'в процессе'}
             </span>
-            <span className="text-[10px] uppercase tracking-[0.16em] text-brand-orange">{KIND_LABEL[hover.e.kind]}</span>
+            <span className="text-[9px] uppercase tracking-[0.14em] text-light/40">{KIND_LABEL[hover.e.kind]}</span>
           </div>
-          <h4 className="mt-3 font-display text-base font-bold leading-tight text-light">{hover.e.title}</h4>
-          <div className="mt-3 space-y-1.5 text-[12px]">
-            {hover.e.clientName && (
-              <div className="flex gap-2"><span className="text-light/40">Проект:</span><span className="text-light/85">{hover.e.clientName}</span></div>
-            )}
-            {hover.e.assigneeName && (
-              <div className="flex gap-2"><span className="text-light/40">Ответственный:</span><span className="text-light/85">{hover.e.assigneeName}</span></div>
-            )}
-            <div className="flex gap-2">
-              <span className="text-light/40">Когда:</span>
-              <span className="text-light/85">{fmtDate(hover.e.startAt)}, {fmtTime(hover.e.startAt)}{hover.e.endAt ? `–${fmtTime(hover.e.endAt)}` : ''}</span>
-            </div>
+          <h4 className="mt-2 line-clamp-2 font-display text-[15px] font-bold leading-tight text-light">{hover.e.title}</h4>
+          <div className="mt-1.5 text-[12px] text-light/55">
+            {fmtTime(hover.e.startAt)}{hover.e.endAt ? `–${fmtTime(hover.e.endAt)}` : ''}
+            {hover.e.clientName ? ` · ${hover.e.clientName}` : ''}
           </div>
-          {hover.e.description && <p className="mt-3 border-t border-white/[0.06] pt-3 text-[12px] leading-relaxed text-light/60">{hover.e.description}</p>}
-          {canManage && <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-light/30">клик по плашке — удалить</p>}
+          {hover.e.assigneeNames.length > 0 && (
+            <div className="mt-1 truncate text-[11px] text-light/40">{hover.e.assigneeNames.join(', ')}</div>
+          )}
+          <div className="mt-2.5 text-[10px] uppercase tracking-[0.14em] text-brand-lime/70">нажмите — подробнее →</div>
         </div>
       )}
 
-      {/* Create form (managers only) */}
-      {showForm && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4"
-          onClick={() => setShowForm(false)}
-        >
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-ink2 p-6"
-          >
-            <h3 className="font-display text-xl font-bold text-light">Новое событие</h3>
-            <div className="mt-5 space-y-3">
-              <div>
-                <label className="label-soft">Проект</label>
-                <select className="input-glass" value={form.clientId} onChange={(e) => set('clientId', e.target.value)}>
-                  <option value="">Без проекта</option>
-                  {clients.map((c) => <option key={c.id} value={c.id}>{c.businessName}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label-soft">Тип события</label>
-                  <select
-                    className="input-glass"
-                    value={form.kind}
-                    onChange={(e) => {
-                      const kind = e.target.value as Kind;
-                      setForm((p) => ({ ...p, kind, category: KIND_CATEGORY[kind] ?? p.category }));
-                    }}
-                  >
-                    {Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                  </select>
-                </div>
-                {canManage && (
-                  <div>
-                    <label className="label-soft">Календарь (команда)</label>
-                    <select className="input-glass" value={form.category} onChange={(e) => set('category', e.target.value as EventCategory)}>
-                      {(['GENERAL','VIDEO','DESIGN','SALES','TARGET','WEB'] as EventCategory[]).map((c) => (
-                        <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-              {canManage ? (
-                <div>
-                  <label className="label-soft">Ответственный</label>
-                  <select className="input-glass" value={form.assigneeId} onChange={(e) => set('assigneeId', e.target.value)}>
-                    <option value="">Не назначен</option>
-                    {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
-              ) : (
-                <p className="text-[11px] text-light/40">
-                  Событие появится в вашем календаре. Другие сотрудники его не увидят.
-                </p>
-              )}
-              <input className="input-glass" placeholder="Название" value={form.title} onChange={(e) => set('title', e.target.value)} />
-              <textarea className="input-glass min-h-[60px]" placeholder="Описание" value={form.description} onChange={(e) => set('description', e.target.value)} />
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label-soft">Начало</label>
-                  <input type="datetime-local" className="input-glass" value={form.startAt} onChange={(e) => set('startAt', e.target.value)} />
-                </div>
-                <div>
-                  <label className="label-soft">Конец</label>
-                  <input type="datetime-local" className="input-glass" value={form.endAt} onChange={(e) => set('endAt', e.target.value)} />
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => setShowForm(false)} className="btn-ghost">Отмена</button>
-              <button onClick={save} disabled={saving} className="btn-lime disabled:opacity-60">{saving ? 'Создаём…' : 'Создать'}</button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* ── Карточка события: статус + заметки ── */}
-      {open && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/80 p-4" onClick={() => setOpen(null)}>
-          <div onClick={(ev) => ev.stopPropagation()} className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/[0.08] bg-ink2 p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-light/50">
-                {CATEGORY_LABEL[open.category]}
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.16em] text-brand-orange">{KIND_LABEL[open.kind]}</span>
-              {/* Крупный, однозначный признак состояния */}
-              <span className={cn(
-                'ml-auto rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.14em]',
-                open.done
-                  ? 'border-brand-lime/40 bg-brand-lime/10 text-brand-lime'
-                  : 'border-brand-orange/40 bg-brand-orange/10 text-brand-orange',
-              )}>
-                {open.done ? '✓ Выполнено' : '● В процессе'}
-              </span>
-            </div>
-
-            <h3 className="mt-3 font-display text-xl font-bold leading-tight text-light">{open.title}</h3>
-            <p className="mt-1 text-[12px] text-light/50">
-              {fmtDate(open.startAt)}, {fmtTime(open.startAt)}{open.endAt ? `–${fmtTime(open.endAt)}` : ''}
-              {open.clientName ? ` · ${open.clientName}` : ''}
-              {open.assigneeName ? ` · ${open.assigneeName}` : ''}
-            </p>
-            {open.description && (
-              <p className="mt-3 whitespace-pre-wrap border-t border-white/[0.06] pt-3 text-[13px] leading-relaxed text-light/65">
-                {open.description}
-              </p>
-            )}
-
-            <button
-              onClick={() => toggleDone(open)}
-              disabled={busy}
-              className={cn(
-                'mt-5 w-full rounded-2xl border px-4 py-3 text-[12px] uppercase tracking-[0.14em] transition disabled:opacity-50',
-                open.done
-                  ? 'border-white/15 text-light/60 hover:border-brand-orange/40 hover:text-brand-orange'
-                  : 'border-brand-lime bg-brand-lime text-[#0A0712] hover:opacity-90',
-              )}
-            >
-              {open.done ? 'Вернуть в работу' : '✓ Отметить выполненным'}
-            </button>
-
-            {/* Заметки — личные, дублируются в разделе «Заметки» */}
-            <div className="mt-6 border-t border-white/[0.06] pt-5">
-              <p className="mb-3 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Мои заметки по событию</p>
-              <textarea
-                value={noteDraft}
-                onChange={(ev) => setNoteDraft(ev.target.value)}
-                rows={2}
-                placeholder="Что нужно помнить по этому событию…"
-                className="input-glass min-h-[70px]"
-              />
-              <div className="mt-2 flex justify-end">
-                <button onClick={() => addNote(open)} disabled={busy || !noteDraft.trim()} className="btn-lime !px-4 !py-1.5 !text-[11px] disabled:opacity-50">
-                  Добавить
-                </button>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {open.myNotes.length === 0 && <p className="text-[12px] text-light/35">Заметок пока нет.</p>}
-                {open.myNotes.map((n) => (
-                  <div key={n.id} className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-2">
-                    <div className="text-[10px] text-light/35">
-                      {new Date(n.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <p className="mt-1 whitespace-pre-wrap text-[13px] text-light/85">{n.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-between gap-3">
-              {(canManage || open.ownerId === meId) && (
-                <button onClick={() => { remove(open.id); setOpen(null); }} className="text-[11px] uppercase tracking-[0.14em] text-light/35 hover:text-rose-400">
-                  Удалить событие
-                </button>
-              )}
-              <button onClick={() => setOpen(null)} className="btn-ghost ml-auto !px-5 !py-2 !text-[11px]">Закрыть</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

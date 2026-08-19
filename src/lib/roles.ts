@@ -1,8 +1,8 @@
 import type { Role } from '@prisma/client';
 
 /** Calendar / event categories — drive the calendar tabs and per-role visibility. */
-export type EventCategory = 'GENERAL' | 'VIDEO' | 'DESIGN' | 'SALES' | 'TARGET' | 'WEB';
-export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'DESIGN', 'SALES', 'TARGET', 'WEB'];
+export type EventCategory = 'GENERAL' | 'VIDEO' | 'MONTAGE' | 'DESIGN' | 'SALES' | 'TARGET' | 'WEB';
+export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'MONTAGE', 'DESIGN', 'SALES', 'TARGET', 'WEB'];
 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
@@ -126,6 +126,7 @@ export function canEditProduction(role: string | null | undefined, kind: Product
 export const CATEGORY_LABEL: Record<EventCategory, string> = {
   GENERAL: 'Общий',
   VIDEO: 'Видео',
+  MONTAGE: 'Монтаж',
   DESIGN: 'Дизайн',
   SALES: 'Продажи',
   TARGET: 'Таргет',
@@ -139,8 +140,9 @@ export function visibleCategories(role?: string | null): EventCategory[] {
     case 'OPS_DIRECTOR':
       return [...EVENT_CATEGORIES];
     case 'VIDEOGRAPHER':
-    case 'MONTAGE':
       return ['VIDEO'];
+    case 'MONTAGE':
+      return ['MONTAGE'];
     case 'DESIGNER':
       return ['DESIGN'];
     case 'SALES':

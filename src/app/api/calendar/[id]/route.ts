@@ -7,11 +7,11 @@ import { isAdminLike, visibleCategories } from '@/lib/roles';
 async function myEvent(id: string, userId: string, role: string) {
   const ev = await prisma.calendarEvent.findUnique({
     where: { id },
-    select: { id: true, ownerId: true, assigneeId: true, category: true },
+    select: { id: true, ownerId: true, category: true, assignees: { select: { id: true } } },
   });
   if (!ev) return null;
   if (isAdminLike(role)) return ev;
-  const mine = ev.ownerId === userId || ev.assigneeId === userId;
+  const mine = ev.ownerId === userId || ev.assignees.some((a) => a.id === userId);
   const inMyCategory = (visibleCategories(role) as string[]).includes(ev.category);
   return mine || inMyCategory ? ev : null;
 }
@@ -36,8 +36,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   // Остальные поля меняет только админ / опер. директор.
   if (isAdminLike(role)) {
-    for (const k of ['title', 'description', 'kind', 'category', 'clientId', 'assigneeId']) {
+    for (const k of ['title', 'description', 'kind', 'category', 'clientId']) {
       if (k in body) data[k] = body[k] || null;
+    }
+    // `set` заменяет состав целиком — иначе снятые ответственные остались бы.
+    if (Array.isArray(body.assigneeIds)) {
+      data.assignees = { set: body.assigneeIds.filter(Boolean).map((id: string) => ({ id })) };
     }
     if (body.title) data.title = body.title;
     if ('startAt' in body) data.startAt = new Date(body.startAt);

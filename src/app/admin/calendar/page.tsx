@@ -19,6 +19,7 @@ export default async function AdminCalendarPage() {
       include: {
         client: { select: { id: true, businessName: true } },
         assignee: { select: { id: true, name: true } },
+        assignees: { select: { id: true, name: true } },
         notes: {
           where: { authorId: me?.id ?? '__none__' },
           orderBy: { createdAt: 'desc' },
@@ -28,7 +29,12 @@ export default async function AdminCalendarPage() {
     }),
     canManage
       ? prisma.client.findMany({
-    relationLoadStrategy: 'join', select: { id: true, businessName: true }, orderBy: { businessName: 'asc' } })
+          // В календаре выбираем ПРОЕКТЫ — тех, с кем уже работаем.
+          // Лиды из воронки сюда не попадают.
+          where: { salesStatus: 'PARTNER' },
+          select: { id: true, businessName: true },
+          orderBy: { businessName: 'asc' },
+        })
       : Promise.resolve([]),
     canManage
       ? prisma.user.findMany({
@@ -59,8 +65,8 @@ export default async function AdminCalendarPage() {
         clientId: e.clientId ?? null,
         ownerId: e.ownerId ?? null,
         clientName: e.client?.businessName ?? null,
-        assigneeId: e.assigneeId ?? null,
-        assigneeName: e.assignee?.name ?? null,
+        assigneeIds: e.assignees.map((a) => a.id),
+        assigneeNames: e.assignees.map((a) => a.name),
         done: e.done,
         myNotes: e.notes.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt.toISOString() })),
       }))}

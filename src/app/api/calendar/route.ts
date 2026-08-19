@@ -61,8 +61,14 @@ export async function POST(req: Request) {
       startAt: new Date(body.startAt),
       endAt: body.endAt ? new Date(body.endAt) : null,
       clientId: adminLike ? (body.clientId ?? null) : null,
-      // Сотрудник заводит событие только себе — оно попадёт в «Мой календарь».
-      assigneeId: adminLike ? (body.assigneeId ?? null) : me.id,
+      // Ответственных может быть несколько. Сотрудник заводит событие только
+      // себе — оно попадёт в «Мой календарь».
+      assignees: {
+        connect: (adminLike
+          ? (Array.isArray(body.assigneeIds) ? body.assigneeIds.filter(Boolean) : [])
+          : [me.id]
+        ).map((id: string) => ({ id })),
+      },
       ownerId: me.id,
     },
   });
