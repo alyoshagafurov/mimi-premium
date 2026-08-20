@@ -27,8 +27,8 @@ type Lead = {
   sourceNote: string | null;
   createdById: string | null;
   createdByName: string | null;
-  assignedToName: string | null;
-  assignedToId: string | null;
+  assigneeIds: string[];
+  assigneeNames: string[];
   reminderAt: string | null;
   reminderNote: string;
   reminderDone: boolean;
@@ -202,15 +202,15 @@ export function SalesClient({
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return leads.filter((l) => {
-      if (mine && l.assignedToId !== meId) return false;
-      if (repFilter && l.assignedToId !== repFilter) return false;
+      if (mine && !l.assigneeIds.includes(meId)) return false;
+      if (repFilter && !l.assigneeIds.includes(repFilter)) return false;
       if (bounds) {
         const t = new Date(l.createdAt).getTime();
         if (t < bounds.start || t > bounds.end) return false;
       }
       if (packages.size && !packages.has(l.packageType)) return false;
       if (!needle) return true;
-      return [l.contactName, l.businessName, l.niche, l.phone, l.email, l.assignedToName ?? '']
+      return [l.contactName, l.businessName, l.niche, l.phone, l.email, ...l.assigneeNames]
         .join(' ').toLowerCase().includes(needle);
     });
   }, [leads, mine, meId, q, repFilter, bounds, packages]);
@@ -524,7 +524,11 @@ export function SalesClient({
                     )}
                     <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[10px] text-light/30">
                       <span className="uppercase tracking-[0.12em]">с {fmtDate(l.createdAt)}</span>
-                      {l.assignedToName && <span className="text-brand-lime/70">· {l.assignedToName}</span>}
+                      {l.assigneeNames.length > 0 && (
+                        <span className="text-brand-lime/70">
+                          · {l.assigneeNames[0]}{l.assigneeNames.length > 1 ? ` +${l.assigneeNames.length - 1}` : ''}
+                        </span>
+                      )}
                     </div>
                   </Link>
                 ))}

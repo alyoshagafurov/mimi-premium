@@ -7,12 +7,12 @@ export default async function AdminSalesPage() {
   const session = await getSafeSession();
   const me = session?.user as any;
   // Админ и операционный директор видят все лиды; продажник и разработчик —
-  // только те, за которые они отвечают. Смена ответственного передаёт лид вместе
-  // с видимостью.
+  // те, где они в числе ответственных. Ответственных может быть несколько, и
+  // лид видит каждый из них.
   const seesAllLeads = isAdminLike(me?.role);
   // Only the full ADMIN sees everyone's personal lead statistics.
   const seesEveryone = canSeeRevenue(me?.role);
-  const leadScope = seesAllLeads ? {} : { assignedToId: me?.id ?? '__none__' };
+  const leadScope = seesAllLeads ? {} : { assignees: { some: { id: me?.id ?? '__none__' } } };
 
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -36,6 +36,7 @@ export default async function AdminSalesPage() {
         owner: { select: { phone: true, email: true } },
         createdBy: { select: { id: true, name: true } },
         assignedTo: { select: { id: true, name: true } },
+        assignees: { select: { id: true, name: true } },
       },
     }),
     prisma.user.findMany({
@@ -91,8 +92,8 @@ export default async function AdminSalesPage() {
         sourceNote: c.sourceNote,
         createdById: c.createdBy?.id ?? null,
         createdByName: c.createdBy?.name ?? null,
-        assignedToName: c.assignedTo?.name ?? null,
-        assignedToId: c.assignedTo?.id ?? null,
+        assigneeIds: c.assignees.map((a) => a.id),
+        assigneeNames: c.assignees.map((a) => a.name),
         reminderAt: c.reminderAt?.toISOString() ?? null,
         reminderNote: c.reminderNote ?? '',
         reminderDone: c.reminderDone,

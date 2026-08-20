@@ -193,21 +193,22 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  client         Client?
-  ownedDeals     Deal[]                  @relation("DealOwner")
-  ownedTasks     Task[]                  @relation("TaskOwner")
-  activities     Activity[]              @relation("ActivityAuthor")
-  notifications  Notification[]
-  sentMessages   Message[]               @relation("MessageSender")
-  uploadedFiles  File[]                  @relation("FileUploader")
-  calendarEvents CalendarEvent[]         @relation("EventOwner")
-  assignedEvents CalendarEvent[]         @relation("EventAssignee")
-  eventsAssigned CalendarEvent[]         @relation("EventAssignees")
-  resetTokens    PasswordResetToken[]
-  emailCodes     EmailVerificationCode[]
-  leadsCreated   Client[]                @relation("LeadCreator")
-  leadsAssigned  Client[]                @relation("LeadOwner")
-  staffNotes     StaffNote[]             @relation("NoteAuthor")
+  client           Client?
+  ownedDeals       Deal[]                  @relation("DealOwner")
+  ownedTasks       Task[]                  @relation("TaskOwner")
+  activities       Activity[]              @relation("ActivityAuthor")
+  notifications    Notification[]
+  sentMessages     Message[]               @relation("MessageSender")
+  uploadedFiles    File[]                  @relation("FileUploader")
+  calendarEvents   CalendarEvent[]         @relation("EventOwner")
+  assignedEvents   CalendarEvent[]         @relation("EventAssignee")
+  eventsAssigned   CalendarEvent[]         @relation("EventAssignees")
+  resetTokens      PasswordResetToken[]
+  emailCodes       EmailVerificationCode[]
+  leadsCreated     Client[]                @relation("LeadCreator")
+  leadsAssigned    Client[]                @relation("LeadOwner")
+  leadsResponsible Client[]                @relation("LeadAssignees")
+  staffNotes       StaffNote[]             @relation("NoteAuthor")
 }
 
 model EmailVerificationCode {
@@ -269,8 +270,11 @@ model Client {
   // Ownership: who first added the lead vs. who works it now (transferable).
   createdById  String?
   createdBy    User?         @relation("LeadCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  /// Устаревшее одиночное поле — данные перенесены в `assignees`.
   assignedToId String?
   assignedTo   User?         @relation("LeadOwner", fields: [assignedToId], references: [id], onDelete: SetNull)
+  /// Ответственных за лид может быть несколько; каждый из них его видит.
+  assignees    User[]        @relation("LeadAssignees")
   packageType  ClientPackage @default(NONE)
   comment      String?
   reminderAt   DateTime?

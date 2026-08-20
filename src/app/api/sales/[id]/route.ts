@@ -23,9 +23,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!adminLike) {
     const own = await prisma.client.findUnique({
       where: { id: params.id },
-      select: { assignedToId: true },
+      select: { assignees: { select: { id: true } } },
     });
-    if (!own || own.assignedToId !== (session?.user as any)?.id) {
+    const myId = (session?.user as any)?.id;
+    if (!own || !own.assignees.some((a) => a.id === myId)) {
       return NextResponse.json({ error: 'Это не ваш лид' }, { status: 403 });
     }
   }
@@ -81,22 +82,27 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.techSpec = body.techSpec.trim() || null;
   }
 
-  // ── Transfer: hand the lead to another salesperson ──────────────
-  // The notes stay on the lead, so the new owner inherits the full history.
-  let transfer: { from: string; to: string; toId: string } | null = null;
-  if (typeof body.assignedToId === 'string' && body.assignedToId) {
+  // ── Ответственные: заменяем состав целиком ─────────────────────
+  // Заметки остаются на лиде, поэтому новый ответственный видит всю историю.
+  let addedIds: string[] = [];
+  let summaryLine = '';
+  if (Array.isArray(body.assigneeIds)) {
+    const next = body.assigneeIds.filter(Boolean) as string[];
     const current = await prisma.client.findUnique({
       where: { id: params.id },
-      select: { assignedToId: true, contactName: true, assignedTo: { select: { name: true } } },
+      select: { contactName: true, businessName: true, assignees: { select: { id: true, name: true } } },
     });
-    if (current && current.assignedToId !== body.assignedToId) {
-      const next = await prisma.user.findUnique({
-        where: { id: body.assignedToId },
-        select: { id: true, name: true, role: true },
-      });
-      if (!next) return NextResponse.json({ error: 'Сотрудник не найден' }, { status: 400 });
-      data.assignedToId = next.id;
-      transfer = { from: current.assignedTo?.name ?? '—', to: next.name, toId: next.id };
+    if (current) {
+      const before = current.assignees.map((a) => a.id);
+      addedIds = next.filter((id) => !before.includes(id));
+      if (addedIds.length || before.some((id) => !next.includes(id))) {
+        const people = await prisma.user.findMany({
+          where: { id: { in: next } },
+          select: { id: true, name: true },
+        });
+        data.assignees = { set: next.map((id) => ({ id })) };
+        summaryLine = `Ответственные: ${current.assignees.map((a) => a.name).join(', ') || '—'} → ${people.map((p) => p.name).join(', ') || '—'}`;
+      }
     }
   }
 
@@ -106,20 +112,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const client = await prisma.client.update({ where: { id: params.id }, data });
 
-  if (transfer) {
-    const summary = `Лид передан: ${transfer.from} → ${transfer.to}`;
-    // Visible in the lead's notes feed so the new owner sees who had it before.
+  if (summaryLine) {
+    // Видно в ленте заметок лида — новый ответственный понимает, кто вёл до него.
     await prisma.activity.create({
-      data: { kind: 'NOTE', body: summary, clientId: params.id, authorId: (session!.user as any).id ?? null },
+      data: { kind: 'NOTE', body: summaryLine, clientId: params.id, authorId: (session!.user as any).id ?? null },
     });
-    await notify({
-      userId: transfer.toId,
-      kind: 'LEAD',
-      title: 'Вам передали лид',
-      body: client.contactName ?? client.businessName,
-      link: `/admin/sales/${params.id}`,
-    }).catch(() => {});
-    await logAudit({ action: 'updated', entity: 'lead', entityId: params.id, summary });
+    for (const uid of addedIds) {
+      await notify({
+        userId: uid,
+        kind: 'LEAD',
+        title: 'Вам назначили лид',
+        body: client.contactName ?? client.businessName,
+        link: `/admin/sales/${params.id}`,
+      }).catch(() => {});
+    }
+    await logAudit({ action: 'updated', entity: 'lead', entityId: params.id, summary: summaryLine });
   }
 
   return NextResponse.json({ ok: true, client: { id: client.id } });
@@ -143,13 +150,13 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     where: { id: params.id },
     select: {
       ownerId: true, businessName: true, contactName: true,
-      salesStatus: true, createdById: true, assignedToId: true,
+      salesStatus: true, createdById: true, assignees: { select: { id: true } },
     },
   });
   if (!client) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
   if (!adminLike) {
-    if (client.assignedToId !== me?.id) {
+    if (!client.assignees.some((a) => a.id === me?.id)) {
       return NextResponse.json({ error: 'Это не ваш лид' }, { status: 403 });
     }
     // A converted partner is a real client, not a lead — admin only.

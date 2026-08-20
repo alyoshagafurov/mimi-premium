@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { videoEmbed } from '@/lib/link-preview';
+import { cn } from '@/lib/utils';
 import { telegramUrl, instagramUrl } from '@/lib/utils';
 import {
   SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL,
@@ -20,7 +21,7 @@ type Lead = {
   sourceUrl: string | null; sourceCover: string | null; sourceNote: string | null;
   telegram: string | null; instagram: string | null;
   comment: string;
-  createdByName: string | null; assignedToId: string; assignedToName: string | null;
+  createdByName: string | null; assigneeIds: string[]; assigneeNames: string[];
   reminderAt: string | null; reminderNote: string; createdAt: string;
 };
 type Note = { id: string; body: string; author: string; createdAt: string };
@@ -52,7 +53,7 @@ export function LeadDetail({
   const [posting, setPosting] = useState(false);
   const [status, setStatus] = useState(lead.salesStatus);
   const [pkg, setPkg] = useState(lead.packageType);
-  const [owner, setOwner] = useState(lead.assignedToId);
+  const [owners, setOwners] = useState<string[]>(lead.assigneeIds);
   const [saving, setSaving] = useState(false);
   const embed = videoEmbed(lead.sourceUrl);
   // Leads no longer capture business/niche, so these hold placeholders
@@ -194,22 +195,37 @@ export function LeadDetail({
                 </select>
               </div>
               <div className="sm:col-span-2">
-                <label className="label-soft">Ответственный продажник</label>
-                <select
-                  className="input-glass"
-                  value={owner}
-                  disabled={saving}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    const prev = owner;
-                    setOwner(v);
-                    patch({ assignedToId: v }, 'Лид передан').then((ok) => { if (!ok) setOwner(prev); });
-                  }}
-                >
-                  {reps.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                <label className="label-soft">Ответственные — можно выбрать несколько</label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {reps.map((r) => {
+                    const picked = owners.includes(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        disabled={saving}
+                        onClick={() => {
+                          const prev = owners;
+                          const next = picked ? owners.filter((x) => x !== r.id) : [...owners, r.id];
+                          setOwners(next);
+                          patch({ assigneeIds: next }, 'Ответственные обновлены')
+                            .then((ok) => { if (!ok) setOwners(prev); });
+                        }}
+                        className={cn(
+                          'rounded-full border px-3 py-1.5 text-[12px] transition disabled:opacity-50',
+                          picked
+                            ? 'border-brand-lime bg-brand-lime text-[#0A0712]'
+                            : 'border-white/10 text-light/55 hover:text-light',
+                        )}
+                      >
+                        {picked ? '✓ ' : ''}{r.name}
+                      </button>
+                    );
+                  })}
+                </div>
                 <p className="mt-2 text-[11px] text-light/40">
-                  При передаче все заметки остаются — новый продажник видит всю историю.
+                  Лид видит каждый из выбранных. Заметки остаются на лиде — новый
+                  ответственный видит всю историю.
                 </p>
               </div>
             </div>

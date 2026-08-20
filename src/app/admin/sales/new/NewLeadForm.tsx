@@ -15,7 +15,7 @@ const EMPTY = {
   sourceType: 'VIDEO' as 'VIDEO' | 'OTHER',
   sourceUrl: '', sourceNote: '',
   comment: '',
-  assignedToId: '',
+  assigneeIds: [] as string[],
 };
 
 export function NewLeadForm({
@@ -28,7 +28,7 @@ export function NewLeadForm({
   canAssign: boolean;
 }) {
   const router = useRouter();
-  const [f, setF] = useState({ ...EMPTY, assignedToId: meId });
+  const [f, setF] = useState({ ...EMPTY, assigneeIds: [meId] });
   const [busy, setBusy] = useState(false);
 
   const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -165,10 +165,33 @@ export function NewLeadForm({
             </div>
             {canAssign && (
               <div className="col-span-2">
-                <label className="label-soft">Ответственный продажник</label>
-                <select className="input-glass" value={f.assignedToId} onChange={set('assignedToId')}>
-                  {reps.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                <label className="label-soft">Ответственные — можно выбрать несколько</label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {reps.map((r) => {
+                    const picked = f.assigneeIds.includes(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setF((p) => ({
+                          ...p,
+                          assigneeIds: picked
+                            ? p.assigneeIds.filter((x) => x !== r.id)
+                            : [...p.assigneeIds, r.id],
+                        }))}
+                        className={cn(
+                          'rounded-full border px-3 py-1.5 text-[12px] transition',
+                          picked
+                            ? 'border-brand-lime bg-brand-lime text-[#0A0712]'
+                            : 'border-white/10 text-light/55 hover:text-light',
+                        )}
+                      >
+                        {picked ? '✓ ' : ''}{r.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-light/40">Лид увидит каждый из выбранных.</p>
               </div>
             )}
           </div>

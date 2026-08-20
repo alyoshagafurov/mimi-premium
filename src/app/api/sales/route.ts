@@ -24,7 +24,7 @@ const schema = z.object({
   telegram: z.string().max(120).optional(),
   instagram: z.string().max(120).optional(),
   comment: z.string().max(2000).optional(),
-  assignedToId: z.string().optional(),
+  assigneeIds: z.array(z.string()).optional(),
 });
 
 /** Sales / admin / ops: create a CRM lead. */
@@ -82,8 +82,13 @@ export async function POST(req: Request) {
             sourceNote: d.sourceNote?.trim() || null,
             comment: d.comment?.trim() || null,
             createdById: me?.id ?? null,
-            // Sales keep their own leads; admin/ops may assign to someone else.
-            assignedToId: d.assignedToId || me?.id || null,
+            // Ответственных может быть несколько, и лид видит каждый из них.
+            // По умолчанию — тот, кто завёл лид.
+            assignees: {
+              connect: (d.assigneeIds?.length ? d.assigneeIds : [me?.id])
+                .filter(Boolean)
+                .map((id: string) => ({ id })),
+            },
           },
         },
       },

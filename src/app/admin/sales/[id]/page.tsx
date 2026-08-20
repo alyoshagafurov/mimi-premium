@@ -18,6 +18,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         owner: { select: { name: true, email: true, phone: true } },
         createdBy: { select: { name: true } },
         assignedTo: { select: { id: true, name: true } },
+        assignees: { select: { id: true, name: true } },
         activities: {
           where: { kind: 'NOTE' },
           orderBy: { createdAt: 'desc' },
@@ -36,7 +37,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
   if (!lead) notFound();
   // Продажник/разработчик работают только со своими лидами — чужой не открыть
   // даже по прямой ссылке.
-  if (!isAdminLike(role) && lead.assignedToId !== me?.id) notFound();
+  if (!isAdminLike(role) && !lead.assignees.some((a) => a.id === me?.id)) notFound();
 
   return (
     <LeadDetail
@@ -60,8 +61,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         instagram: lead.instagram,
         comment: lead.comment ?? '',
         createdByName: lead.createdBy?.name ?? null,
-        assignedToId: lead.assignedTo?.id ?? '',
-        assignedToName: lead.assignedTo?.name ?? null,
+        assigneeIds: lead.assignees.map((a) => a.id),
+        assigneeNames: lead.assignees.map((a) => a.name),
         reminderAt: lead.reminderAt?.toISOString() ?? null,
         reminderNote: lead.reminderNote ?? '',
         createdAt: lead.createdAt.toISOString(),
