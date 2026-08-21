@@ -72,6 +72,13 @@ export function FinanceClient({
   total, invoices, payers, byYear, byMonth, byWeek, topClients,
   currentYear, currentMonthAmount, prevMonthAmount,
 }: Props) {
+  // Суммы всегда закрыты при заходе — чтобы случайно не показать заработки
+  // на презентации. Открывает только «глазик», и только до перезагрузки.
+  const [reveal, setReveal] = useState(false);
+  const stars = (n: number) => formatInt(n).replace(/\d/g, '*');
+  const sum = (n: number) => (reveal ? formatInt(n) : stars(n));
+  const sumFull = (n: number) => (reveal ? formatMoney(n) : `${stars(n)} сомони`);
+
   const yearsList = byYear.map((y) => y.year);
   const [year, setYear] = useState(yearsList.includes(currentYear) ? currentYear : yearsList[yearsList.length - 1] ?? currentYear);
   const [hoverM, setHoverM] = useState<number | null>(null);
@@ -119,6 +126,36 @@ export function FinanceClient({
         eyebrow="Finance"
         title={<>Финансы <span className="text-lime-grad">агентства</span></>}
         subtitle="Выручка за всё время, по годам, по месяцам и по неделям."
+        action={
+          <button
+            type="button"
+            onClick={() => setReveal((v) => !v)}
+            aria-pressed={reveal}
+            title={reveal ? 'Скрыть суммы' : 'Показать суммы'}
+            className={cn(
+              'flex items-center gap-2 rounded-full border px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] transition',
+              reveal
+                ? 'border-brand-lime/50 bg-brand-lime/[0.08] text-brand-lime'
+                : 'border-white/10 text-light/55 hover:border-brand-lime/40 hover:text-light',
+            )}
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              {reveal ? (
+                <>
+                  <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </>
+              ) : (
+                <>
+                  <path d="M4 4l16 16" />
+                  <path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.3 3.9M6.5 7.6A17 17 0 0 0 2 12s3.6 6 10 6a10 10 0 0 0 3.9-.75" />
+                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+                </>
+              )}
+            </svg>
+            {reveal ? 'Скрыть' : 'Показать'}
+          </button>
+        }
       />
 
       {/* ── Выручка за всё время ── */}
@@ -129,14 +166,14 @@ export function FinanceClient({
           <div>
             <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Выручка за всё время</p>
             <div className="mt-3 font-display text-5xl font-extrabold leading-none text-lime-grad sm:text-7xl">
-              {formatInt(total)}
+              {sum(total)}
             </div>
             <p className="mt-2 text-sm text-light/50">сомони · {formatInt(invoices)} оплат · {formatInt(payers)} плательщиков</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
               <div className="text-[10px] uppercase tracking-[0.2em] text-light/45">Этот месяц</div>
-              <div className="mt-2 font-display text-2xl font-extrabold text-light">{formatInt(currentMonthAmount)}</div>
+              <div className="mt-2 font-display text-2xl font-extrabold text-light">{sum(currentMonthAmount)}</div>
               {momDelta !== null && (
                 <div className={cn('mt-1 text-[11px]', momDelta >= 0 ? 'text-brand-lime' : 'text-rose-300')}>
                   {momDelta >= 0 ? '↑' : '↓'} {Math.abs(momDelta)}% к прошлому
@@ -146,7 +183,7 @@ export function FinanceClient({
             <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
               <div className="text-[10px] uppercase tracking-[0.2em] text-light/45">Средний чек</div>
               <div className="mt-2 font-display text-2xl font-extrabold text-light">
-                {invoices ? formatInt(total / invoices) : 0}
+                {invoices ? sum(total / invoices) : '—'}
               </div>
               <div className="mt-1 text-[11px] text-light/40">за оплату</div>
             </div>
@@ -226,7 +263,7 @@ export function FinanceClient({
               </text>
               <text x={R.cx} y={R.cy + 14} textAnchor="middle" fontSize="17" fontWeight="800"
                 style={{ color: '#D4EC4C' }} className="fill-current">
-                {formatInt(hoverM === null ? yearTotal : months[hoverM])}
+                {sum(hoverM === null ? yearTotal : months[hoverM])}
               </text>
             </svg>
           </div>
@@ -247,7 +284,7 @@ export function FinanceClient({
                 <span className={cn('text-[12px]', i === bestMonth && v > 0 ? 'text-brand-lime' : 'text-light/55')}>
                   {MONTHS_RU[i]}
                 </span>
-                <span className="font-mono text-[12px] text-light/80">{v ? formatInt(v) : '—'}</span>
+                <span className="font-mono text-[12px] text-light/80">{v ? sum(v) : '—'}</span>
               </button>
             ))}
           </div>
@@ -262,8 +299,8 @@ export function FinanceClient({
             <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:text-2xl">Последние 26 недель</h2>
           </div>
           <div className="text-right">
-            <div className="font-display text-2xl font-extrabold text-light">{formatMoney(weekSum)}</div>
-            <div className="text-[11px] text-light/45">на этой неделе {formatInt(lastWeek)}</div>
+            <div className="font-display text-2xl font-extrabold text-light">{sumFull(weekSum)}</div>
+            <div className="text-[11px] text-light/45">на этой неделе {sum(lastWeek)}</div>
           </div>
         </div>
 
@@ -300,7 +337,7 @@ export function FinanceClient({
               <span className="rounded-full border border-brand-lime/30 bg-ink/90 px-3 py-1 text-[11px] text-light">
                 {new Date(byWeek[hoverW].start).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                 {' · '}
-                <span className="font-mono text-brand-lime">{formatInt(byWeek[hoverW].amount)}</span>
+                <span className="font-mono text-brand-lime">{sum(byWeek[hoverW].amount)}</span>
               </span>
             </div>
           )}
@@ -333,7 +370,7 @@ export function FinanceClient({
                             {growth >= 0 ? '+' : ''}{growth}%
                           </span>
                         )}
-                        <span className="font-mono text-sm text-light">{formatInt(y.amount)}</span>
+                        <span className="font-mono text-sm text-light">{sum(y.amount)}</span>
                       </span>
                     </div>
                     {/* «плитки» вместо обычной полосы */}
@@ -377,7 +414,7 @@ export function FinanceClient({
                         {i + 1}. {c.name}
                       </span>
                       <span className="shrink-0 font-mono text-[12px] text-light/60">
-                        {formatInt(c.amount)} · {share.toFixed(1)}%
+                        {sum(c.amount)} · {share.toFixed(1)}%
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
