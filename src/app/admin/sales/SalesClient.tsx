@@ -89,8 +89,12 @@ export function SalesClient({
   seesAllLeads: boolean;
 }) {
   const router = useRouter();
-  const [mine, setMine] = useState(false);
   const [q, setQ] = useState('');
+  // Режим выбора: чекбоксы на карточках + массовые действия над выбранным.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
   // Admin can drill into one salesperson's leads by clicking their row.
   const [repFilter, setRepFilter] = useState<string | null>(null);
   // Free date range, typed by hand and applied on click (not while typing).
@@ -202,7 +206,6 @@ export function SalesClient({
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return leads.filter((l) => {
-      if (mine && !l.assigneeIds.includes(meId)) return false;
       if (repFilter && !l.assigneeIds.includes(repFilter)) return false;
       if (bounds) {
         const t = new Date(l.createdAt).getTime();
@@ -213,7 +216,7 @@ export function SalesClient({
       return [l.contactName, l.businessName, l.niche, l.phone, l.email, ...l.assigneeNames]
         .join(' ').toLowerCase().includes(needle);
     });
-  }, [leads, mine, meId, q, repFilter, bounds, packages]);
+  }, [leads, q, repFilter, bounds, packages]);
 
   const byStatus = useMemo(() => {
     const map = new Map<SalesStatus, Lead[]>();
@@ -226,6 +229,46 @@ export function SalesClient({
     () => visible.filter((l) => l.reminderAt && !l.reminderDone && new Date(l.reminderAt) <= new Date()),
     [visible],
   );
+
+  /* ── Массовые действия ───────────────────────────────────────── */
+  const toggleSel = (id: string) =>
+    setSelected((cur) => {
+      const next = new Set(cur);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const exitSelect = () => { setSelectMode(false); setSelected(new Set()); setAssignOpen(false); };
+
+  const allSelected = visible.length > 0 && visible.every((l) => selected.has(l.id));
+  const toggleAll = () =>
+    setSelected(allSelected ? new Set() : new Set(visible.map((l) => l.id)));
+
+  /** Кто сейчас отвечает за выбранные лиды — от этого зависит обмен. */
+  const selectedOwners = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of leads) {
+      if (!selected.has(l.id)) continue;
+      l.assigneeIds.forEach((id, i) => map.set(id, l.assigneeNames[i] ?? ''));
+    }
+    return [...map.entries()].map(([id, name]) => ({ id, name }));
+  }, [leads, selected]);
+
+  const runBulk = async (payload: Record<string, unknown>) => {
+    if (!selected.size || bulkBusy) return;
+    setBulkBusy(true);
+    const r = await fetch('/api/sales/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, ids: [...selected] }),
+    }).catch(() => null);
+    const d = await r?.json().catch(() => ({}));
+    setBulkBusy(false);
+    if (!r?.ok) return toast.error(d?.error || 'Не удалось выполнить');
+    toast.success(d.summary ?? 'Готово');
+    exitSelect();
+    router.refresh();
+  };
 
   const closeReminder = async (id: string) => {
     const r = await fetch(`/api/sales/${id}`, {
@@ -349,6 +392,62 @@ export function SalesClient({
                 )}
               </div>
             )}
+
+            {/* ── ПАКЕТ ── */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setPkgOpen((v) => !v)}
+                className={cn(
+                  'rounded-xl border px-3 py-1.5 text-[12px] transition',
+                  packages.size ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+                )}
+              >
+                {packages.size === 0
+                  ? 'Пакет'
+                  : packages.size === 1
+                    ? PACKAGE_LABEL[[...packages][0] as ClientPackage]
+                    : `Пакеты · ${packages.size}`}
+              </button>
+              {pkgOpen && (
+                <>
+                  <span className="fixed inset-0 z-20" onClick={() => setPkgOpen(false)} />
+                  <div className="absolute right-0 top-10 z-30 max-h-[320px] w-[230px] overflow-y-auto rounded-2xl border border-white/10 bg-ink2 p-2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                    <button
+                      type="button"
+                      onClick={() => setPackages(new Set())}
+                      className={cn(
+                        'block w-full rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]',
+                        packages.size === 0 && 'text-brand-lime',
+                      )}
+                    >
+                      Все пакеты
+                    </button>
+                    {PACKAGES.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => togglePackage(p)}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]',
+                          packages.has(p) ? 'text-brand-lime' : 'text-light/70',
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[9px]',
+                            packages.has(p) ? 'border-brand-lime bg-brand-lime/20 text-brand-lime' : 'border-white/15 text-transparent',
+                          )}
+                        >
+                          ✓
+                        </span>
+                        {PACKAGE_LABEL[p]}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -442,19 +541,94 @@ export function SalesClient({
           onChange={(e) => setQ(e.target.value)}
           className="input-glass max-w-sm"
         />
-        {seesEveryone && (
+        {seesAllLeads && (
           <button
-            onClick={() => setMine((v) => !v)}
+            onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
             className={cn(
               'rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.14em] transition',
-              mine ? 'border-brand-lime bg-brand-lime text-[#0A0712]' : 'border-white/10 text-light/55 hover:text-light',
+              selectMode ? 'border-brand-lime bg-brand-lime text-[#0A0712]' : 'border-white/10 text-light/55 hover:text-light',
             )}
           >
-            Только мои
+            {selectMode ? 'Отмена' : 'Выбрать'}
           </button>
         )}
         <span className="chip-lime">{visible.length} лидов</span>
       </div>
+
+      {/* ── Панель массовых действий ── */}
+      {selectMode && (
+        <div className="sticky top-3 z-30 flex flex-wrap items-center gap-2 rounded-2xl border border-brand-lime/30 bg-ink2/95 p-3 backdrop-blur-xl">
+          <button
+            onClick={toggleAll}
+            className="rounded-full border border-white/10 px-3.5 py-1.5 text-[12px] text-light/70 transition hover:border-brand-lime/40 hover:text-brand-lime"
+          >
+            {allSelected ? 'Снять всё' : `Выбрать все (${visible.length})`}
+          </button>
+          <span className="text-[12px] text-light/50">
+            Выбрано <span className="font-mono text-brand-lime">{selected.size}</span>
+            {selectedOwners.length > 0 && (
+              <span className="ml-2 text-light/35">· {selectedOwners.map((o) => o.name).join(' ⇄ ')}</span>
+            )}
+          </span>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              disabled={!selected.size || bulkBusy || selectedOwners.length !== 2}
+              onClick={() => runBulk({ op: 'swap' })}
+              title="Обменять лиды между двумя ответственными"
+              className={cn(
+                'flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] transition',
+                selectedOwners.length === 2 && selected.size && !bulkBusy
+                  ? 'border-brand-lime bg-brand-lime/10 text-brand-lime hover:bg-brand-lime/20'
+                  : 'cursor-not-allowed border-white/10 text-light/25',
+              )}
+            >
+              <span className="text-[14px] leading-none">⇄</span> Обменять
+            </button>
+
+            <div className="relative">
+              <button
+                disabled={!selected.size || bulkBusy}
+                onClick={() => setAssignOpen((v) => !v)}
+                className={cn(
+                  'rounded-full border px-4 py-1.5 text-[12px] transition',
+                  selected.size && !bulkBusy
+                    ? 'border-white/15 text-light/75 hover:border-brand-lime/40 hover:text-brand-lime'
+                    : 'cursor-not-allowed border-white/10 text-light/25',
+                )}
+              >
+                Передать →
+              </button>
+              {assignOpen && (
+                <>
+                  <span className="fixed inset-0 z-20" onClick={() => setAssignOpen(false)} />
+                  <div className="absolute right-0 top-9 z-30 max-h-[300px] w-[230px] overflow-y-auto rounded-2xl border border-white/10 bg-ink2 p-2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                    {repStats.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => { setAssignOpen(false); runBulk({ op: 'assign', assigneeIds: [r.id] }); }}
+                        className="block w-full rounded-lg px-2.5 py-2 text-left text-[12px] text-light/70 transition hover:bg-white/[0.05] hover:text-brand-lime"
+                      >
+                        {r.name}
+                        <span className="ml-2 text-[10px] uppercase tracking-[0.1em] text-light/30">
+                          {ROLE_LABEL[r.role as Role] ?? r.role}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {selectedOwners.length > 2 && (
+            <p className="w-full text-[11px] text-brand-orange">
+              Для обмена в выборке должно быть ровно два ответственных — сейчас {selectedOwners.length}.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Board */}
       <div className="grid gap-4 lg:grid-cols-5">
@@ -471,17 +645,38 @@ export function SalesClient({
                   <Link
                     key={l.id}
                     href={`/admin/sales/${l.id}`}
-                    className="relative block rounded-2xl border border-white/[0.06] bg-ink/40 p-3 transition-colors hover:border-brand-lime/30"
+                    // В режиме выбора карточка не открывается, а отмечается.
+                    onClick={(e) => { if (selectMode) { e.preventDefault(); toggleSel(l.id); } }}
+                    className={cn(
+                      'relative block rounded-2xl border bg-ink/40 p-3 transition-colors',
+                      selectMode && selected.has(l.id)
+                        ? 'border-brand-lime/60 bg-brand-lime/[0.06]'
+                        : 'border-white/[0.06] hover:border-brand-lime/30',
+                    )}
                   >
-                    {/* ⋯ — действия с лидом */}
-                    <button
-                      type="button"
-                      aria-label="Действия"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuFor((cur) => (cur === l.id ? null : l.id)); }}
-                      className="absolute right-1.5 top-1.5 z-20 rounded-lg px-1.5 py-0.5 text-light/35 transition hover:bg-white/[0.06] hover:text-light"
-                    >
-                      ⋯
-                    </button>
+                    {selectMode ? (
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'absolute right-1.5 top-1.5 z-20 flex h-5 w-5 items-center justify-center rounded-md border text-[10px]',
+                          selected.has(l.id)
+                            ? 'border-brand-lime bg-brand-lime text-[#0A0712]'
+                            : 'border-white/20 text-transparent',
+                        )}
+                      >
+                        ✓
+                      </span>
+                    ) : (
+                      /* ⋯ — действия с лидом */
+                      <button
+                        type="button"
+                        aria-label="Действия"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuFor((cur) => (cur === l.id ? null : l.id)); }}
+                        className="absolute right-1.5 top-1.5 z-20 rounded-lg px-1.5 py-0.5 text-light/35 transition hover:bg-white/[0.06] hover:text-light"
+                      >
+                        ⋯
+                      </button>
+                    )}
                     {menuFor === l.id && (
                       <>
                         <span

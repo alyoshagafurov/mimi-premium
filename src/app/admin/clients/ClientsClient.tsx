@@ -151,12 +151,12 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Clients"
-        title={<>Активные <span className="text-lime-grad">аккаунты</span></>}
-        subtitle="Управление клиентскими бизнесами, нишами и тарифами."
+        eyebrow="Projects"
+        title={<>Наши <span className="text-lime-grad">проекты</span></>}
+        subtitle="Проекты, с которыми мы работаем: бизнесы, ниши и тарифы."
         action={
           <button onClick={() => setCreating(true)} className="btn-gold !px-5 !py-3 !text-[11px]">
-            + Добавить клиента
+            + Добавить проект
           </button>
         }
       />

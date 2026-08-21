@@ -7,7 +7,7 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'MONTAGE',
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
   | 'dashboard' | 'clients' | 'projects' | 'sales'
-  | 'calendar' | 'notes' | 'people' | 'settings';
+  | 'calendar' | 'notes' | 'people' | 'finance' | 'tasks' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
 export const STAFF_ROLES: Role[] = [
@@ -160,16 +160,17 @@ export function visibleCategories(role?: string | null): EventCategory[] {
  */
 /** Sections each specialised staff role may open (beyond calendar + projects). */
 const ROLE_SECTIONS: Record<string, AdminSection[]> = {
-  SALES: ['calendar', 'notes', 'people', 'settings', 'projects', 'sales'],
-  DESIGNER: ['calendar', 'notes', 'people', 'settings', 'projects'],
-  DEVELOPER: ['calendar', 'notes', 'people', 'settings', 'projects', 'sales'],
-  VIDEOGRAPHER: ['calendar', 'notes', 'people', 'settings', 'projects'],
-  MONTAGE: ['calendar', 'notes', 'people', 'settings', 'projects'],
+  SALES: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects', 'sales'],
+  DESIGNER: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects'],
+  DEVELOPER: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects', 'sales'],
+  VIDEOGRAPHER: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects'],
+  MONTAGE: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects'],
 };
 
 export function canAccessSection(role: string | null | undefined, section: AdminSection): boolean {
   if (role === 'ADMIN') return true;
-  if (role === 'OPS_DIRECTOR') return true;
+  // «Финансы» — это выручка целиком, её видит только полный админ.
+  if (role === 'OPS_DIRECTOR') return section !== 'finance';
   if (isStaff(role)) return (ROLE_SECTIONS[role as string] ?? []).includes(section);
   return false;
 }
@@ -180,7 +181,8 @@ export function sectionFromPath(pathname: string): AdminSection {
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
     clients: 'clients', projects: 'projects', sales: 'sales',
-    calendar: 'calendar', notes: 'notes', people: 'people', team: 'people', settings: 'settings',
+    calendar: 'calendar', notes: 'notes', people: 'people', team: 'people',
+    finance: 'finance', tasks: 'tasks', settings: 'settings',
   };
   return map[seg] ?? 'dashboard';
 }
