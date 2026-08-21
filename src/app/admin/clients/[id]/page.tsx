@@ -21,6 +21,7 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
         payments: { orderBy: [{ year: 'desc' }, { month: 'desc' }] },
         tasks: { orderBy: [{ done: 'asc' }, { dueDate: 'asc' }] },
         activities: { orderBy: { createdAt: 'desc' }, include: { author: { select: { name: true } } } },
+        messages: { orderBy: { createdAt: 'desc' }, include: { sender: { select: { name: true } } } },
       },
     }),
     prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true, name: true } }),
@@ -92,6 +93,13 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
           body: a.body,
           createdAt: a.createdAt.toISOString(),
           authorName: a.author?.name ?? null,
+        }))}
+        tariffEnd={client.owner.tariffEnd?.toISOString() ?? null}
+        clientNotes={client.messages.map((m) => ({
+          id: m.id,
+          body: m.body,
+          createdAt: m.createdAt.toISOString(),
+          authorName: m.sender?.name ?? null,
         }))}
       />
     </div>

@@ -22,6 +22,7 @@ type Team = { id: string; name: string }[];
 type Payment = { id: string; amount: number; status: string; month: number; year: number; dueDate: string | null; paidAt: string | null; method: string; note: string };
 type Task = { id: string; title: string; done: boolean; dueDate: string | null; priority: string };
 type Activity = { id: string; kind: string; body: string; createdAt: string; authorName: string | null };
+type ClientNote = { id: string; body: string; createdAt: string; authorName: string | null };
 
 const now = new Date();
 const PAYMENT_STATUSES = ['PENDING', 'PAID', 'OVERDUE'] as const;
@@ -34,14 +35,22 @@ export function ClientCrmPanel({
   payments,
   tasks,
   activities,
+  tariffEnd,
+  clientNotes,
 }: {
   clientId: string;
   team: Team;
   payments: Payment[];
   tasks: Task[];
   activities: Activity[];
+  tariffEnd: string | null;
+  clientNotes: ClientNote[];
 }) {
   const router = useRouter();
+
+  // Кабинет клиента: до какого числа оплачено и что он видит от нас.
+  const [paidTill, setPaidTill] = useState(tariffEnd ? tariffEnd.slice(0, 10) : '');
+  const [clientNote, setClientNote] = useState('');
 
   const [pay, setPay] = useState({ month: now.getMonth() + 1, year: now.getFullYear(), amount: '', status: 'PENDING' });
   const [task, setTask] = useState({ title: '', dueDate: '', priority: 'MEDIUM', ownerId: '' });
@@ -86,6 +95,17 @@ export function ClientCrmPanel({
       setTask({ title: '', dueDate: '', priority: 'MEDIUM', ownerId: '' });
     }
   };
+  const savePaidTill = async () => {
+    await patch(`/api/clients/${clientId}`, { tariffEnd: paidTill || null });
+    toast.success(paidTill ? 'Срок оплаты обновлён' : 'Срок оплаты снят');
+  };
+  const addClientNote = async () => {
+    if (!clientNote.trim()) return toast.error('Введите текст');
+    if (await post('/api/messages', { clientId, body: clientNote }, 'Клиент увидит заметку в кабинете')) {
+      setClientNote('');
+    }
+  };
+
   const addNote = async () => {
     if (!note.body.trim()) return toast.error('Введите текст');
     if (await post('/api/activities', { clientId, kind: note.kind, body: note.body }, 'Запись добавлена')) {
@@ -95,6 +115,70 @@ export function ClientCrmPanel({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      {/* Что видит клиент в своём кабинете */}
+      <div className="glass rounded-2xl p-6 lg:col-span-2">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-bold">Кабинет клиента</h2>
+          <span className="text-[11px] text-muted">всё из этого блока клиент видит у себя</span>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
+          <div>
+            <label className="label-soft">Оплата активна до</label>
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={paidTill}
+                onChange={(e) => setPaidTill(e.target.value)}
+                className="input-glass"
+              />
+              <button onClick={savePaidTill} className="btn-lime !px-4 !py-2 !text-[11px]">
+                Сохранить
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] text-muted">
+              Клиент видит дату и сколько дней осталось.
+            </p>
+          </div>
+
+          <div>
+            <label className="label-soft">Заметка клиенту</label>
+            <div className="flex gap-2">
+              <textarea
+                rows={2}
+                value={clientNote}
+                onChange={(e) => setClientNote(e.target.value)}
+                placeholder="Например: «В этом месяце запускаем новую серию Reels — ждём сценарии до 5 числа»"
+                className="input-glass flex-1"
+              />
+              <button onClick={addClientNote} className="btn-gold shrink-0 !px-4 !py-2 !text-[11px]">
+                Отправить
+              </button>
+            </div>
+            {clientNotes.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {clientNotes.map((n) => (
+                  <div key={n.id} className="flex items-start justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-2.5">
+                    <div className="min-w-0">
+                      <p className="whitespace-pre-wrap text-[13px] text-light/85">{n.body}</p>
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-muted">
+                        {n.authorName ?? 'mimi'} · {formatDate(n.createdAt)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => del(`/api/messages/${n.id}`)}
+                      className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-muted transition hover:border-rose-400/40 hover:text-rose-400"
+                    >
+                      Убрать
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Payments */}
       <div className="glass rounded-2xl p-6 lg:col-span-2">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

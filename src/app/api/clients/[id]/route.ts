@@ -15,6 +15,8 @@ const schema = z.object({
   logo: z.string().nullable().optional(),
   status: z.enum(['ACTIVE', 'ARCHIVED']).optional(),
   tariff: z.enum(['NONE', 'START', 'GROWTH', 'PREMIUM']).optional(),
+  /// До какого числа оплачено — клиент видит это у себя в кабинете.
+  tariffEnd: z.string().nullable().optional(),
   salesStatus: z.enum(SALES_STATUSES as unknown as [string, ...string[]]).optional(),
   // Owner (login) fields
   name: z.string().min(2).optional(),
@@ -28,7 +30,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!(await ensureAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
     const {
-      tariff, name, email, phone, password, avatar, salesStatus,
+      tariff, tariffEnd, name, email, phone, password, avatar, salesStatus,
       ...clientData
     } = schema.parse(await req.json());
 
@@ -38,6 +40,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     // Build the owner (User) update only from the fields that were sent.
     const ownerData: any = {};
     if (tariff) ownerData.tariff = tariff as Tariff;
+    if (tariffEnd !== undefined) ownerData.tariffEnd = tariffEnd ? new Date(tariffEnd) : null;
     if (name !== undefined) ownerData.name = name.trim();
     if (phone !== undefined) ownerData.phone = phone?.trim() || null;
     if (avatar !== undefined) ownerData.avatar = avatar || null;

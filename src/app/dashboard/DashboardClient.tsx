@@ -1,16 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ReachChart } from '@/components/dashboard/ReachChart';
 import { BudgetBar } from '@/components/dashboard/BudgetBar';
 import { PlatformRow } from '@/components/dashboard/PlatformRow';
 import { CampaignList } from '@/components/dashboard/CampaignList';
 import { AudienceChart, type AudienceData } from '@/components/dashboard/AudienceChart';
-import { formatInt, formatMoney, formatPct, formatRoas, monthLabel, reportKpis, tariffLabel } from '@/lib/utils';
+import { ClientOverview, type ReportRow, type NoteRow, type TaskRow } from './ClientOverview';
+import { formatInt, formatMoney, formatPct, formatRoas, monthLabel, reportKpis } from '@/lib/utils';
 
 type Metrics = {
   spent: number;
@@ -37,22 +35,28 @@ export function DashboardClient({
   platforms,
   campaigns,
   audience,
+  reportList,
+  notes,
+  tasks,
 }: {
   user: { name: string; tariff: string; tariffEnd: string | null };
-  business: { name: string; niche: string };
+  business: { name: string; niche: string; logo: string | null; since: string };
   period: { month: number; year: number } | null;
   metrics: Metrics;
   reachTrend: { label: string; reach: number }[];
   platforms: { name: string; spent: number; roas: number }[];
   campaigns: { id: string; name: string; platform: string; status: string }[];
   audience: AudienceData | null;
+  reportList: ReportRow[];
+  notes: NoteRow[];
+  tasks: TaskRow[];
 }) {
   const hasData = period !== null;
   const k = reportKpis({ spent: metrics.spent, revenue: metrics.revenue, leads: metrics.leads, clicks: metrics.clicks });
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-20 pt-6">
-      {/* Greeting + tariff */}
+      {/* Приветствие */}
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -70,21 +74,25 @@ export function DashboardClient({
             {business.name} · {business.niche}
           </p>
         </div>
-        <div className="glass-gold flex items-center justify-between gap-6 rounded-2xl px-5 py-3">
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted">Тариф</div>
-            <div className="font-display text-lg font-bold text-lime-grad">{tariffLabel(user.tariff)}</div>
-            {user.tariffEnd && (
-              <div className="mt-0.5 text-[11px] text-muted">
-                до {format(new Date(user.tariffEnd), 'd MMMM yyyy', { locale: ru })}
-              </div>
-            )}
-          </div>
-          <Link href="/pricing" className="btn-ghost !px-4 !py-2 !text-[10px]">
-            Сменить
-          </Link>
-        </div>
       </motion.div>
+
+      <div className="mt-7">
+        <ClientOverview
+          business={business}
+          tariff={user.tariff}
+          tariffEnd={user.tariffEnd}
+          period={period}
+          roas={k.roas}
+          romi={k.romi}
+          payback={k.payback}
+          revenue={metrics.revenue}
+          spent={metrics.spent}
+          leads={metrics.leads}
+          reportList={reportList}
+          notes={notes}
+          tasks={tasks}
+        />
+      </div>
 
       {!hasData ? (
         <div className="glass mt-10 rounded-3xl p-12 text-center">
@@ -95,8 +103,13 @@ export function DashboardClient({
         </div>
       ) : (
         <>
+          <div className="mt-10">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Аналитика</p>
+            <h2 className="mt-1.5 font-display text-2xl font-extrabold text-light">Подробные цифры</h2>
+          </div>
+
           {/* KPI ROW — reach funnel */}
-          <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <MetricCard label="Потрачено" value={formatMoney(metrics.spent)} delta={metrics.spentDelta} delay={0} />
             <MetricCard label="Охват" value={formatInt(metrics.reach)} delta={metrics.reachDelta} delay={0.08} />
             <MetricCard label="Клики" value={formatInt(metrics.clicks)} delta={metrics.clicksDelta} delay={0.16} />

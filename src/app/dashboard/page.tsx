@@ -28,6 +28,19 @@ export default async function DashboardPage() {
               audience: true,
             },
           },
+          // Заметки, которые пишет админ именно для клиента (внутренние
+          // Activity сюда не попадают никогда).
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            include: { sender: { select: { name: true, avatar: true } } },
+          },
+          // Задачи по проекту — те же события календаря, что ставит команда.
+          calendarEvents: {
+            orderBy: [{ done: 'asc' }, { startAt: 'desc' }],
+            take: 30,
+            select: { id: true, title: true, kind: true, startAt: true, done: true, doneAt: true },
+          },
         },
       },
     },
@@ -59,7 +72,35 @@ export default async function DashboardPage() {
         tariff: user.tariff,
         tariffEnd: user.tariffEnd?.toISOString() ?? null,
       }}
-      business={{ name: user.client.businessName, niche: user.client.niche }}
+      business={{
+        name: user.client.businessName,
+        niche: user.client.niche,
+        logo: user.client.logo,
+        since: user.client.createdAt.toISOString(),
+      }}
+      reportList={[...reports].reverse().map((r) => ({
+        id: r.id,
+        month: r.month,
+        year: r.year,
+        revenue: r.revenue,
+        spent: r.spent,
+        leads: r.leads,
+      }))}
+      notes={user.client.messages.map((m) => ({
+        id: m.id,
+        body: m.body,
+        createdAt: m.createdAt.toISOString(),
+        authorName: m.sender?.name ?? 'mimi',
+        authorAvatar: m.sender?.avatar ?? null,
+      }))}
+      tasks={user.client.calendarEvents.map((e) => ({
+        id: e.id,
+        title: e.title,
+        kind: e.kind,
+        date: e.startAt.toISOString(),
+        done: e.done,
+        doneAt: e.doneAt?.toISOString() ?? null,
+      }))}
       period={current ? { month: current.month, year: current.year } : null}
       metrics={{
         spent: current?.spent ?? 0,
