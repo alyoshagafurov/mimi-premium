@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { cn } from '@/lib/utils';
-import { CATEGORY_LABEL, type EventCategory } from '@/lib/roles';
+import { CATEGORY_LABEL, EVENT_CATEGORIES, type EventCategory } from '@/lib/roles';
 
 type Kind =
   | 'MEETING' | 'CALL' | 'CONSULTATION' | 'PAYMENT' | 'COLLABORATION'
@@ -192,13 +192,19 @@ export function CalendarClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, title: form.title.trim(), clientId: form.clientId || null, endAt: form.endAt || null }),
       });
-      if (!r.ok) throw new Error();
+      if (!r.ok) {
+        // Показываем причину с сервера, а не глухое «не удалось» — иначе
+        // непонятно, что именно не так.
+        const d = await r.json().catch(() => ({}));
+        toast.error(d.error || 'Не удалось сохранить');
+        return;
+      }
       toast.success('Событие добавлено');
       setShowForm(false);
       setForm(EMPTY);
       router.refresh();
     } catch {
-      toast.error('Не удалось сохранить');
+      toast.error('Не удалось сохранить — проверьте соединение');
     } finally {
       setSaving(false);
     }
@@ -366,6 +372,107 @@ export function CalendarClient({
         </div>
       )}
 
+      {showForm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4"
+          onClick={() => setShowForm(false)}
+        >
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-ink2 p-6"
+          >
+            <h3 className="font-display text-xl font-bold text-light">Новое событие</h3>
+            <div className="mt-5 space-y-3">
+              <div>
+                <label className="label-soft">Проект</label>
+                <select className="input-glass" value={form.clientId} onChange={(e) => set('clientId', e.target.value)}>
+                  <option value="">Без проекта</option>
+                  {clients.map((c) => <option key={c.id} value={c.id}>{c.businessName}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label-soft">Тип события</label>
+                  <select
+                    className="input-glass"
+                    value={form.kind}
+                    onChange={(e) => {
+                      const kind = e.target.value as Kind;
+                      setForm((p) => ({ ...p, kind, category: KIND_CATEGORY[kind] ?? p.category }));
+                    }}
+                  >
+                    {Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                  </select>
+                </div>
+                {canManage && (
+                  <div>
+                    <label className="label-soft">Календарь (команда)</label>
+                    <select className="input-glass" value={form.category} onChange={(e) => set('category', e.target.value as EventCategory)}>
+                      {(['GENERAL','VIDEO','DESIGN','SALES','TARGET','WEB'] as EventCategory[]).map((c) => (
+                        <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+              {canManage ? (
+                <div>
+                  <label className="label-soft">Ответственные — можно выбрать несколько</label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {staff.map((p) => {
+                      const picked = form.assigneeIds.includes(p.id);
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setForm((f) => ({
+                            ...f,
+                            assigneeIds: picked
+                              ? f.assigneeIds.filter((x) => x !== p.id)
+                              : [...f.assigneeIds, p.id],
+                          }))}
+                          className={cn(
+                            'rounded-full border px-3 py-1.5 text-[12px] transition',
+                            picked
+                              ? 'border-brand-lime bg-brand-lime text-[#0A0712]'
+                              : 'border-white/10 text-light/55 hover:text-light',
+                          )}
+                        >
+                          {picked ? '✓ ' : ''}{p.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-light/40">
+                  Событие появится в вашем календаре. Другие сотрудники его не увидят.
+                </p>
+              )}
+              <input className="input-glass" placeholder="Название" value={form.title} onChange={(e) => set('title', e.target.value)} />
+              <textarea className="input-glass min-h-[60px]" placeholder="Описание" value={form.description} onChange={(e) => set('description', e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label-soft">Начало</label>
+                  <input type="datetime-local" className="input-glass" value={form.startAt} onChange={(e) => set('startAt', e.target.value)} />
+                </div>
+                <div>
+                  <label className="label-soft">Конец</label>
+                  <input type="datetime-local" className="input-glass" value={form.endAt} onChange={(e) => set('endAt', e.target.value)} />
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setShowForm(false)} className="btn-ghost">Отмена</button>
+              <button onClick={save} disabled={saving} className="btn-lime disabled:opacity-60">{saving ? 'Создаём…' : 'Создать'}</button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }
