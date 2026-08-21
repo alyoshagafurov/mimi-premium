@@ -2,8 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { NewTaskForm } from './NewTaskForm';
 import { CATEGORY_LABEL, type EventCategory } from '@/lib/roles';
 import { cn, formatInt } from '@/lib/utils';
 
@@ -20,11 +23,37 @@ export type TaskRow = {
   projectName: string | null;
   people: { id: string; name: string }[];
   href: string | null;
+  doneAt: string | null;
+  isTask: boolean;
 };
 
 type Named = { id: string; name: string };
 
 const PRIORITY_LABEL: Record<string, string> = { LOW: 'низкий', MEDIUM: 'средний', HIGH: 'высокий' };
+
+/** «2 дн 4 ч», «5 ч», «20 мин» — грубо, но читается с одного взгляда. */
+function humanGap(ms: number): string {
+  const min = Math.round(ms / 60_000);
+  if (min < 60) return `${min} мин`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} ч`;
+  const d = Math.floor(h / 24);
+  const rest = h % 24;
+  return rest ? `${d} дн ${rest} ч` : `${d} дн`;
+}
+
+/**
+ * Успели или опоздали. Считаем от дедлайна до момента, когда нажали
+ * «выполнено». Меньше получаса в любую сторону — считаем, что ровно в срок.
+ */
+function verdict(deadline: string, doneAt: string | null): { late: boolean; text: string } | null {
+  if (!doneAt) return null;
+  const gap = new Date(deadline).getTime() - new Date(doneAt).getTime();
+  if (Math.abs(gap) < 30 * 60_000) return { late: false, text: 'точно в срок' };
+  return gap > 0
+    ? { late: false, text: `успели · за ${humanGap(gap)} до срока` }
+    : { late: true, text: `опоздали · на ${humanGap(-gap)}` };
+}
 
 /** Выпадающий фильтр — одна кнопка + список. */
 function Select({
@@ -72,10 +101,11 @@ function Select({
 }
 
 export function TasksClient({
-  rows, staff, projects, canToggle,
+  rows, staff, projects, canToggle, canCreate,
 }: {
-  rows: TaskRow[]; staff: Named[]; projects: Named[]; canToggle: boolean;
+  rows: TaskRow[]; staff: Named[]; projects: Named[]; canToggle: boolean; canCreate: boolean;
 }) {
+  const router = useRouter();
   const [state, setState] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [status, setStatus] = useState<'' | 'open' | 'done'>('');
@@ -114,6 +144,8 @@ export function TasksClient({
       body: JSON.stringify({ done: next }),
     }).catch(() => null);
     if (!res?.ok) setState((s) => ({ ...s, [r.id]: !next })); // откат
+    // Обновляемся, чтобы прилетело doneAt и появилось «успели / опоздали».
+    else router.refresh();
     setBusy(null);
   }
 
@@ -124,6 +156,8 @@ export function TasksClient({
         title={<>Все <span className="text-lime-grad">задачи</span></>}
         subtitle="Всё, что заведено в календаре и по проектам — в одном списке."
       />
+
+      {canCreate && <NewTaskForm staff={staff} projects={projects} />}
 
       {/* ── Сводка ── */}
       <div className="grid grid-cols-3 gap-3">
@@ -213,7 +247,10 @@ export function TasksClient({
         <div className="space-y-2">
           {filtered.map((r, i) => {
             const done = isDone(r);
-            const overdue = !done && r.hasDueDate && r.date.slice(0, 10) < new Date().toISOString().slice(0, 10);
+            const overdue = !done && r.hasDueDate && new Date(r.date).getTime() < Date.now();
+            // Итог считаем только по тому, что реально закрыли (r.done + doneAt),
+            // а не по локальному переключению — иначе цифра прыгает до ответа.
+            const result = done && r.done ? verdict(r.date, r.doneAt) : null;
             return (
               <motion.div
                 key={`${r.source}-${r.id}`}
@@ -265,9 +302,15 @@ export function TasksClient({
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-light/40">
                     <span className={cn(overdue && 'text-rose-300')}>
+                      {r.isTask && 'срок: '}
                       {new Date(r.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                       {overdue && ' · просрочено'}
                     </span>
+                    {result && (
+                      <span className={cn('sm:hidden', result.late ? 'text-rose-300' : 'text-emerald-300')}>
+                        {result.text}
+                      </span>
+                    )}
                     {r.projectName && (
                       <Link href={`/admin/clients/${r.projectId}`} className="hover:text-brand-lime">
                         {r.projectName}
@@ -279,11 +322,17 @@ export function TasksClient({
 
                 <span
                   className={cn(
-                    'hidden shrink-0 rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.14em] sm:inline',
-                    done ? 'bg-white/[0.04] text-light/40' : 'bg-brand-lime/10 text-brand-lime',
+                    'hidden shrink-0 rounded-full px-3 py-1 text-center text-[10px] uppercase tracking-[0.12em] sm:inline',
+                    !done
+                      ? 'bg-brand-lime/10 text-brand-lime'
+                      : result?.late
+                        ? 'bg-rose-400/10 text-rose-300'
+                        : result
+                          ? 'bg-emerald-400/10 text-emerald-300'
+                          : 'bg-white/[0.04] text-light/40',
                   )}
                 >
-                  {done ? 'выполнено' : 'в процессе'}
+                  {!done ? 'в процессе' : result?.text ?? 'выполнено'}
                 </span>
               </motion.div>
             );

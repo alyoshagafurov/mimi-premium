@@ -3,6 +3,7 @@ import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike, ensureStaff } from '@/lib/api-guard';
 import { isStaff, isAdminLike, visibleCategories } from '@/lib/roles';
+import { notify } from '@/lib/notify';
 
 export async function GET(req: Request) {
   const session = await getSafeSession();
@@ -52,25 +53,59 @@ export async function POST(req: Request) {
     ? (body.category ?? 'GENERAL')
     : ((myCats as string[]).includes(body.category) ? body.category : (myCats[0] ?? 'GENERAL'));
 
+  // Ответственных может быть несколько. Сотрудник заводит событие только
+  // себе — оно попадёт в «Мой календарь».
+  const assigneeIds: string[] = adminLike
+    ? (Array.isArray(body.assigneeIds) ? body.assigneeIds.filter(Boolean) : [])
+    : [me.id];
+  const clientId = adminLike ? (body.clientId || null) : null;
+  const startAt = new Date(body.startAt);
+
   const ev = await prisma.calendarEvent.create({
     data: {
       title: body.title,
       description: body.description ?? null,
       kind: body.kind ?? 'MEETING',
       category,
-      startAt: new Date(body.startAt),
+      startAt,
       endAt: body.endAt ? new Date(body.endAt) : null,
-      clientId: adminLike ? (body.clientId ?? null) : null,
-      // Ответственных может быть несколько. Сотрудник заводит событие только
-      // себе — оно попадёт в «Мой календарь».
-      assignees: {
-        connect: (adminLike
-          ? (Array.isArray(body.assigneeIds) ? body.assigneeIds.filter(Boolean) : [])
-          : [me.id]
-        ).map((id: string) => ({ id })),
-      },
+      clientId,
+      assignees: { connect: assigneeIds.map((id: string) => ({ id })) },
       ownerId: me.id,
     },
   });
+
+  // Задача/событие должны прийти как сообщение — иначе о них узнают, только
+  // если сами откроют календарь.
+  const isTask = ev.kind === 'TASK';
+  const when = startAt.toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  await Promise.all(
+    assigneeIds
+      .filter((id) => id !== me.id)
+      .map((id) =>
+        notify({
+          userId: id,
+          kind: 'TASK',
+          title: isTask ? 'Новая задача' : 'Новое событие',
+          body: `${ev.title} — ${isTask ? 'срок' : 'когда'}: ${when}`,
+          link: `/admin/calendar/${ev.id}`,
+        }).catch(() => {}),
+      ),
+  );
+
+  // Если задача привязана к проекту — её видит и клиент в своём кабинете.
+  if (clientId) {
+    const client = await prisma.client.findUnique({ where: { id: clientId }, select: { ownerId: true } });
+    if (client && client.ownerId !== me.id) {
+      await notify({
+        userId: client.ownerId,
+        kind: 'TASK',
+        title: isTask ? 'Новая задача по вашему проекту' : 'Новое событие по вашему проекту',
+        body: `${ev.title} — ${when}`,
+        link: '/dashboard/calendar',
+      }).catch(() => {});
+    }
+  }
+
   return NextResponse.json(ev);
 }

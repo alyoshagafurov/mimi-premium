@@ -36,7 +36,7 @@ export default async function TasksPage() {
       where: eventWhere,
       orderBy: [{ done: 'asc' }, { startAt: 'desc' }],
       select: {
-        id: true, title: true, done: true, startAt: true, category: true,
+        id: true, title: true, done: true, doneAt: true, startAt: true, category: true, kind: true,
         assignees: { select: { id: true, name: true } },
         client: { select: { id: true, businessName: true } },
       },
@@ -67,6 +67,9 @@ export default async function TasksPage() {
       projectName: t.client?.businessName ?? null,
       people: t.owner ? [{ id: t.owner.id, name: t.owner.name }] : [],
       href: null,
+      // У старых задач нет времени закрытия — «успели / опоздали» не посчитать.
+      doneAt: null,
+      isTask: false,
     })),
     ...events.map((e) => ({
       id: e.id,
@@ -81,6 +84,8 @@ export default async function TasksPage() {
       projectName: e.client?.businessName ?? null,
       people: e.assignees.map((a) => ({ id: a.id, name: a.name })),
       href: `/admin/calendar/${e.id}`,
+      doneAt: e.doneAt?.toISOString() ?? null,
+      isTask: e.kind === 'TASK',
     })),
   ].sort((a, b) => (a.done === b.done ? b.date.localeCompare(a.date) : a.done ? 1 : -1));
 
@@ -90,6 +95,7 @@ export default async function TasksPage() {
       staff={staff.map((s) => ({ id: s.id, name: s.name }))}
       projects={projects.map((p) => ({ id: p.id, name: p.businessName }))}
       canToggle
+      canCreate={adminLike}
     />
   );
 }

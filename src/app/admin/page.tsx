@@ -11,7 +11,7 @@ export default async function AdminDashboardPage() {
   // записи, включая лиды из воронки, — отсюда и завышенное число.
   const IS_PROJECT = { salesStatus: 'PARTNER' as const };
 
-  const [activeProjects, crmGroups, activeTasks, staffCount, partners, debts] = await Promise.all([
+  const [activeProjects, crmGroups, activeTasks, staffCount, partners, debts, eventGroups] = await Promise.all([
     prisma.client.count({ where: { ...IS_PROJECT, status: 'ACTIVE' } }),
     prisma.client.groupBy({ by: ['salesStatus'], _count: { _all: true } }),
     prisma.task.count({ where: { done: false } }),
@@ -32,12 +32,48 @@ export default async function AdminDashboardPage() {
       },
       orderBy: { dueDate: 'asc' },
     }),
+    // Одним запросом: и всего событий, и выполнено, и разрез по направлениям.
+    prisma.calendarEvent.groupBy({ by: ['category', 'done'], _count: { _all: true } }),
   ]);
 
   const crm = SALES_STATUSES.map((status) => ({
     status,
     count: crmGroups.find((g) => g.salesStatus === status)?._count._all ?? 0,
   }));
+
+  /* ── События: всего / выполнено, и по направлениям ── */
+  const evCount = (cat?: string, done?: boolean) =>
+    eventGroups
+      .filter((g) => (cat ? g.category === cat : true) && (done === undefined ? true : g.done === done))
+      .reduce((s, g) => s + g._count._all, 0);
+
+  const activeEvents = evCount(undefined, false);
+  const doneEvents = evCount(undefined, true);
+  const production = (['VIDEO', 'MONTAGE', 'DESIGN'] as const).map((cat) => ({
+    cat,
+    total: evCount(cat),
+    done: evCount(cat, true),
+  }));
+
+  /**
+   * Конверсия воронки. salesStatus хранит только текущий этап, поэтому
+   * «дошло до этапа» = все, кто сейчас на нём или дальше: партнёр когда-то был
+   * и новым лидом. Отсюда и проценты перехода между этапами.
+   */
+  const reached = SALES_STATUSES.map((_, i) =>
+    crm.slice(i).reduce((s, c) => s + c.count, 0),
+  );
+  const funnel = SALES_STATUSES.map((status, i) => ({
+    status,
+    reached: reached[i],
+    // Процент от предыдущего этапа; у первого — доля от всех лидов, то есть 100%.
+    pct: i === 0
+      ? (reached[0] ? 100 : 0)
+      : (reached[i - 1] ? Math.round((reached[i] / reached[i - 1]) * 100) : 0),
+  }));
+  const totalConversion = reached[0]
+    ? Math.round((reached[reached.length - 1] / reached[0]) * 100)
+    : 0;
 
   const now = Date.now();
   const DAY = 86_400_000;
@@ -86,8 +122,14 @@ export default async function AdminDashboardPage() {
   return (
     <AdminDashboardClient
       me={me}
-      stats={{ activeProjects, staffCount, activeTasks, leadsTotal: crm.reduce((s, c) => s + c.count, 0) }}
+      stats={{
+        activeProjects, staffCount, activeTasks, activeEvents, doneEvents,
+        leadsTotal: crm.reduce((s, c) => s + c.count, 0),
+      }}
       crm={crm}
+      production={production}
+      funnel={funnel}
+      totalConversion={totalConversion}
       topRevenue={byRevenue}
       topTenure={byTenure}
       owing={owing}

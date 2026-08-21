@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/admin/PageHeader';
@@ -7,8 +8,20 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { SALES_STATUS_LABEL, type SalesStatus } from '@/lib/roles';
 import { formatInt, formatMoney, cn } from '@/lib/utils';
 
-type Stats = { activeProjects: number; staffCount: number; activeTasks: number; leadsTotal: number };
+type Stats = {
+  activeProjects: number; staffCount: number; activeTasks: number;
+  activeEvents: number; doneEvents: number; leadsTotal: number;
+};
 type Crm = { status: string; count: number }[];
+type Production = { cat: 'VIDEO' | 'MONTAGE' | 'DESIGN'; total: number; done: number }[];
+type Funnel = { status: string; reached: number; pct: number }[];
+
+/** Как называем направления на дашборде — короче, чем в календаре. */
+const PROD_LABEL: Record<Production[number]['cat'], string> = {
+  VIDEO: 'Reels / съёмка',
+  MONTAGE: 'Монтаж',
+  DESIGN: 'Дизайн',
+};
 type Ranked = { id: string; name: string; logo: string | null }[];
 type RevRow = { id: string; name: string; logo: string | null; revenue: number };
 type TenRow = { id: string; name: string; logo: string | null; days: number };
@@ -72,11 +85,41 @@ function Tile({
   return href ? <Link href={href} className="block h-full">{inner}</Link> : inner;
 }
 
+/** Кольцо прогресса — доля выполненного по направлению. */
+function Ring({ pct, label, done, total, delay }: { pct: number; label: string; done: number; total: number; delay: number }) {
+  const R = 34;
+  const C = 2 * Math.PI * R;
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <svg width="86" height="86" viewBox="0 0 86 86" className="shrink-0 -rotate-90">
+        <circle cx="43" cy="43" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+        <motion.circle
+          cx="43" cy="43" r={R} fill="none" stroke="#D4EC4C" strokeWidth="8" strokeLinecap="round"
+          strokeDasharray={C}
+          initial={{ strokeDashoffset: C }}
+          animate={{ strokeDashoffset: C - (pct / 100) * C }}
+          transition={{ duration: 1, delay, ease: [0.22, 1, 0.36, 1] }}
+        />
+        <text x="43" y="43" textAnchor="middle" dominantBaseline="central" transform="rotate(90 43 43)"
+          fontSize="16" fontWeight="800" style={{ color: '#D4EC4C' }} className="fill-current">
+          {pct}%
+        </text>
+      </svg>
+      <div className="min-w-0">
+        <div className="truncate text-[13px] font-medium text-light">{label}</div>
+        <div className="mt-1 font-mono text-[12px] text-light/50">{done} из {total}</div>
+        <div className="text-[11px] text-light/35">{total - done} в работе</div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminDashboardClient({
-  me, stats, crm, topRevenue, topTenure, owing,
+  me, stats, crm, topRevenue, topTenure, owing, production, funnel, totalConversion,
 }: {
   me: string; stats: Stats; crm: Crm;
   topRevenue: RevRow[]; topTenure: TenRow[]; owing: DebtRow[];
+  production: Production; funnel: Funnel; totalConversion: number;
 }) {
   const maxCrm = Math.max(...crm.map((c) => c.count), 1);
   const maxRev = Math.max(...topRevenue.map((c) => c.revenue), 1);
@@ -93,7 +136,7 @@ export function AdminDashboardClient({
       />
 
       {/* ── Счётчики ── */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         <Tile
           label="Активные проекты"
           value={formatInt(stats.activeProjects)}
@@ -116,7 +159,46 @@ export function AdminDashboardClient({
           href="/admin/tasks"
           delay={0.12}
         />
+        <Tile
+          label="Активные события"
+          value={formatInt(stats.activeEvents)}
+          hint="в календаре"
+          href="/admin/calendar"
+          delay={0.18}
+        />
+        <Tile
+          label="Выполненные события"
+          value={formatInt(stats.doneEvents)}
+          hint="закрыто"
+          href="/admin/tasks"
+          delay={0.24}
+        />
       </div>
+
+      {/* ── Производство: reels / монтаж / дизайн ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.14 }}
+        className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-7"
+      >
+        <div className="mb-6">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Производство</p>
+          <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:text-2xl">По направлениям</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {production.map((p, i) => (
+            <Ring
+              key={p.cat}
+              label={PROD_LABEL[p.cat]}
+              done={p.done}
+              total={p.total}
+              pct={p.total ? Math.round((p.done / p.total) * 100) : 0}
+              delay={0.2 + i * 0.1}
+            />
+          ))}
+        </div>
+      </motion.div>
 
       {/* ── Воронка CRM: горизонтальные ступени ── */}
       <motion.div
@@ -160,6 +242,55 @@ export function AdminDashboardClient({
             );
           })}
         </div>
+      </motion.div>
+
+      {/* ── Конверсия воронки ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-7"
+      >
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Конверсия</p>
+            <h2 className="mt-1.5 font-display text-xl font-extrabold text-light sm:text-2xl">Из лида в партнёра</h2>
+          </div>
+          <div className="text-right">
+            <div className="font-display text-4xl font-extrabold leading-none text-lime-grad">{totalConversion}%</div>
+            <div className="mt-1 text-[11px] text-light/40">доходят до партнёрства</div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-stretch gap-2">
+          {funnel.map((f, i) => (
+            <Fragment key={f.status}>
+              {i > 0 && (
+                <div className="flex shrink-0 flex-col items-center justify-center px-0.5">
+                  <span
+                    className={cn(
+                      'font-mono text-[12px] font-bold',
+                      f.pct >= 50 ? 'text-brand-lime' : f.pct >= 25 ? 'text-brand-orange' : 'text-rose-300',
+                    )}
+                  >
+                    {f.pct}%
+                  </span>
+                  <span className="text-[13px] text-light/20">→</span>
+                </div>
+              )}
+              <div className="min-w-[104px] flex-1 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+                <div className="truncate text-[10px] uppercase tracking-[0.12em] text-light/45">
+                  {SALES_STATUS_LABEL[f.status as SalesStatus]}
+                </div>
+                <div className="mt-2 font-display text-2xl font-extrabold text-light">{formatInt(f.reached)}</div>
+                <div className="text-[10px] text-light/30">дошли</div>
+              </div>
+            </Fragment>
+          ))}
+        </div>
+        <p className="mt-4 text-[11px] text-light/35">
+          «Дошли» — те, кто сейчас на этапе или прошёл его дальше. Процент — переход с предыдущего этапа.
+        </p>
       </motion.div>
 
       {/* ── Два топа рядом ── */}
