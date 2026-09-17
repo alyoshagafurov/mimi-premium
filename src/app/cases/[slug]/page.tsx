@@ -73,13 +73,27 @@ export default async function CaseDetailPage({ params }: { params: { slug: strin
           ]}
         />
 
+        {c.logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={c.logo}
+            alt={`Логотип: ${c.title}`}
+            decoding="async"
+            className="mt-8 h-20 w-20 rounded-3xl border border-white/10 bg-white/[0.04] object-contain p-2 sm:h-24 sm:w-24"
+          />
+        )}
         <div className="mt-6 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-brand-orange">
-          <span>{c.category}</span>
-          {c.clientName && <span className="text-light/40">· {c.clientName}</span>}
-          <span className="text-light/40">· {formatDate(c.date)}</span>
+          {c.category && <span>{c.category}</span>}
+          {c.clientName && <span className="text-light/50">{c.category ? '· ' : ''}{c.clientName}</span>}
+          <span className="text-light/50">{c.category || c.clientName ? '· ' : ''}{formatDate(c.date)}</span>
         </div>
         <h1 className="mt-4 font-display text-hero-sm font-extrabold leading-[1.05] text-light">{c.title}</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-light/65">{c.description}</p>
+        <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-light/65">{c.description}</p>
+        {c.instagramUrl && (
+          <a href={c.instagramUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost mt-8">
+            Смотреть в Instagram ↗
+          </a>
+        )}
 
         {c.coverImage && (
           <div className="mt-10 overflow-hidden rounded-3xl border border-white/[0.06]">

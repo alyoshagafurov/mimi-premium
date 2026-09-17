@@ -73,22 +73,36 @@ export default async function CasesPage({ searchParams }: { searchParams: { cate
                 href={`/cases/${c.slug}`}
                 className="group flex flex-col overflow-hidden rounded-3xl border border-white/[0.06] bg-ink2/30 transition-colors hover:border-brand-lime/30"
               >
-                <div className="aspect-[16/10] overflow-hidden bg-brand-purple/20">
+                <div className="relative aspect-[16/10] overflow-hidden bg-brand-purple/20">
                   {c.coverImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.coverImage} alt={c.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  ) : c.logo ? (
+                    <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_45%,rgba(212,236,76,0.10),transparent_65%)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.logo} alt={`Логотип: ${c.title}`} loading="lazy" decoding="async" className="max-h-[46%] max-w-[52%] object-contain transition-transform duration-500 group-hover:scale-105" />
+                    </div>
                   ) : (
                     <div className="flex h-full items-center justify-center font-display text-4xl font-extrabold text-brand-lime/30">mimi</div>
                   )}
+                  {c.coverImage && c.logo && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.logo} alt="" loading="lazy" decoding="async" className="absolute bottom-4 left-4 h-12 w-12 rounded-2xl border border-white/10 bg-ink/80 object-contain p-1.5" />
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col p-6">
-                  <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-brand-orange">
-                    <span>{c.category}</span>
-                    {c.clientName && <span className="text-light/35">· {c.clientName}</span>}
-                  </div>
-                  <h2 className="mt-3 font-display text-xl font-extrabold leading-tight text-light group-hover:text-brand-lime">{c.title}</h2>
-                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-light/55">{c.description}</p>
-                  <span className="mt-auto pt-5 text-[11px] uppercase tracking-[0.2em] text-brand-lime">Смотреть кейс →</span>
+                  {(c.category || c.clientName) && (
+                    <div className="mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-brand-orange">
+                      {c.category && <span>{c.category}</span>}
+                      {c.clientName && <span className="text-light/45">{c.category ? '· ' : ''}{c.clientName}</span>}
+                    </div>
+                  )}
+                  <h2 className="font-display text-xl font-extrabold leading-tight text-light group-hover:text-brand-lime">{c.title}</h2>
+                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-light/60">{c.description}</p>
+                  <span className="mt-auto flex items-center justify-between gap-3 pt-5 text-[11px] uppercase tracking-[0.2em]">
+                    <span className="text-brand-lime">Смотреть кейс →</span>
+                    {c.instagramUrl && <span className="normal-case tracking-normal text-light/50">есть в Instagram</span>}
+                  </span>
                 </div>
               </Link>
             ))}

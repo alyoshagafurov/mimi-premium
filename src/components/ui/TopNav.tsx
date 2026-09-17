@@ -14,7 +14,7 @@ import type { Lang } from '@/i18n/config';
 type NavItem = { href: string; label: string; n: string };
 
 const ru = {
-  nav: { home: 'Главная', services: 'Услуги', cases: 'Кейсы', pricing: 'Тарифы', faq: 'FAQ', contacts: 'Контакты' },
+  nav: { home: 'Главная', services: 'Услуги', cases: 'Кейсы', reviews: 'Отзывы', pricing: 'Тарифы', faq: 'FAQ', contacts: 'Контакты' },
   cabinet: 'Кабинет',
   logout: 'Выйти',
   login: 'Вход',
@@ -27,7 +27,7 @@ const ru = {
   closeMenu: 'Закрыть меню',
 };
 const en: typeof ru = {
-  nav: { home: 'Home', services: 'Services', cases: 'Cases', pricing: 'Pricing', faq: 'FAQ', contacts: 'Contacts' },
+  nav: { home: 'Home', services: 'Services', cases: 'Cases', reviews: 'Reviews', pricing: 'Pricing', faq: 'FAQ', contacts: 'Contacts' },
   cabinet: 'Dashboard',
   logout: 'Sign out',
   login: 'Sign in',
@@ -40,7 +40,7 @@ const en: typeof ru = {
   closeMenu: 'Close menu',
 };
 const tg: typeof ru = {
-  nav: { home: 'Асосӣ', services: 'Хидматҳо', cases: 'Кейсҳо', pricing: 'Тарифҳо', faq: 'Саволҳо', contacts: 'Тамос' },
+  nav: { home: 'Асосӣ', services: 'Хидматҳо', cases: 'Кейсҳо', reviews: 'Фикрҳо', pricing: 'Тарифҳо', faq: 'Саволҳо', contacts: 'Тамос' },
   cabinet: 'Кабинет',
   logout: 'Баромад',
   login: 'Воридшавӣ',
@@ -63,8 +63,9 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
   const NAV: NavItem[] = [
     { href: '/', label: t.nav.home, n: '01' },
     { href: '/cases', label: t.nav.cases, n: '02' },
-    { href: '/pricing', label: t.nav.pricing, n: '03' },
-    { href: '/contacts', label: t.nav.contacts, n: '04' },
+    { href: '/reviews', label: t.nav.reviews, n: '03' },
+    { href: '/pricing', label: t.nav.pricing, n: '04' },
+    { href: '/contacts', label: t.nav.contacts, n: '05' },
   ];
 
   useEffect(() => {
@@ -103,9 +104,10 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
           <Logo size="md" />
 
           {/* Desktop nav */}
-          <nav aria-label="Основная навигация" className="hidden items-center gap-9 text-[12px] uppercase tracking-[0.2em] text-light/65 md:flex">
+          <nav aria-label="Основная навигация" className="hidden items-center gap-6 text-[12px] uppercase tracking-[0.2em] text-light/65 lg:flex xl:gap-9">
             <Link href="/" className="transition-colors hover:text-brand-lime">{t.nav.home}</Link>
             <Link href="/cases" className="transition-colors hover:text-brand-lime">{t.nav.cases}</Link>
+            <Link href="/reviews" className="transition-colors hover:text-brand-lime">{t.nav.reviews}</Link>
             <Link href="/pricing" className="transition-colors hover:text-brand-lime">{t.nav.pricing}</Link>
             <Link href="/contacts" className="transition-colors hover:text-brand-lime">{t.nav.contacts}</Link>
             {session?.user ? (
@@ -138,7 +140,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
             aria-label={open ? t.closeMenu : t.openMenu}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] transition-all duration-300 hover:border-brand-lime/50 hover:bg-brand-lime/[0.06] md:hidden"
+            className="group relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] transition-all duration-300 hover:border-brand-lime/50 hover:bg-brand-lime/[0.06] lg:hidden"
           >
             {/* Lime glow ring on open */}
             <span
@@ -186,7 +188,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="fixed inset-0 z-[55] bg-ink/70 backdrop-blur-md md:hidden"
+              className="fixed inset-0 z-[55] bg-ink/70 backdrop-blur-md lg:hidden"
             />
             {/* Panel */}
             <motion.aside
@@ -196,7 +198,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed inset-y-0 right-0 z-[60] flex w-[88%] max-w-sm flex-col overflow-hidden border-l border-white/[0.06] bg-gradient-to-br from-ink2/95 to-ink/95 backdrop-blur-2xl md:hidden"
+              className="fixed inset-y-0 right-0 z-[60] flex w-[88%] max-w-sm flex-col overflow-hidden border-l border-white/[0.06] bg-gradient-to-br from-ink2/95 to-ink/95 backdrop-blur-2xl lg:hidden"
             >
               {/* Ambient washes inside panel */}
               <div className="pointer-events-none absolute -top-32 -right-20 h-72 w-72 rounded-full bg-brand-lime/[0.08] blur-3xl" />

@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { ensureAdmin } from '@/lib/api-guard';
+import { ensureAdminLike } from '@/lib/api-guard';
 import { uniqueSlug } from '@/lib/slug';
+import { normalizeInstagramUrl } from '@/lib/utils';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const admin = await ensureAdmin();
+  const admin = await ensureAdminLike();
   if (!admin) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   const b = await req.json();
   const data: any = {};
+  if ('logo' in b) data.logo = b.logo || null;
+  if ('instagramUrl' in b) {
+    data.instagramUrl = normalizeInstagramUrl(b.instagramUrl);
+    if (b.instagramUrl?.trim() && !data.instagramUrl) {
+      return NextResponse.json({ error: 'Это не ссылка на Instagram' }, { status: 400 });
+    }
+  }
   for (const k of ['title', 'category', 'clientName', 'description', 'task', 'solution', 'result', 'seoTitle', 'seoDescription']) {
     if (k in b) data[k] = b[k];
   }
@@ -29,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const admin = await ensureAdmin();
+  const admin = await ensureAdminLike();
   if (!admin) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   await prisma.case.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });

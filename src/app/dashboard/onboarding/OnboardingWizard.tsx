@@ -4,14 +4,22 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { BRIEF_QUESTIONS, type BriefKey } from '@/lib/utils';
 
-const STEPS = [
-  { key: 'goals', label: 'Цели', q: 'Какие у вас цели на ближайшие 3 месяца?', placeholder: 'Например: вырастить продажи в 2 раза, выйти в новый регион...' },
-  { key: 'targetAudience', label: 'ЦА', q: 'Кто ваша целевая аудитория?', placeholder: 'Возраст, пол, география, доход, поведение...' },
-  { key: 'budget', label: 'Бюджет', q: 'Какой ежемесячный рекламный бюджет?', placeholder: 'В сомони', type: 'number' as const },
-  { key: 'competitors', label: 'Конкуренты', q: 'Назовите 2-3 ключевых конкурентов', placeholder: 'Бренды, аккаунты, сайты...' },
-  { key: 'usp', label: 'УТП', q: 'В чём ваше уникальное торговое предложение?', placeholder: 'Что отличает вас от конкурентов...' },
-];
+const PLACEHOLDER: Record<BriefKey, string> = {
+  goals: 'Например: вырастить продажи в 2 раза, выйти в новый регион...',
+  targetAudience: 'Возраст, пол, география, доход, поведение...',
+  budget: 'В сомони',
+  competitors: 'Бренды, аккаунты, сайты...',
+  usp: 'Что отличает вас от конкурентов...',
+};
+
+// Тексты вопросов — общие с карточкой лида, чтобы продажник видел ровно то, о чём спросили.
+const STEPS = BRIEF_QUESTIONS.map((s) => ({
+  ...s,
+  placeholder: PLACEHOLDER[s.key],
+  type: s.key === 'budget' ? ('number' as const) : undefined,
+}));
 
 export function OnboardingWizard({ businessName }: { businessName: string }) {
   const router = useRouter();

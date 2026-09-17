@@ -207,6 +207,24 @@ export const telegramUrl = (v: string) =>
 export const instagramUrl = (v: string) =>
   /^https?:\/\//i.test(v) ? v : `https://instagram.com/${v.replace(/^@/, '')}`;
 
+/**
+ * Canonical https Instagram link from «@name», «name» or a URL — or null when
+ * it isn't Instagram, so a case card can't be pointed at an arbitrary site.
+ */
+export function normalizeInstagramUrl(raw?: string | null): string | null {
+  const v = (raw ?? '').trim();
+  if (!v) return null;
+  try {
+    const u = new URL(instagramUrl(v));
+    const host = u.hostname.replace(/^www\./, '');
+    if (!/^https?:$/.test(u.protocol) || (host !== 'instagram.com' && host !== 'instagr.am')) return null;
+    u.protocol = 'https:';
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 /* ─────────────────────────  PDF-отчёты  ───────────────────────── */
 
 /** Название PDF-отчёта хранит период: «Август 2026». */
@@ -251,3 +269,16 @@ export const formatBytes = (n: number) =>
   n >= 1024 * 1024
     ? `${(n / (1024 * 1024)).toFixed(1).replace('.', ',')} МБ`
     : `${Math.max(1, Math.round(n / 1024))} КБ`;
+
+/**
+ * Пять вопросов анкеты, на которые клиент отвечает сразу после регистрации.
+ * Один источник и для мастера в кабинете, и для карточки лида в «Продажах».
+ */
+export const BRIEF_QUESTIONS = [
+  { key: 'goals', label: 'Цели', q: 'Какие у вас цели на ближайшие 3 месяца?' },
+  { key: 'targetAudience', label: 'ЦА', q: 'Кто ваша целевая аудитория?' },
+  { key: 'budget', label: 'Бюджет', q: 'Какой ежемесячный рекламный бюджет?' },
+  { key: 'competitors', label: 'Конкуренты', q: 'Назовите 2-3 ключевых конкурентов' },
+  { key: 'usp', label: 'УТП', q: 'В чём ваше уникальное торговое предложение?' },
+] as const;
+export type BriefKey = (typeof BRIEF_QUESTIONS)[number]['key'];

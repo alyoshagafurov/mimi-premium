@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { ensureAdmin } from '@/lib/api-guard';
+import { ensureAdminLike } from '@/lib/api-guard';
 import { getCollection, coerceBody } from '@/lib/cms-collections';
 
 export async function POST(req: Request, { params }: { params: { type: string } }) {
-  const admin = await ensureAdmin();
+  const admin = await ensureAdminLike();
   if (!admin) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   const col = getCollection(params.type);
   if (!col) return NextResponse.json({ error: 'unknown_collection' }, { status: 404 });

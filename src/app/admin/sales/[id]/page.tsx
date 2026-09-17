@@ -66,6 +66,17 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         reminderAt: lead.reminderAt?.toISOString() ?? null,
         reminderNote: lead.reminderNote ?? '',
         createdAt: lead.createdAt.toISOString(),
+        brief: {
+          done: lead.briefDone,
+          manual: lead.owner.email.endsWith('@lead.mimitj.agency'),
+          answers: {
+            goals: lead.briefGoals,
+            targetAudience: lead.briefTargetAudience,
+            budget: lead.briefBudget,
+            competitors: lead.briefCompetitors,
+            usp: lead.briefUSP,
+          },
+        },
       }}
       notes={lead.activities.map((a) => ({
         id: a.id,

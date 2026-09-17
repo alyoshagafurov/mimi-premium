@@ -12,6 +12,7 @@ import {
   SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL,
   type SalesStatus, type ClientPackage,
 } from '@/lib/roles';
+import { LeadBrief, type Brief } from './LeadBrief';
 
 type Lead = {
   id: string; firstName: string; lastName: string; contactName: string;
@@ -23,6 +24,7 @@ type Lead = {
   comment: string;
   createdByName: string | null; assigneeIds: string[]; assigneeNames: string[];
   reminderAt: string | null; reminderNote: string; createdAt: string;
+  brief: Brief;
 };
 type Note = { id: string; body: string; author: string; createdAt: string };
 
@@ -105,6 +107,8 @@ export function LeadDetail({
         title={<>{lead.contactName}</>}
         subtitle={[hasBusiness ? lead.businessName : '', hasNiche ? lead.niche : ''].filter(Boolean).join(' · ')}
       />
+
+      <LeadBrief brief={lead.brief} />
 
       <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
         {/* ── ЛЕВО: информация о лиде ── */}

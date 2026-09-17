@@ -634,6 +634,8 @@ model Case {
   result         String   @default("")
   achievements   String[] // list of wins
   coverImage     String?
+  logo           String? // логотип проекта
+  instagramUrl   String? // ссылка на пост/профиль в Instagram
   images         String[]
   date           DateTime @default(now())
   seoTitle       String?
@@ -659,6 +661,7 @@ model Testimonial {
   text      String
   date      DateTime @default(now())
   published Boolean  @default(false)
+  fromSite  Boolean  @default(false) // оставлен посетителем через /reviews
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

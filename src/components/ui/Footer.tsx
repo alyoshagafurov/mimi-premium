@@ -12,6 +12,7 @@ const ru = {
   colContact: 'Связь',
   services: 'Услуги',
   cases: 'Кейсы',
+  reviews: 'Отзывы',
   blog: 'Блог',
   process: 'Процесс',
   pricing: 'Тарифы',
@@ -30,6 +31,7 @@ const en: typeof ru = {
   colContact: 'Contact',
   services: 'Services',
   cases: 'Cases',
+  reviews: 'Reviews',
   blog: 'Blog',
   process: 'Process',
   pricing: 'Pricing',
@@ -48,6 +50,7 @@ const tg: typeof ru = {
   colContact: 'Тамос',
   services: 'Хидматҳо',
   cases: 'Кейсҳо',
+  reviews: 'Фикрҳо',
   blog: 'Блог',
   process: 'Раванд',
   pricing: 'Тарифҳо',
@@ -78,6 +81,7 @@ export function Footer() {
           <ul className="mt-4 space-y-3 text-sm text-light/75">
             <li><Link href="/#services" className="transition-colors hover:text-brand-lime">{t.services}</Link></li>
             <li><Link href="/cases" className="transition-colors hover:text-brand-lime">{t.cases}</Link></li>
+            <li><Link href="/reviews" className="transition-colors hover:text-brand-lime">{t.reviews}</Link></li>
             <li><Link href="/blog" className="transition-colors hover:text-brand-lime">{t.blog}</Link></li>
             <li><Link href="/#process" className="transition-colors hover:text-brand-lime">{t.process}</Link></li>
             <li><Link href="/pricing" className="transition-colors hover:text-brand-lime">{t.pricing}</Link></li>
