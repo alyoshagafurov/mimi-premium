@@ -412,7 +412,8 @@ export function CalendarClient({
                   <div>
                     <label className="label-soft">Календарь (команда)</label>
                     <select className="input-glass" value={form.category} onChange={(e) => set('category', e.target.value as EventCategory)}>
-                      {(['GENERAL','VIDEO','DESIGN','SALES','TARGET','WEB'] as EventCategory[]).map((c) => (
+                      {/* Single source of truth — the hardcoded list had drifted and was missing «Монтаж». */}
+                      {EVENT_CATEGORIES.map((c) => (
                         <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>
                       ))}
                     </select>
