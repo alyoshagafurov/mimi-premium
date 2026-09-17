@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { PdfReports, type PdfReport } from '@/components/dashboard/PdfReports';
 import { cn, formatInt, formatMoney, monthLabel, tariffLabel } from '@/lib/utils';
 
 export type ReportRow = { id: string; month: number; year: number; revenue: number; spent: number; leads: number };
@@ -59,7 +60,7 @@ function Counter({ value, decimals = 0, suffix = '' }: { value: number; decimals
 
 export function ClientOverview({
   business, tariff, tariffEnd, period, roas, romi, payback, revenue, spent, leads,
-  reportList, notes, tasks,
+  reportList, pdfReports, notes, tasks,
 }: {
   business: { name: string; niche: string; logo: string | null; since: string };
   tariff: string;
@@ -68,6 +69,7 @@ export function ClientOverview({
   roas: number; romi: number; payback: number;
   revenue: number; spent: number; leads: number;
   reportList: ReportRow[];
+  pdfReports: PdfReport[];
   notes: NoteRow[];
   tasks: TaskRow[];
 }) {
@@ -215,6 +217,25 @@ export function ClientOverview({
           <p className="mt-2 text-[12px] text-light/45">{business.name} · {business.niche}</p>
         </motion.div>
       </div>
+
+      {/* ── PDF-отчёты от команды ── */}
+      {pdfReports.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.16 }}
+          className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-7"
+        >
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Документы</p>
+              <h2 className="mt-1.5 font-display text-xl font-extrabold text-light">Отчёты</h2>
+            </div>
+            <span className="text-[11px] text-light/40">нажмите, чтобы открыть · ↓ скачать</span>
+          </div>
+          <PdfReports reports={pdfReports} />
+        </motion.section>
+      )}
 
       {/* ── Заметки от команды ── */}
       {notes.length > 0 && (

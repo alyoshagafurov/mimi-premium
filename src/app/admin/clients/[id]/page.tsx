@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { ClientManageClient } from './ClientManageClient';
 import { ClientCrmPanel } from './ClientCrmPanel';
+import { ClientReportsPanel } from './ClientReportsPanel';
+import { compareReports } from '@/lib/utils';
 
 export default async function AdminClientManagePage({ params }: { params: { id: string } }) {
   const [client, team] = await Promise.all([
@@ -22,6 +24,10 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
         tasks: { orderBy: [{ done: 'asc' }, { dueDate: 'asc' }] },
         activities: { orderBy: { createdAt: 'desc' }, include: { author: { select: { name: true } } } },
         messages: { orderBy: { createdAt: 'desc' }, include: { sender: { select: { name: true } } } },
+        files: {
+          where: { mime: 'application/pdf' },
+          select: { id: true, name: true, url: true, size: true, createdAt: true },
+        },
       },
     }),
     prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true, name: true } }),
@@ -64,6 +70,13 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
             : null,
           campaigns: r.campaigns.map((c) => ({ id: c.id, name: c.name, platform: c.platform, status: c.status })),
         }))}
+      />
+
+      <ClientReportsPanel
+        clientId={client.id}
+        reports={client.files
+          .map((f) => ({ id: f.id, name: f.name, url: f.url, size: f.size, createdAt: f.createdAt.toISOString() }))
+          .sort(compareReports)}
       />
 
       <ClientCrmPanel

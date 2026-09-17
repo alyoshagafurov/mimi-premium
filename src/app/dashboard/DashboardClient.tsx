@@ -8,6 +8,7 @@ import { PlatformRow } from '@/components/dashboard/PlatformRow';
 import { CampaignList } from '@/components/dashboard/CampaignList';
 import { AudienceChart, type AudienceData } from '@/components/dashboard/AudienceChart';
 import { ClientOverview, type ReportRow, type NoteRow, type TaskRow } from './ClientOverview';
+import type { PdfReport } from '@/components/dashboard/PdfReports';
 import { formatInt, formatMoney, formatPct, formatRoas, monthLabel, reportKpis } from '@/lib/utils';
 
 type Metrics = {
@@ -36,6 +37,7 @@ export function DashboardClient({
   campaigns,
   audience,
   reportList,
+  pdfReports,
   notes,
   tasks,
 }: {
@@ -48,6 +50,7 @@ export function DashboardClient({
   campaigns: { id: string; name: string; platform: string; status: string }[];
   audience: AudienceData | null;
   reportList: ReportRow[];
+  pdfReports: PdfReport[];
   notes: NoteRow[];
   tasks: TaskRow[];
 }) {
@@ -89,6 +92,7 @@ export function DashboardClient({
           spent={metrics.spent}
           leads={metrics.leads}
           reportList={reportList}
+          pdfReports={pdfReports}
           notes={notes}
           tasks={tasks}
         />

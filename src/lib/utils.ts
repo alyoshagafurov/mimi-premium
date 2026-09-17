@@ -206,3 +206,48 @@ export const telegramUrl = (v: string) =>
   /^https?:\/\//i.test(v) ? v : `https://t.me/${v.replace(/^@/, '')}`;
 export const instagramUrl = (v: string) =>
   /^https?:\/\//i.test(v) ? v : `https://instagram.com/${v.replace(/^@/, '')}`;
+
+/* ─────────────────────────  PDF-отчёты  ───────────────────────── */
+
+/** Название PDF-отчёта хранит период: «Август 2026». */
+export const reportTitle = (month: number, year: number) => monthLabel(month, year);
+
+const REPORT_PERIOD_RE = new RegExp(`(${MONTHS_RU.join('|')})\\s+(\\d{4})`);
+
+/**
+ * Период обратно из названия — чтобы сортировать по месяцу отчёта, а не по
+ * дню загрузки (отчёт за май могут залить и в сентябре).
+ */
+export function reportPeriod(name: string): { month: number; year: number } | null {
+  const m = name.match(REPORT_PERIOD_RE);
+  if (!m) return null;
+  return { month: MONTHS_RU.indexOf(m[1] as (typeof MONTHS_RU)[number]) + 1, year: Number(m[2]) };
+}
+
+/** Сортировка отчётов: свежий период первым, внутри периода — позже загруженный. */
+export function compareReports(
+  a: { name: string; createdAt: string },
+  b: { name: string; createdAt: string },
+): number {
+  const pa = reportPeriod(a.name);
+  const pb = reportPeriod(b.name);
+  const ka = pa ? pa.year * 12 + pa.month : 0;
+  const kb = pb ? pb.year * 12 + pb.month : 0;
+  return kb - ka || b.createdAt.localeCompare(a.createdAt);
+}
+
+/** Файл лежит в нашем Vercel Blob, а не по произвольной ссылке. */
+export const isBlobUrl = (url: string) => {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && u.hostname.endsWith('.public.blob.vercel-storage.com');
+  } catch {
+    return false;
+  }
+};
+
+/** «2,4 МБ», «840 КБ». */
+export const formatBytes = (n: number) =>
+  n >= 1024 * 1024
+    ? `${(n / (1024 * 1024)).toFixed(1).replace('.', ',')} МБ`
+    : `${Math.max(1, Math.round(n / 1024))} КБ`;

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { monthName } from '@/lib/utils';
+import { compareReports, monthName } from '@/lib/utils';
 import { DashboardClient } from './DashboardClient';
 
 const deltaPct = (cur?: number, prev?: number): number | null => {
@@ -40,6 +40,11 @@ export default async function DashboardPage() {
             orderBy: [{ done: 'asc' }, { startAt: 'desc' }],
             take: 30,
             select: { id: true, title: true, kind: true, startAt: true, done: true, doneAt: true },
+          },
+          // PDF-отчёты, которые команда загрузила в карточку проекта.
+          files: {
+            where: { mime: 'application/pdf' },
+            select: { id: true, name: true, url: true, size: true, createdAt: true },
           },
         },
       },
@@ -86,6 +91,9 @@ export default async function DashboardPage() {
         spent: r.spent,
         leads: r.leads,
       }))}
+      pdfReports={user.client.files
+        .map((f) => ({ id: f.id, name: f.name, url: f.url, size: f.size, createdAt: f.createdAt.toISOString() }))
+        .sort(compareReports)}
       notes={user.client.messages.map((m) => ({
         id: m.id,
         body: m.body,
