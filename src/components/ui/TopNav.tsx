@@ -8,6 +8,7 @@ import { Logo } from './Logo';
 import { LangSwitcher } from './LangSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { cn } from '@/lib/utils';
+import { isStaff } from '@/lib/roles';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
 
@@ -88,7 +89,8 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
     };
   }, [open]);
 
-  const cabinHref = (session?.user as any)?.role === 'ADMIN' ? '/admin' : '/dashboard';
+  // Сотрудники возвращаются в админку, клиенты — в свой кабинет.
+  const cabinHref = isStaff((session?.user as any)?.role) ? '/admin' : '/dashboard';
 
   return (
     <>

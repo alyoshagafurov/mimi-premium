@@ -1,6 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { SITE_URL, SITE_NAME } from '@/lib/seo';
 import { FaqJsonLd } from '@/components/seo/JsonLd';
@@ -52,12 +50,12 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: HOME_TITLE, description: HOME_DESCRIPTION },
 };
 
+/**
+ * Лендинг открыт всем, включая тех, кто уже вошёл: команда должна иметь
+ * возможность посмотреть сайт, не выходя из админки. Вернуться в кабинет
+ * можно кнопкой в меню — сессия при этом сохраняется.
+ */
 export default async function Home() {
-  const session = await getSafeSession();
-  if (session?.user) {
-    const role = (session.user as any).role;
-    redirect(role === 'ADMIN' ? '/admin' : '/dashboard');
-  }
   const cms = await loadCms();
   return (
     <>
