@@ -20,11 +20,17 @@ export default async function CasesPage({ searchParams }: { searchParams: { cate
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1);
 
   const where = { published: true, ...(category ? { category } : {}) };
+  // База на Neon умеет засыпать, и одна неудачная попытка не должна превращать
+  // страницу в ошибку 500 — показываем честное сообщение и рабочую навигацию.
+  let dbDown = false;
   const [cases, total, categoriesRaw] = await Promise.all([
     prisma.case.findMany({ where, orderBy: [{ sortOrder: 'asc' }, { date: 'desc' }], skip: (page - 1) * PER_PAGE, take: PER_PAGE }),
     prisma.case.count({ where }),
     prisma.case.findMany({ where: { published: true }, select: { category: true }, distinct: ['category'] }),
-  ]);
+  ]).catch(() => {
+    dbDown = true;
+    return [[], 0, []] as [Awaited<ReturnType<typeof prisma.case.findMany>>, number, { category: string }[]];
+  });
   const categories = categoriesRaw.map((c) => c.category).filter(Boolean);
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
 
@@ -62,8 +68,10 @@ export default async function CasesPage({ searchParams }: { searchParams: { cate
         </div>
 
         {cases.length === 0 ? (
-          <p className="mt-16 rounded-3xl border border-white/[0.06] bg-white/[0.02] p-12 text-center text-light/50">
-            Пока нет опубликованных кейсов.
+          <p className="mt-16 rounded-3xl border border-white/[0.06] bg-white/[0.02] p-12 text-center text-light/60">
+            {dbDown
+              ? 'Кейсы сейчас не загрузились — обновите страницу через минуту. Мы уже на связи в WhatsApp.'
+              : 'Пока нет опубликованных кейсов.'}
           </p>
         ) : (
           <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
