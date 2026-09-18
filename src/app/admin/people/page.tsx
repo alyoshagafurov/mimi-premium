@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { openSecret } from '@/lib/secret-box';
 import { isStaff, isAdminLike } from '@/lib/roles';
 import { PeopleClient } from './PeopleClient';
 
@@ -22,6 +23,7 @@ export default async function AdminPeoplePage() {
     select: {
       id: true, name: true, email: true, phone: true, role: true,
       avatar: true, banner: true, jobTitle: true, bio: true, approvedAt: true,
+      passwordCipher: canManage, // пароль видят только админ и опер. директор
     },
   });
 
@@ -40,6 +42,7 @@ export default async function AdminPeoplePage() {
         jobTitle: p.jobTitle ?? '',
         bio: p.bio ?? '',
         approved: p.approvedAt !== null,
+        password: canManage ? openSecret(p.passwordCipher) : null,
       }))}
     />
   );

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { openSecret } from '@/lib/secret-box';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { ClientAbout } from '@/components/admin/ClientAbout';
 import { CredentialsPanel } from '@/components/admin/CredentialsPanel';
@@ -15,7 +16,7 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
     relationLoadStrategy: 'join',
       where: { id: params.id },
       include: {
-        owner: { select: { id: true, name: true, email: true, phone: true, avatar: true, tariff: true, tariffEnd: true } },
+        owner: { select: { id: true, name: true, email: true, phone: true, avatar: true, tariff: true, tariffEnd: true, passwordCipher: true } },
         payments: { orderBy: [{ year: 'desc' }, { month: 'desc' }] },
         tasks: { orderBy: [{ done: 'asc' }, { dueDate: 'asc' }] },
         activities: { orderBy: { createdAt: 'desc' }, include: { author: { select: { name: true } } } },
@@ -49,7 +50,11 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
         }
       />
 
-      <CredentialsPanel endpoint={`/api/clients/${client.id}`} email={client.owner.email} />
+      <CredentialsPanel
+        endpoint={`/api/clients/${client.id}`}
+        email={client.owner.email}
+        password={openSecret(client.owner.passwordCipher)}
+      />
 
       <ClientAbout value={client.description ?? ''} endpoint={`/api/clients/${client.id}`} />
 

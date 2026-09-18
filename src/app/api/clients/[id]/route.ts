@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { sealSecret } from '@/lib/secret-box';
 import { ensureAdmin, ensureAdminLike } from '@/lib/api-guard';
 import { adminPasswordProblem, emailProblem, normalizeEmail } from '@/lib/validation';
 import { SALES_STATUSES } from '@/lib/roles';
@@ -68,6 +69,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       const err = adminPasswordProblem(password);
       if (err) return NextResponse.json({ error: err }, { status: 400 });
       ownerData.password = await bcrypt.hash(password.trim(), 10);
+      // Копию храним зашифрованной, чтобы админ мог показать её клиенту.
+      ownerData.passwordCipher = sealSecret(password.trim());
     }
 
     /**

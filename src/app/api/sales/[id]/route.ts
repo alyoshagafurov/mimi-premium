@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { sealSecret } from '@/lib/secret-box';
 import { adminPasswordProblem, emailProblem, normalizeEmail } from '@/lib/validation';
 import { getSafeSession } from '@/lib/session';
 import { isAdminLike, canWorkLeads } from '@/lib/roles';
@@ -108,6 +109,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const err = adminPasswordProblem(body.password);
     if (err) return NextResponse.json({ error: err }, { status: 400 });
     ownerData.password = await bcrypt.hash(body.password.trim(), 10);
+    ownerData.passwordCipher = sealSecret(body.password.trim());
   }
   if (typeof body.phone === 'string' && adminLike) ownerData.phone = body.phone.trim() || null;
   if (ownerData.email || ownerData.password) ownerData.emailVerified = new Date();

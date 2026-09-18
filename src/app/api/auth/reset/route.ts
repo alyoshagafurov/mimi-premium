@@ -22,7 +22,8 @@ export async function POST(req: Request) {
 
   const hashed = await bcrypt.hash(password, 12);
   await prisma.$transaction([
-    prisma.user.update({ where: { id: record.userId }, data: { password: hashed } }),
+    // Пароль сменил сам пользователь — копия для админки больше не действует.
+    prisma.user.update({ where: { id: record.userId }, data: { password: hashed, passwordCipher: null } }),
     prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
     // invalidate any other outstanding tokens for this user
     prisma.passwordResetToken.updateMany({

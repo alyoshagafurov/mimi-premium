@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { sealSecret } from '@/lib/secret-box';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
 import { adminPasswordProblem, emailProblem } from '@/lib/validation';
@@ -47,7 +48,11 @@ export async function POST(req: Request) {
   const user = await prisma.user.create({
     // Сотрудника заводит админ — он же за него ручается: почта считается
     // подтверждённой, доступ сразу одобрен, иначе войти нельзя.
-    data: { name, email, password: hashed, role, phone, emailVerified: new Date(), approvedAt: new Date() },
+    data: {
+      name, email, password: hashed, role, phone,
+      passwordCipher: sealSecret(password),
+      emailVerified: new Date(), approvedAt: new Date(),
+    },
     select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
   });
   await logAudit({

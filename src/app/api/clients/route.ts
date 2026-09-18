@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { sealSecret } from '@/lib/secret-box';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { emailProblem, normalizeEmail } from '@/lib/validation';
 import { SALES_STATUSES } from '@/lib/roles';
@@ -50,11 +51,14 @@ export async function POST(req: Request) {
 
     const rawPassword = data.password || randomUUID(); // random if the admin didn't set one
     const password = await bcrypt.hash(rawPassword, 10);
+    // Пароль, заданный админом, сохраняем зашифрованным — его он отправит клиенту.
+    const passwordCipher = data.password ? sealSecret(data.password) : null;
 
     const user = await prisma.user.create({
       data: {
         email,
         password,
+        passwordCipher,
         name,
         phone: data.phone?.trim() || null,
         role: 'CLIENT',

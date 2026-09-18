@@ -14,6 +14,8 @@ import type { Role } from '@prisma/client';
 type Staff = {
   id: string; name: string; email: string; phone: string | null; role: Role;
   approved: boolean; avatar: string | null; jobTitle: string; bio: string;
+  /** Выданный пароль — видят только админ и опер. директор. */
+  password: string | null;
 };
 
 const EMPTY = { name: '', email: '', phone: '', password: '', role: 'VIDEOGRAPHER' as Role };
@@ -196,6 +198,7 @@ export function PeopleClient({ meId, canManage, people }: { meId: string; canMan
               <CredentialsPanel
                 endpoint={`/api/admin/team/${pwFor.id}`}
                 email={pwFor.email}
+                password={pwFor.password}
                 who="Сотрудник"
               />
             </div>

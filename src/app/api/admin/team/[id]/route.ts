@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { sealSecret } from '@/lib/secret-box';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
 import { adminPasswordProblem, emailProblem, normalizeEmail } from '@/lib/validation';
@@ -51,6 +52,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const passErr = adminPasswordProblem(body.password);
     if (passErr) return NextResponse.json({ error: passErr }, { status: 400 });
     data.password = await bcrypt.hash(body.password.trim(), 12);
+    data.passwordCipher = sealSecret(body.password.trim());
   }
 
   // Без подтверждённой почты вход блокируется (callbacks.signIn в lib/auth.ts),

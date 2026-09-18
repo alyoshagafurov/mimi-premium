@@ -175,6 +175,10 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   password      String? // null for Google / OAuth-only accounts
+  /// Зашифрованная копия пароля, который выдал админ, — чтобы его можно было
+  /// показать в админке и отправить клиенту. Вход проверяется по password.
+  /// Пусто, если пароль менял сам пользователь (тогда мы его не знаем).
+  passwordCipher String?
   name          String
   phone         String?
   role          Role      @default(CLIENT)

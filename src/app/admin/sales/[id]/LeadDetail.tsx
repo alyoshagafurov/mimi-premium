@@ -29,6 +29,8 @@ type Lead = {
   brief: Brief;
   /** Описание проекта — его видит клиент в кабинете. */
   description: string;
+  /** Выданный пароль — показываем админу, чтобы он отправил его клиенту. */
+  password: string | null;
   canEditDescription: boolean;
 };
 type Note = { id: string; body: string; author: string; createdAt: string };
@@ -118,6 +120,7 @@ export function LeadDetail({
       <CredentialsPanel
         endpoint={`/api/sales/${lead.id}`}
         email={lead.email}
+        password={lead.password}
         canEdit={lead.canEditDescription}
         who="Клиент"
       />

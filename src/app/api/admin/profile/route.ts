@@ -26,7 +26,10 @@ export async function PATCH(req: Request) {
     const data = schema.parse(body);
     const update: any = { ...data };
     if (data.email) update.email = data.email.toLowerCase();
-    if (data.password) update.password = await bcrypt.hash(data.password, 10);
+    if (data.password) {
+      update.password = await bcrypt.hash(data.password, 10);
+      update.passwordCipher = null; // сменил сам — копия в админке устарела
+    }
     const user = await prisma.user.update({ where: { id: (session.user as any).id }, data: update });
     return NextResponse.json({ id: user.id });
   } catch (e: any) {

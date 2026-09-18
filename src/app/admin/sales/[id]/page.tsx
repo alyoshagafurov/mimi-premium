@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { openSecret } from '@/lib/secret-box';
 import { canWorkLeads, isAdminLike, LEAD_ROLES } from '@/lib/roles';
 import { LeadDetail } from './LeadDetail';
 
@@ -15,7 +16,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     relationLoadStrategy: 'join',
       where: { id: params.id },
       include: {
-        owner: { select: { name: true, email: true, phone: true } },
+        owner: { select: { name: true, email: true, phone: true, passwordCipher: true } },
         createdBy: { select: { name: true } },
         assignedTo: { select: { id: true, name: true } },
         assignees: { select: { id: true, name: true } },
@@ -67,6 +68,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         reminderNote: lead.reminderNote ?? '',
         createdAt: lead.createdAt.toISOString(),
         description: lead.description ?? '',
+        password: isAdminLike(role) ? openSecret(lead.owner.passwordCipher) : null,
         canEditDescription: isAdminLike(role),
         brief: {
           done: lead.briefDone,
