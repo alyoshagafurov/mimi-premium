@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
-import { passwordProblem } from '@/lib/validation';
+import { adminPasswordProblem, emailProblem, normalizeEmail } from '@/lib/validation';
 import { logAudit } from '@/lib/audit';
 import { notify } from '@/lib/notify';
 import type { Role } from '@prisma/client';
@@ -33,11 +33,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (typeof body.bio === 'string') data.bio = body.bio.trim() || null;
   if (typeof body.avatar === 'string' || body.avatar === null) data.avatar = body.avatar || null;
 
-  if (typeof body.password === 'string' && body.password) {
-    const passErr = passwordProblem(body.password);
-    if (passErr) return NextResponse.json({ error: passErr }, { status: 400 });
-    data.password = await bcrypt.hash(body.password, 12);
+  // Логин сотрудника — админ может выдать новый адрес.
+  if (typeof body.email === 'string') {
+    if (!body.email.trim()) return NextResponse.json({ error: 'Укажите email' }, { status: 400 });
+    const normalized = normalizeEmail(body.email);
+    const emailErr = emailProblem(normalized);
+    if (emailErr) return NextResponse.json({ error: emailErr }, { status: 400 });
+    const taken = await prisma.user.findFirst({
+      where: { email: normalized, id: { not: params.id } },
+      select: { id: true },
+    });
+    if (taken) return NextResponse.json({ error: 'Email уже занят' }, { status: 400 });
+    data.email = normalized;
   }
+
+  if (typeof body.password === 'string' && body.password) {
+    const passErr = adminPasswordProblem(body.password);
+    if (passErr) return NextResponse.json({ error: passErr }, { status: 400 });
+    data.password = await bcrypt.hash(body.password.trim(), 12);
+  }
+
+  // Без подтверждённой почты вход блокируется (callbacks.signIn в lib/auth.ts),
+  // а доступ выдаёт сам админ — значит адрес подтверждён.
+  if (data.email || data.password) data.emailVerified = new Date();
   const user = await prisma.user.update({
     where: { id: params.id },
     data,

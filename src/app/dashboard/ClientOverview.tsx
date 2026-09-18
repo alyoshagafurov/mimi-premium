@@ -62,7 +62,7 @@ export function ClientOverview({
   business, tariff, tariffEnd, period, roas, romi, payback, revenue, spent, leads,
   reportList, pdfReports, notes, tasks,
 }: {
-  business: { name: string; niche: string; logo: string | null; since: string };
+  business: { name: string; niche: string; logo: string | null; since: string; about: string };
   tariff: string;
   tariffEnd: string | null;
   period: { month: number; year: number } | null;
@@ -152,6 +152,22 @@ export function ClientOverview({
               )}
             </div>
           </div>
+        </motion.section>
+      )}
+
+      {/* ── О проекте: биографию пишет команда в админке ── */}
+      {business.about.trim() && (
+        <motion.section
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6 sm:p-7"
+        >
+          <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">О проекте</p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-light">{business.name}</h2>
+          <p className="mt-4 max-w-[70ch] whitespace-pre-wrap text-[15px] leading-[1.75] text-light/80">
+            {business.about}
+          </p>
         </motion.section>
       )}
 

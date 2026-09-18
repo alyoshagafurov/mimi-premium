@@ -1,9 +1,13 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { ClientManageClient } from './ClientManageClient';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { ClientAbout } from '@/components/admin/ClientAbout';
+import { CredentialsPanel } from '@/components/admin/CredentialsPanel';
+import { StatusPill } from '@/components/ui/StatusPill';
 import { ClientCrmPanel } from './ClientCrmPanel';
 import { ClientReportsPanel } from './ClientReportsPanel';
-import { compareReports } from '@/lib/utils';
+import { compareReports, tariffLabel } from '@/lib/utils';
 
 export default async function AdminClientManagePage({ params }: { params: { id: string } }) {
   const [client, team] = await Promise.all([
@@ -12,14 +16,6 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
       where: { id: params.id },
       include: {
         owner: { select: { id: true, name: true, email: true, phone: true, avatar: true, tariff: true, tariffEnd: true } },
-        reports: {
-          orderBy: [{ year: 'desc' }, { month: 'desc' }],
-          include: {
-            platforms: { orderBy: { name: 'asc' } },
-            campaigns: { orderBy: { createdAt: 'asc' } },
-            audience: true,
-          },
-        },
         payments: { orderBy: [{ year: 'desc' }, { month: 'desc' }] },
         tasks: { orderBy: [{ done: 'asc' }, { dueDate: 'asc' }] },
         activities: { orderBy: { createdAt: 'desc' }, include: { author: { select: { name: true } } } },
@@ -37,40 +33,25 @@ export default async function AdminClientManagePage({ params }: { params: { id: 
 
   return (
     <div className="space-y-8">
-      <ClientManageClient
-        client={{
-          id: client.id,
-          businessName: client.businessName,
-          niche: client.niche,
-          status: client.status,
-          ownerName: client.owner.name,
-          ownerEmail: client.owner.email,
-          tariff: client.owner.tariff,
-        }}
-        reports={client.reports.map((r) => ({
-          id: r.id,
-          month: r.month,
-          year: r.year,
-          spent: r.spent,
-          budget: r.budget,
-          reach: r.reach,
-          clicks: r.clicks,
-          leads: r.leads,
-          revenue: r.revenue,
-          profileVisits: r.profileVisits,
-          campaignCount: r.campaignCount,
-          platforms: r.platforms.map((p) => ({ name: p.name, spent: p.spent, roas: p.roas })),
-          audience: r.audience
-            ? {
-                age18_24: r.audience.age18_24,
-                age25_34: r.audience.age25_34,
-                age35_44: r.audience.age35_44,
-                age45plus: r.audience.age45plus,
-              }
-            : null,
-          campaigns: r.campaigns.map((c) => ({ id: c.id, name: c.name, platform: c.platform, status: c.status })),
-        }))}
+      <Link href="/admin/clients" className="btn-quiet text-[11px]">
+        ← Все клиенты
+      </Link>
+
+      <PageHeader
+        eyebrow="Управление клиентом"
+        title={<span className="text-lime-grad">{client.businessName}</span>}
+        subtitle={`${client.niche} · ${client.owner.name} · ${client.owner.email}`}
+        action={
+          <div className="flex items-center gap-2">
+            <span className="chip text-gold/90">{tariffLabel(client.owner.tariff)}</span>
+            <StatusPill status={client.status} />
+          </div>
+        }
       />
+
+      <CredentialsPanel endpoint={`/api/clients/${client.id}`} email={client.owner.email} />
+
+      <ClientAbout value={client.description ?? ''} endpoint={`/api/clients/${client.id}`} />
 
       <ClientReportsPanel
         clientId={client.id}

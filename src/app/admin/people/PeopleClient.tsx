@@ -6,23 +6,10 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { ROLE_LABEL, ASSIGNABLE_ROLES } from '@/lib/roles';
-import { passwordRules } from '@/lib/validation';
+import { ADMIN_PASSWORD_MIN } from '@/lib/validation';
+import { CredentialsPanel } from '@/components/admin/CredentialsPanel';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { Role } from '@prisma/client';
-
-/** Live checklist — the same rules the API enforces, so nothing is a surprise. */
-function PasswordRules({ value }: { value: string }) {
-  return (
-    <ul className="mt-2 space-y-1">
-      {passwordRules(value).map((r) => (
-        <li key={r.id} className={`flex items-center gap-2 text-[11px] ${r.ok ? 'text-brand-lime' : 'text-light/40'}`}>
-          <span>{r.ok ? '✓' : '○'}</span>
-          {r.label}
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 type Staff = {
   id: string; name: string; email: string; phone: string | null; role: Role;
@@ -38,8 +25,6 @@ export function PeopleClient({ meId, canManage, people }: { meId: string; canMan
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [pwFor, setPwFor] = useState<Staff | null>(null);
-  const [pw, setPw] = useState('');
-  const [pwSaving, setPwSaving] = useState(false);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((p) => ({ ...p, [k]: v }));
 
   const create = async () => {
@@ -72,26 +57,6 @@ export function PeopleClient({ meId, canManage, people }: { meId: string; canMan
     if (!r.ok) return toast.error('Не удалось изменить роль');
     toast.success('Роль обновлена');
     router.refresh();
-  };
-
-  const savePassword = async () => {
-    if (!pwFor) return;
-    setPwSaving(true);
-    const r = await fetch(`/api/admin/team/${pwFor.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw }),
-    });
-    setPwSaving(false);
-    if (!r.ok) {
-      // Surface the API's real reason (e.g. which rule failed) instead of a
-      // generic failure — that's why changing a password "just didn't work".
-      const d = await r.json().catch(() => ({}));
-      return toast.error(d.error || 'Не удалось сменить пароль');
-    }
-    toast.success(`Пароль для «${pwFor.name}» обновлён`);
-    setPwFor(null);
-    setPw('');
   };
 
   const setApproved = async (s: Staff, approved: boolean) => {
@@ -128,7 +93,7 @@ export function PeopleClient({ meId, canManage, people }: { meId: string; canMan
           <input className="input-glass" placeholder="Телефон (необязательно)" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
           <div>
             <input className="input-glass" type="text" placeholder="Пароль" value={form.password} onChange={(e) => set('password', e.target.value)} />
-            {form.password && <PasswordRules value={form.password} />}
+            <p className="mt-1.5 text-[11px] text-light/40">Минимум {ADMIN_PASSWORD_MIN} символов — его вы продиктуете сотруднику.</p>
           </div>
           <select className="input-glass" value={form.role} onChange={(e) => set('role', e.target.value as Role)}>
             {ASSIGNABLE_ROLES.map((r) => (
@@ -204,8 +169,8 @@ export function PeopleClient({ meId, canManage, people }: { meId: string; canMan
                       ✓ Одобрить
                     </button>
                   )}
-                  <button onClick={() => { setPwFor(s); setPw(''); }} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
-                    Пароль
+                  <button onClick={() => setPwFor(s)} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
+                    Логин и пароль
                   </button>
                   {s.id !== meId && (
                     <button onClick={() => remove(s.id)} className="ml-auto text-[11px] uppercase tracking-[0.14em] text-light/40 hover:text-rose-400">
@@ -219,32 +184,20 @@ export function PeopleClient({ meId, canManage, people }: { meId: string; canMan
         </div>
       )}
 
-      {/* Смена пароля сотрудника */}
+      {/* Логин и пароль сотрудника */}
       {pwFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4" onClick={() => setPwFor(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-ink2 p-6">
-            <h3 className="font-display text-xl font-bold text-light">Новый пароль</h3>
-            <p className="mt-1 text-[12px] text-light/45">{pwFor.name} · {pwFor.email}</p>
-
-            <div className="mt-5">
-              <label className="label-soft">Пароль</label>
-              <input
-                className="input-glass"
-                type="text"
-                autoFocus
-                value={pw}
-                onChange={(e) => setPw(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && savePassword()}
-                placeholder="Например: Mimi2026!"
-              />
-              <PasswordRules value={pw} />
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/80 p-4 pt-16" onClick={() => setPwFor(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[12px] text-light/60">{pwFor.name} · {ROLE_LABEL[pwFor.role]}</p>
+              <button onClick={() => setPwFor(null)} className="btn-ghost !px-4 !py-1.5 !text-[11px]">Закрыть</button>
             </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => setPwFor(null)} className="btn-ghost">Отмена</button>
-              <button onClick={savePassword} disabled={pwSaving || !pw} className="btn-lime disabled:opacity-50">
-                {pwSaving ? 'Сохраняем…' : 'Сохранить'}
-              </button>
+            <div className="bg-ink2">
+              <CredentialsPanel
+                endpoint={`/api/admin/team/${pwFor.id}`}
+                email={pwFor.email}
+                who="Сотрудник"
+              />
             </div>
           </div>
         </div>

@@ -13,6 +13,8 @@ import {
   type SalesStatus, type ClientPackage,
 } from '@/lib/roles';
 import { LeadBrief, type Brief } from './LeadBrief';
+import { ClientAbout } from '@/components/admin/ClientAbout';
+import { CredentialsPanel } from '@/components/admin/CredentialsPanel';
 
 type Lead = {
   id: string; firstName: string; lastName: string; contactName: string;
@@ -25,6 +27,9 @@ type Lead = {
   createdByName: string | null; assigneeIds: string[]; assigneeNames: string[];
   reminderAt: string | null; reminderNote: string; createdAt: string;
   brief: Brief;
+  /** Описание проекта — его видит клиент в кабинете. */
+  description: string;
+  canEditDescription: boolean;
 };
 type Note = { id: string; body: string; author: string; createdAt: string };
 
@@ -109,6 +114,19 @@ export function LeadDetail({
       />
 
       <LeadBrief brief={lead.brief} />
+
+      <CredentialsPanel
+        endpoint={`/api/sales/${lead.id}`}
+        email={lead.email}
+        canEdit={lead.canEditDescription}
+        who="Клиент"
+      />
+
+      <ClientAbout
+        value={lead.description}
+        endpoint={`/api/sales/${lead.id}`}
+        canEdit={lead.canEditDescription}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
         {/* ── ЛЕВО: информация о лиде ── */}

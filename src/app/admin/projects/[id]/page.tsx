@@ -65,6 +65,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
         <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6">
           <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">О бизнесе</p>
           <Row label="Ниша" value={c.niche} />
+          {c.description && <Row label="Описание" value={<span className="whitespace-pre-wrap">{c.description}</span>} />}
           <Row label="Дата поступления" value={new Date(c.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' })} />
           <Row label="Статус в CRM" value={SALES_STATUS_LABEL[c.salesStatus as SalesStatus]} />
           {c.packageType !== 'NONE' && <Row label="Пакет" value={PACKAGE_LABEL[c.packageType as ClientPackage]} />}

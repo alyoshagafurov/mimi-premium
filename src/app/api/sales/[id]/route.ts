@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { adminPasswordProblem, emailProblem, normalizeEmail } from '@/lib/validation';
 import { getSafeSession } from '@/lib/session';
 import { isAdminLike, canWorkLeads } from '@/lib/roles';
 import { SALES_STATUSES, PACKAGES } from '@/lib/roles';
@@ -75,6 +77,50 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
   if (typeof body.reminderNote === 'string') data.reminderNote = body.reminderNote.trim() || null;
   if (typeof body.reminderDone === 'boolean') data.reminderDone = body.reminderDone;
+
+  /**
+   * Логин и пароль лида. Аккаунт лида заводится с адресом-заглушкой и
+   * случайным паролем, поэтому войти он не может, пока админ не выдаст
+   * настоящие данные. emailVerified ставим сразу: вход блокируется без него.
+   */
+  const ownerData: any = {};
+  if (typeof body.email === 'string') {
+    if (!adminLike) {
+      return NextResponse.json({ error: 'Логин меняет админ или опер. директор' }, { status: 403 });
+    }
+    if (!body.email.trim()) return NextResponse.json({ error: 'Укажите email' }, { status: 400 });
+    const normalized = normalizeEmail(body.email);
+    const err = emailProblem(normalized);
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+    const lead = await prisma.client.findUnique({ where: { id: params.id }, select: { ownerId: true } });
+    if (!lead) return NextResponse.json({ error: 'Лид не найден' }, { status: 404 });
+    const taken = await prisma.user.findFirst({
+      where: { email: normalized, id: { not: lead.ownerId } },
+      select: { id: true },
+    });
+    if (taken) return NextResponse.json({ error: 'Email уже занят' }, { status: 400 });
+    ownerData.email = normalized;
+  }
+  if (typeof body.password === 'string') {
+    if (!adminLike) {
+      return NextResponse.json({ error: 'Пароль меняет админ или опер. директор' }, { status: 403 });
+    }
+    const err = adminPasswordProblem(body.password);
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+    ownerData.password = await bcrypt.hash(body.password.trim(), 10);
+  }
+  if (typeof body.phone === 'string' && adminLike) ownerData.phone = body.phone.trim() || null;
+  if (ownerData.email || ownerData.password) ownerData.emailVerified = new Date();
+  if (Object.keys(ownerData).length) data.owner = { update: ownerData };
+
+  // Описание проекта — его видит сам клиент в кабинете, поэтому пишет его
+  // только админ или операционный директор (как и ТЗ).
+  if (typeof body.description === 'string') {
+    if (!adminLike) {
+      return NextResponse.json({ error: 'Описание проекта меняет админ или опер. директор' }, { status: 403 });
+    }
+    data.description = body.description.trim().slice(0, 4000) || null;
+  }
 
   // Tech spec (ТЗ) — admin / ops director only.
   if (typeof body.techSpec === 'string') {

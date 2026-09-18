@@ -66,6 +66,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         reminderAt: lead.reminderAt?.toISOString() ?? null,
         reminderNote: lead.reminderNote ?? '',
         createdAt: lead.createdAt.toISOString(),
+        description: lead.description ?? '',
+        canEditDescription: isAdminLike(role),
         brief: {
           done: lead.briefDone,
           manual: lead.owner.email.endsWith('@lead.mimitj.agency'),

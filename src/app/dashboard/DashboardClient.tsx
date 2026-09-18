@@ -42,7 +42,7 @@ export function DashboardClient({
   tasks,
 }: {
   user: { name: string; tariff: string; tariffEnd: string | null };
-  business: { name: string; niche: string; logo: string | null; since: string };
+  business: { name: string; niche: string; logo: string | null; since: string; about: string };
   period: { month: number; year: number } | null;
   metrics: Metrics;
   reachTrend: { label: string; reach: number }[];

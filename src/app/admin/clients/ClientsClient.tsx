@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { ADMIN_PASSWORD_MIN } from '@/lib/validation';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { StatusPill } from '@/components/ui/StatusPill';
@@ -125,8 +126,8 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
   };
 
   const create = async () => {
-    if (!form.name || !form.email || form.password.length < 6 || !form.businessName) {
-      toast.error('Заполните имя, email, пароль (6+) и название бизнеса');
+    if (!form.name || !form.email || form.password.trim().length < ADMIN_PASSWORD_MIN || !form.businessName) {
+      toast.error(`Заполните имя, email, пароль (от ${ADMIN_PASSWORD_MIN} символов) и название бизнеса`);
       return;
     }
     setBusy(true);
@@ -203,7 +204,7 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
                 <button
                   onClick={(e) => { e.preventDefault(); openEdit(c); }}
                   aria-label="Редактировать"
-                  className="absolute right-2 top-2 rounded-full border border-white/10 bg-ink/40 p-1.5 text-light/40 opacity-0 transition hover:text-brand-lime group-hover:opacity-100"
+                  className="absolute right-2 top-2 rounded-full border border-white/10 bg-ink/60 p-1.5 text-light/55 transition hover:border-brand-lime/40 hover:text-brand-lime"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 </button>
@@ -430,7 +431,7 @@ export function ClientsClient({ clients }: { clients: Row[] }) {
                     <input className="input-glass" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                   </div>
                   <div>
-                    <label className="label-soft">Пароль</label>
+                    <label className="label-soft">Пароль (от {ADMIN_PASSWORD_MIN} символов)</label>
                     <input className="input-glass" type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                   </div>
                 </div>

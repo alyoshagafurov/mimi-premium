@@ -82,6 +82,8 @@ export default async function DashboardPage() {
         niche: user.client.niche,
         logo: user.client.logo,
         since: user.client.createdAt.toISOString(),
+        // Описание проекта пишет команда в админке — клиент читает его здесь.
+        about: user.client.description ?? '',
       }}
       reportList={[...reports].reverse().map((r) => ({
         id: r.id,

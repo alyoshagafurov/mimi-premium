@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { ensureAdmin } from '@/lib/api-guard';
-import { emailProblem, normalizeEmail } from '@/lib/validation';
+import { ensureAdmin, ensureAdminLike } from '@/lib/api-guard';
+import { adminPasswordProblem, emailProblem, normalizeEmail } from '@/lib/validation';
 import { SALES_STATUSES } from '@/lib/roles';
 import { logAudit } from '@/lib/audit';
 import { Tariff } from '@prisma/client';
@@ -13,6 +13,8 @@ const schema = z.object({
   businessName: z.string().optional(),
   niche: z.string().optional(),
   logo: z.string().nullable().optional(),
+  /// Описание проекта — его клиент видит в своём кабинете.
+  description: z.string().max(4000).optional(),
   status: z.enum(['ACTIVE', 'ARCHIVED']).optional(),
   tariff: z.enum(['NONE', 'START', 'GROWTH', 'PREMIUM']).optional(),
   /// До какого числа оплачено — клиент видит это у себя в кабинете.
@@ -27,7 +29,11 @@ const schema = z.object({
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  if (!(await ensureAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  // Карточку клиента ведут и админ, и операционный директор — создавать клиента
+  // ops уже может, логично разрешить и правку.
+  if (!(await ensureAdminLike())) {
+    return NextResponse.json({ error: 'Доступ только для админа или опер. директора' }, { status: 403 });
+  }
   try {
     const {
       tariff, tariffEnd, name, email, phone, password, avatar, salesStatus,
@@ -45,7 +51,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (phone !== undefined) ownerData.phone = phone?.trim() || null;
     if (avatar !== undefined) ownerData.avatar = avatar || null;
 
-    if (email !== undefined && email.trim()) {
+    if (email !== undefined) {
+      if (!email.trim()) return NextResponse.json({ error: 'Укажите email' }, { status: 400 });
       const normalized = normalizeEmail(email);
       const err = emailProblem(normalized);
       if (err) return NextResponse.json({ error: err }, { status: 400 });
@@ -57,12 +64,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       ownerData.email = normalized;
     }
 
-    if (password !== undefined && password.trim()) {
-      if (password.length < 6) {
-        return NextResponse.json({ error: 'Пароль минимум 6 символов' }, { status: 400 });
-      }
-      ownerData.password = await bcrypt.hash(password, 10);
+    if (password !== undefined) {
+      const err = adminPasswordProblem(password);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      ownerData.password = await bcrypt.hash(password.trim(), 10);
     }
+
+    /**
+     * Вход блокируется, пока почта не подтверждена (см. callbacks.signIn в
+     * lib/auth.ts). Логин и пароль выдаёт админ и ручается за адрес — иначе
+     * клиент получал бы «неверный email или пароль» с верными данными.
+     */
+    if (ownerData.email || ownerData.password) ownerData.emailVerified = new Date();
 
     const updated = await prisma.client.update({
       where: { id: params.id },
@@ -82,8 +95,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     return NextResponse.json(updated);
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Bad request' }, { status: 400 });
+    return NextResponse.json({ error: humanError(e) }, { status: 400 });
   }
+}
+
+/** Понятный текст вместо простыни от Zod или Prisma — админ читает его в тосте. */
+function humanError(e: any): string {
+  if (e?.name === 'ZodError') return e.issues?.[0]?.message || 'Проверьте заполненные поля';
+  if (e?.code === 'P2002') return 'Email уже занят';
+  return 'Не удалось сохранить изменения';
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {

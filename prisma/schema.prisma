@@ -284,6 +284,10 @@ model Client {
   // Developer cabinet — тех. задание (filled by admin / ops director)
   techSpec String?
 
+  /// Описание проекта — «биография» клиента. Пишет админ, клиент видит его
+  /// в своём кабинете. Это НЕ внутренняя заметка (comment) и не лента Activity.
+  description String?
+
   // Production statuses — each changed by the role that owns that discipline.
   shootingStatus WorkStatus @default(PLANNED) // видеограф — съёмка
   montageStatus  WorkStatus @default(PLANNED) // видео-команда — монтаж

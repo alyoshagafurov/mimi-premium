@@ -73,6 +73,13 @@ function LoginInner() {
       setFailed(true);
       return;
     }
+    // Почта не подтверждена — пароль верный, но вход закрыт. Раньше это
+    // выглядело как «неверный пароль», и чинить было нечего.
+    if (res?.error === 'AccessDenied') {
+      toast.error('Вход закрыт: почта не подтверждена. Напишите нам — откроем доступ.');
+      setFailed(true);
+      return;
+    }
     if (res?.error) {
       toast.error(t.errorLogin);
       setFailed(true);

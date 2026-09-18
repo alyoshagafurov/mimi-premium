@@ -31,6 +31,21 @@ export function passwordProblem(pw: string): string | null {
   return `Пароль слабый — нужно: ${failed.map((f) => f.label).join('; ')}`;
 }
 
+/**
+ * Пароль, который админ выдаёт клиенту или сотруднику вручную.
+ * Его часто диктуют по телефону, поэтому требование одно — длина.
+ * Для самостоятельной регистрации и сброса пароля остаются строгие
+ * passwordRules().
+ */
+export const ADMIN_PASSWORD_MIN = 8;
+export function adminPasswordProblem(pw: string): string | null {
+  const value = (pw ?? '').trim();
+  if (!value) return 'Укажите пароль';
+  if (value.length < ADMIN_PASSWORD_MIN) return `Пароль минимум ${ADMIN_PASSWORD_MIN} символов`;
+  if (value.length > 72) return 'Пароль слишком длинный';
+  return null;
+}
+
 /* ─────────────── EMAIL ─────────────── */
 
 /** Stricter than the default: real TLD, no consecutive dots, no leading/trailing dots. */

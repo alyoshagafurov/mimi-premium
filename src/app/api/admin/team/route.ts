@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
-import { passwordProblem, emailProblem } from '@/lib/validation';
+import { adminPasswordProblem, emailProblem } from '@/lib/validation';
 import { logAudit } from '@/lib/audit';
 import type { Role } from '@prisma/client';
 
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'Заполните имя, email и пароль' }, { status: 400 });
   }
-  const passErr = passwordProblem(password);
+  const passErr = adminPasswordProblem(password);
   if (passErr) return NextResponse.json({ error: passErr }, { status: 400 });
   const emailErr = emailProblem(email);
   if (emailErr) return NextResponse.json({ error: emailErr }, { status: 400 });
@@ -45,8 +45,9 @@ export async function POST(req: Request) {
 
   const hashed = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    // Staff are created by an admin who vouches for them → email pre-verified.
-    data: { name, email, password: hashed, role, phone, emailVerified: new Date() },
+    // Сотрудника заводит админ — он же за него ручается: почта считается
+    // подтверждённой, доступ сразу одобрен, иначе войти нельзя.
+    data: { name, email, password: hashed, role, phone, emailVerified: new Date(), approvedAt: new Date() },
     select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
   });
   await logAudit({
