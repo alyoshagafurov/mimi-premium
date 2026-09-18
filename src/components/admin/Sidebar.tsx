@@ -41,6 +41,47 @@ function itemsFor(role?: Role | string) {
     .map((it, i) => ({ ...it, n: String(i + 1).padStart(2, '0') }));
 }
 
+/** Стрелка «наружу» — обычный значок внешней ссылки. */
+function ExternalIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M7 17 17 7M9 7h8v8" />
+    </svg>
+  );
+}
+
+/**
+ * Посмотреть лендинг, не теряя админку: сайт открывается в новой вкладке,
+ * поэтому возвращаться и заново входить не нужно.
+ */
+function ViewSiteButton({ className }: { className?: string }) {
+  return (
+    <a
+      href="/"
+      target="_blank"
+      rel="noreferrer"
+      title="Открыть сайт в новой вкладке"
+      aria-label="Открыть сайт в новой вкладке"
+      className={cn(
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] text-light/60 transition-all duration-300 hover:border-brand-lime/50 hover:text-brand-lime',
+        className,
+      )}
+    >
+      <ExternalIcon />
+    </a>
+  );
+}
+
 export function Sidebar({ name, role, avatar }: { name: string; role?: Role | string; avatar?: string | null }) {
   const pathname = usePathname();
   const ITEMS = itemsFor(role);
@@ -51,6 +92,7 @@ export function Sidebar({ name, role, avatar }: { name: string; role?: Role | st
       <div className="flex items-center justify-between">
         <Logo size="md" />
         <div className="flex items-center gap-2">
+          <ViewSiteButton />
           <ThemeToggle />
           <NotificationsBell align="left" />
           <span className="rounded-full border border-brand-lime/30 bg-brand-lime/5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-brand-lime">
@@ -101,12 +143,15 @@ export function Sidebar({ name, role, avatar }: { name: string; role?: Role | st
             <div className="text-[10px] uppercase tracking-[0.18em] text-light/45">{roleLabel}</div>
           </div>
         </Link>
-        <Link
+        <a
           href="/"
-          className="mb-2 block w-full rounded-xl border border-white/10 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-light/55 transition-all hover:border-brand-lime/40 hover:text-brand-lime"
+          target="_blank"
+          rel="noreferrer"
+          className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-light/55 transition-all hover:border-brand-lime/40 hover:text-brand-lime"
         >
-          На главную
-        </Link>
+          Смотреть сайт
+          <ExternalIcon size={13} />
+        </a>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
           className="w-full rounded-xl border border-white/10 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-light/55 transition-all hover:border-brand-lime/40 hover:text-brand-lime"
@@ -148,6 +193,7 @@ export function MobileTopbar({ name, role, avatar }: { name: string; role?: Role
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <ViewSiteButton />
           <ThemeToggle />
           <NotificationsBell />
           <button
@@ -268,13 +314,16 @@ export function MobileTopbar({ name, role, avatar }: { name: string; role?: Role
                       <p className="truncate font-display text-base font-bold text-light">{name}</p>
                     </div>
                   </Link>
-                  <Link
+                  <a
                     href="/"
+                    target="_blank"
+                    rel="noreferrer"
                     onClick={() => setOpen(false)}
                     className="btn-lime w-full !py-3 !text-[11px]"
                   >
-                    На главную
-                  </Link>
+                    Смотреть сайт
+                    <ExternalIcon size={14} />
+                  </a>
                   <button
                     onClick={() => {
                       setOpen(false);
