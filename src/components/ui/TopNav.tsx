@@ -9,6 +9,7 @@ import { LangSwitcher } from './LangSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { cn } from '@/lib/utils';
 import { isStaff } from '@/lib/roles';
+import { BRAND } from '@/lib/seo';
 import { useCopy } from '@/i18n/LanguageProvider';
 import type { Lang } from '@/i18n/config';
 
@@ -319,17 +320,20 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
                   <p className="text-[10px] uppercase tracking-[0.28em] text-light/35">
                     mimi · marketing agency
                   </p>
+                  {BRAND.phones.map((p) => (
+                    <a
+                      key={p.e164}
+                      href={`tel:${p.e164}`}
+                      className="block font-mono text-xs text-light/60 transition-colors hover:text-brand-lime"
+                    >
+                      {p.display}
+                    </a>
+                  ))}
                   <a
-                    href={`tel:${process.env.NEXT_PUBLIC_BRAND_PHONE ?? '+992 07 021 77 55'}`}
-                    className="block font-mono text-xs text-light/60 transition-colors hover:text-brand-lime"
+                    href={`mailto:${BRAND.email}`}
+                    className="block break-all font-mono text-xs text-light/60 transition-colors hover:text-brand-lime"
                   >
-                    {process.env.NEXT_PUBLIC_BRAND_PHONE ?? '+992 07 021 77 55'}
-                  </a>
-                  <a
-                    href={`mailto:${process.env.NEXT_PUBLIC_BRAND_EMAIL ?? 'hello@mimi.agency.tj'}`}
-                    className="block font-mono text-xs text-light/60 transition-colors hover:text-brand-lime"
-                  >
-                    {process.env.NEXT_PUBLIC_BRAND_EMAIL ?? 'hello@mimi.agency.tj'}
+                    {BRAND.email}
                   </a>
                 </motion.div>
               </nav>

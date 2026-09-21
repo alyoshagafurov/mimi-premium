@@ -22,7 +22,7 @@ mimi (mimitj.agency) is a full-cycle marketing agency in Dushanbe: targeted ads 
 
 ## Operating Context
 
-- Main contact channel is WhatsApp `+992 07 021 77 55`; also phone, `hello@mimitj.agency` and Instagram `@mimi.agency.tj`. City: Dushanbe; serves Dushanbe, Khujand, Bokhtar, Kulob, Istaravshan, Tursunzoda. No public street address or opening hours are recorded.
+- Main contact channel is WhatsApp `+992 07 021 77 55`; second phone `+992 90 766 47 75`; email `mimi.marketing.agency.tj@mail.ru` (confirmed 2026-09-21); Instagram `@mimi.agency.tj`. City: Dushanbe; serves Dushanbe, Khujand, Bokhtar, Kulob, Istaravshan, Tursunzoda. No public street address or opening hours are recorded.
 - On the contacts page, writing on WhatsApp and leaving a request form are **equal** primary actions (confirmed 2026-09-17).
 - The site is trilingual: RU (default), EN, TG.
 - Visitors mostly arrive from Instagram on phones (inferred from the Instagram-first lead flow).

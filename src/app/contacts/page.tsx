@@ -22,7 +22,6 @@ const ru = {
   insta: 'Смотреть Instagram',
   mapTitle: 'Схема: Душанбе и города Таджикистана, где работает mimi',
   base: 'наша база',
-  legend: 'Работаем с бизнесом в шести городах Таджикистана',
   cities: { dushanbe: 'Душанбе', khujand: 'Худжанд', istaravshan: 'Истаравшан', tursunzoda: 'Турсунзаде', bokhtar: 'Бохтар', kulob: 'Куляб' },
   reqTitle: 'Расскажите',
   reqAccent: 'о задаче.',
@@ -46,7 +45,6 @@ const en: typeof ru = {
   insta: 'See Instagram',
   mapTitle: 'Map: Dushanbe and the cities of Tajikistan where mimi works',
   base: 'our base',
-  legend: 'We work with businesses in six cities of Tajikistan',
   cities: { dushanbe: 'Dushanbe', khujand: 'Khujand', istaravshan: 'Istaravshan', tursunzoda: 'Tursunzoda', bokhtar: 'Bokhtar', kulob: 'Kulob' },
   reqTitle: 'Tell us',
   reqAccent: 'about the task.',
@@ -70,7 +68,6 @@ const tg: typeof ru = {
   insta: 'Дидани Instagram',
   mapTitle: 'Нақша: Душанбе ва шаҳрҳои Тоҷикистон, ки mimi кор мекунад',
   base: 'пойгоҳи мо',
-  legend: 'Бо тиҷорат дар шаш шаҳри Тоҷикистон кор мекунем',
   cities: { dushanbe: 'Душанбе', khujand: 'Хуҷанд', istaravshan: 'Истаравшан', tursunzoda: 'Турсунзода', bokhtar: 'Бохтар', kulob: 'Кӯлоб' },
   reqTitle: 'Дар бораи',
   reqAccent: 'вазифа бигӯед.',
@@ -95,7 +92,7 @@ export default function ContactsPage() {
   };
 
   const channels = [
-    { href: `tel:${BRAND.phoneE164}`, label: t.call, value: BRAND.phoneDisplay, Icon: PhoneIcon, external: false },
+    ...BRAND.phones.map((p) => ({ href: `tel:${p.e164}`, label: t.call, value: p.display, Icon: PhoneIcon, external: false })),
     { href: `mailto:${BRAND.email}`, label: t.mail, value: BRAND.email, Icon: MailIcon, external: false },
     { href: BRAND.instagram, label: t.insta, value: INSTAGRAM_HANDLE, Icon: InstagramIcon, external: true },
   ];
@@ -132,10 +129,6 @@ export default function ContactsPage() {
             <div style={{ aspectRatio: MAP_RATIO }} className="relative overflow-hidden rounded-[32px] border border-white/[0.07] bg-ink2/40">
               <PresenceMap names={t.cities} base={t.base} title={t.mapTitle} />
             </div>
-            <figcaption className="mt-4 flex items-center gap-3 text-[13px] text-light/60">
-              <span aria-hidden className="h-2 w-2 rounded-full bg-brand-lime" />
-              {t.legend}
-            </figcaption>
           </figure>
 
           {/* ── Каналы связи ── */}
@@ -152,7 +145,7 @@ export default function ContactsPage() {
                   </span>
                   <span className="min-w-0">
                     <span className="block text-[12px] text-light/55">{label}</span>
-                    <span className="block truncate font-display text-lg font-bold tabular-nums text-light transition-colors group-hover:text-brand-lime sm:text-xl">
+                    <span className="block font-display text-lg font-bold tabular-nums text-light transition-colors [overflow-wrap:anywhere] group-hover:text-brand-lime sm:text-xl">
                       {value}
                     </span>
                   </span>

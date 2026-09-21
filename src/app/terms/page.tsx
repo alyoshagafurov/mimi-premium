@@ -3,12 +3,13 @@
 import { TopNav } from '@/components/ui/TopNav';
 import { Footer } from '@/components/ui/Footer';
 import { useCopy } from '@/i18n/LanguageProvider';
+import { BRAND } from '@/lib/seo';
 import type { Lang } from '@/i18n/config';
 
 type Section = { h: string; p: string[] };
 type Copy = { updated: string; title: string; intro: string; sections: Section[] };
 
-const CONTACT_EMAIL = process.env.NEXT_PUBLIC_BRAND_EMAIL ?? 'hello@mimi.agency.tj';
+const CONTACT_EMAIL = BRAND.email;
 
 const ru: Copy = {
   updated: 'Обновлено: июль 2026',

@@ -13,8 +13,15 @@ export const SITE_LEGAL_NAME = 'mimi — маркетинговое агентс
 export const BRAND = {
   phoneDisplay: '+992 07 021 77 55',
   phoneE164: '+992070217755',
+  /** Все номера агентства — первый основной, на нём же WhatsApp. */
+  phones: [
+    { display: '+992 07 021 77 55', e164: '+992070217755' },
+    { display: '+992 90 766 47 75', e164: '+992907664775' },
+  ],
   whatsapp: 'https://wa.me/992070217755',
-  email: process.env.NEXT_PUBLIC_BRAND_EMAIL ?? 'hello@mimitj.agency',
+  // Адрес зафиксирован в коде: старый hello@… оставался в переменной
+  // окружения NEXT_PUBLIC_BRAND_EMAIL и перебивал новый.
+  email: 'mimi.marketing.agency.tj@mail.ru',
   instagram: process.env.NEXT_PUBLIC_BRAND_INSTAGRAM ?? 'https://instagram.com/mimi.agency.tj',
   city: 'Душанбе',
   region: 'Таджикистан',

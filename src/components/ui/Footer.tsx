@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { useCopy } from '@/i18n/LanguageProvider';
+import { BRAND } from '@/lib/seo';
 import type { Lang } from '@/i18n/config';
 
 const ru = {
@@ -13,7 +14,6 @@ const ru = {
   services: 'Услуги',
   cases: 'Кейсы',
   reviews: 'Отзывы',
-  blog: 'Блог',
   process: 'Процесс',
   pricing: 'Тарифы',
   login: 'Вход',
@@ -32,7 +32,6 @@ const en: typeof ru = {
   services: 'Services',
   cases: 'Cases',
   reviews: 'Reviews',
-  blog: 'Blog',
   process: 'Process',
   pricing: 'Pricing',
   login: 'Sign in',
@@ -51,7 +50,6 @@ const tg: typeof ru = {
   services: 'Хидматҳо',
   cases: 'Кейсҳо',
   reviews: 'Фикрҳо',
-  blog: 'Блог',
   process: 'Раванд',
   pricing: 'Тарифҳо',
   login: 'Воридшавӣ',
@@ -82,7 +80,6 @@ export function Footer() {
             <li><Link href="/#services" className="transition-colors hover:text-brand-lime">{t.services}</Link></li>
             <li><Link href="/cases" className="transition-colors hover:text-brand-lime">{t.cases}</Link></li>
             <li><Link href="/reviews" className="transition-colors hover:text-brand-lime">{t.reviews}</Link></li>
-            <li><Link href="/blog" className="transition-colors hover:text-brand-lime">{t.blog}</Link></li>
             <li><Link href="/#process" className="transition-colors hover:text-brand-lime">{t.process}</Link></li>
             <li><Link href="/pricing" className="transition-colors hover:text-brand-lime">{t.pricing}</Link></li>
           </ul>
@@ -98,7 +95,10 @@ export function Footer() {
         <div>
           <p className="text-[10px] uppercase tracking-[0.32em] text-brand-orange">{t.colContact}</p>
           <ul className="mt-4 space-y-3 text-sm text-light/75">
-            <li><a href="tel:+992070217755" className="transition-colors hover:text-brand-lime">+992 07 021 77 55</a></li>
+            {BRAND.phones.map((p) => (
+              <li key={p.e164}><a href={`tel:${p.e164}`} className="transition-colors hover:text-brand-lime">{p.display}</a></li>
+            ))}
+            <li><a href={`mailto:${BRAND.email}`} className="break-all transition-colors hover:text-brand-lime">{BRAND.email}</a></li>
             <li><a href="https://instagram.com/mimi.agency.tj" className="transition-colors hover:text-brand-lime">mimi.agency.tj</a></li>
             <li><Link href="/contacts" className="transition-colors hover:text-brand-lime">{t.allContacts}</Link></li>
           </ul>
