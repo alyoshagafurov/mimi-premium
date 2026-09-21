@@ -5,6 +5,7 @@ import { TopNav } from '@/components/ui/TopNav';
 import { Footer } from '@/components/ui/Footer';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { pageMetadata } from '@/lib/seo';
+import { CaseCard } from '@/components/cases/CaseCard';
 
 export const metadata: Metadata = pageMetadata({
   path: '/cases',
@@ -56,7 +57,7 @@ export default async function CasesPage({ searchParams }: { searchParams: { cate
       <main className="relative z-10 mx-auto max-w-[1500px] px-5 pb-24 pt-32 lg:px-12">
         <Breadcrumbs items={[{ name: 'Главная', path: '/' }, { name: 'Кейсы', path: '/cases' }]} />
         <h1 className="mt-6 max-w-[16ch] font-display text-hero-sm font-extrabold text-light">
-          Кейсы <span className="font-serif italic font-normal text-lime-grad">и результаты.</span>
+          Кейсы <span className="font-serif italic font-normal text-brand-lime">и результаты.</span>
         </h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-light/55">
           Реальные проекты агентства mimi в Душанбе и Таджикистане. Задача, решение, результат.
@@ -74,45 +75,9 @@ export default async function CasesPage({ searchParams }: { searchParams: { cate
               : 'Пока нет опубликованных кейсов.'}
           </p>
         ) : (
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {cases.map((c) => (
-              <Link
-                key={c.id}
-                href={`/cases/${c.slug}`}
-                className="group flex flex-col overflow-hidden rounded-3xl border border-white/[0.06] bg-ink2/30 transition-colors hover:border-brand-lime/30"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden bg-brand-purple/20">
-                  {c.coverImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.coverImage} alt={c.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  ) : c.logo ? (
-                    <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_45%,rgba(212,236,76,0.10),transparent_65%)]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.logo} alt={`Логотип: ${c.title}`} loading="lazy" decoding="async" className="max-h-[46%] max-w-[52%] object-contain transition-transform duration-500 group-hover:scale-105" />
-                    </div>
-                  ) : (
-                    <div className="flex h-full items-center justify-center font-display text-4xl font-extrabold text-brand-lime/30">mimi</div>
-                  )}
-                  {c.coverImage && c.logo && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.logo} alt="" loading="lazy" decoding="async" className="absolute bottom-4 left-4 h-12 w-12 rounded-2xl border border-white/10 bg-ink/80 object-contain p-1.5" />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col p-6">
-                  {(c.category || c.clientName) && (
-                    <div className="mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-brand-orange">
-                      {c.category && <span>{c.category}</span>}
-                      {c.clientName && <span className="text-light/45">{c.category ? '· ' : ''}{c.clientName}</span>}
-                    </div>
-                  )}
-                  <h2 className="font-display text-xl font-extrabold leading-tight text-light group-hover:text-brand-lime">{c.title}</h2>
-                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-light/60">{c.description}</p>
-                  <span className="mt-auto flex items-center justify-between gap-3 pt-5 text-[11px] uppercase tracking-[0.2em]">
-                    <span className="text-brand-lime">Смотреть кейс →</span>
-                    {c.instagramUrl && <span className="normal-case tracking-normal text-light/50">есть в Instagram</span>}
-                  </span>
-                </div>
-              </Link>
+          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+            {cases.map((c, i) => (
+              <CaseCard key={c.id} c={c} priority={i === 0} headingLevel="h2" />
             ))}
           </div>
         )}

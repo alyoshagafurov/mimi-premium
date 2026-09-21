@@ -264,6 +264,55 @@ export const isBlobUrl = (url: string) => {
   }
 };
 
+/** Встроенная картинка `data:image/…` — так хранились старые фото до перехода на Blob. */
+const DATA_IMAGE = /^data:image\/(png|jpe?g|webp|gif|avif);base64,/i;
+
+/**
+ * Одна ссылка на картинку: https или старая встроенная `data:image/…`.
+ * Всё прочее (http:, javascript:, мусор) — null.
+ */
+export function sanitizeImageUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const url = raw.trim();
+  if (!url) return null;
+  if (DATA_IMAGE.test(url)) return url;
+  try {
+    return new URL(url).protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Пропорции картинки (ширина / высота) из админки: разумное число или null. */
+export function sanitizeRatio(raw: unknown): number | null {
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  return Number.isFinite(n) && n > 0.05 && n < 20 ? n : null;
+}
+
+/** Лимит фото-доказательств в одном кейсе — его же показывает админка. */
+export const CASE_IMAGES_MAX = 40;
+
+/**
+ * Фото кейса из админки: только допустимые ссылки, без дублей и не больше
+ * лимита — чтобы в базу не попал мусор или чужой протокол вроде javascript:.
+ */
+export function sanitizeImageList(raw: unknown, max = CASE_IMAGES_MAX): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  for (const v of raw) {
+    const url = sanitizeImageUrl(v);
+    if (url && !out.includes(url)) out.push(url);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/**
+ * Можно ли отдать картинку оптимизатору Next.js. Разрешены только наши файлы
+ * в Vercel Blob (так настроен next.config.js), остальное показываем как есть.
+ */
+export const isOptimizableImage = (url: string) => isBlobUrl(url);
+
 /** «2,4 МБ», «840 КБ». */
 export const formatBytes = (n: number) =>
   n >= 1024 * 1024

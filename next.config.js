@@ -54,7 +54,10 @@ const nextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
-    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+    // Оптимизируем только наши файлы в Vercel Blob. С '**' оптимизатор был
+    // открытым прокси для картинок с любого сайта (и тратил квоту Vercel).
+    // Картинки с других адресов компоненты показывают как есть (unoptimized).
+    remotePatterns: [{ protocol: 'https', hostname: '*.public.blob.vercel-storage.com' }],
   },
   async headers() {
     return [

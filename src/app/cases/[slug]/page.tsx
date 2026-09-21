@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { TopNav } from '@/components/ui/TopNav';
 import { Footer } from '@/components/ui/Footer';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
-import { SITE_URL, SITE_NAME } from '@/lib/seo';
+import { SITE_URL, SITE_NAME, BRAND } from '@/lib/seo';
+import { CaseCard } from '@/components/cases/CaseCard';
+import { CaseStage } from '@/components/cases/CaseStage';
+import { ProofGallery } from './ProofGallery';
 import { formatDate } from '@/lib/utils';
 
 async function getCase(slug: string) {
@@ -64,7 +66,7 @@ export default async function CaseDetailPage({ params }: { params: { slug: strin
       <TopNav />
       {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <main className="relative z-10 mx-auto max-w-[1000px] px-5 pb-24 pt-32 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-[1180px] px-5 pb-24 pt-32 lg:px-8">
         <Breadcrumbs
           items={[
             { name: 'Главная', path: '/' },
@@ -73,37 +75,51 @@ export default async function CaseDetailPage({ params }: { params: { slug: strin
           ]}
         />
 
-        {c.logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={c.logo}
-            alt={`Логотип: ${c.title}`}
-            decoding="async"
-            className="mt-8 h-20 w-20 rounded-3xl border border-white/10 bg-white/[0.04] object-contain p-2 sm:h-24 sm:w-24"
+        {/* ── Шапка: большой логотип и суть кейса ── */}
+        <section className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,440px)_1fr] lg:items-center lg:gap-14">
+          <CaseStage
+            logo={c.logo}
+            logoRatio={c.logoRatio}
+            cover={c.coverImage || (c.logo ? null : c.images[0] ?? null)}
+            title={c.title}
+            sizes="(min-width: 1024px) 440px, 100vw"
+            priority
+            className="aspect-square rounded-[32px] border border-white/[0.07]"
           />
-        )}
-        <div className="mt-6 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-brand-orange">
-          {c.category && <span>{c.category}</span>}
-          {c.clientName && <span className="text-light/50">{c.category ? '· ' : ''}{c.clientName}</span>}
-          <span className="text-light/50">{c.category || c.clientName ? '· ' : ''}{formatDate(c.date)}</span>
-        </div>
-        <h1 className="mt-4 font-display text-hero-sm font-extrabold leading-[1.05] text-light">{c.title}</h1>
-        <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-light/65">{c.description}</p>
-        {c.instagramUrl && (
-          <a href={c.instagramUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost mt-8">
-            Смотреть в Instagram ↗
-          </a>
-        )}
+          <div>
+            <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-brand-orange">
+              {c.category && <span>{c.category}</span>}
+              {c.clientName && <span className="text-light/50">{c.category ? '· ' : ''}{c.clientName}</span>}
+              <span className="text-light/50">{c.category || c.clientName ? '· ' : ''}{formatDate(c.date)}</span>
+            </div>
+            <h1 className="mt-4 font-display text-hero-sm font-extrabold leading-[1.05] text-light [text-wrap:balance]">{c.title}</h1>
+            {c.description && (
+              <p className="mt-5 max-w-[62ch] whitespace-pre-line text-[17px] leading-relaxed text-light/70">{c.description}</p>
+            )}
+            <div className="mt-8 flex flex-wrap gap-3">
+              {c.images.length > 0 && (
+                <a href="#proof" className="btn-lime">
+                  Смотреть доказательства · {c.images.length}
+                </a>
+              )}
+              {c.instagramUrl && (
+                <a href={c.instagramUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+                  Смотреть в Instagram ↗
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
 
-        {c.coverImage && (
-          <div className="mt-10 overflow-hidden rounded-3xl border border-white/[0.06]">
+        {c.logo && c.coverImage && (
+          <div className="mt-12 overflow-hidden rounded-3xl border border-white/[0.06]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={c.coverImage} alt={c.title} className="w-full object-cover" loading="eager" decoding="async" />
+            <img src={c.coverImage} alt={c.title} className="w-full object-cover" loading="lazy" decoding="async" />
           </div>
         )}
 
         {c.achievements.length > 0 && (
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3">
             {c.achievements.map((a, i) => (
               <div key={i} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
                 <span className="mt-1 block text-sm leading-snug text-light/80">{a}</span>
@@ -112,39 +128,44 @@ export default async function CaseDetailPage({ params }: { params: { slug: strin
           </div>
         )}
 
-        <div className="mt-12 space-y-10">
-          {blocks.map((b) => (
-            <section key={b.label}>
-              <h2 className="font-display text-2xl font-extrabold text-brand-lime">{b.label}</h2>
-              <p className="mt-3 whitespace-pre-wrap text-[15px] leading-[1.8] text-light/70">{b.text}</p>
-            </section>
-          ))}
-        </div>
-
-        {c.images.length > 0 && (
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {c.images.map((src, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={src} alt={`${c.title} — фото ${i + 1}`} loading="lazy" decoding="async" className="w-full rounded-2xl border border-white/[0.06] object-cover" />
+        {blocks.length > 0 && (
+          <div className="mt-14 space-y-10">
+            {blocks.map((b) => (
+              <section key={b.label}>
+                <h2 className="font-display text-2xl font-extrabold text-brand-lime">{b.label}</h2>
+                <p className="mt-3 max-w-[70ch] whitespace-pre-wrap text-[15px] leading-[1.8] text-light/70">{b.text}</p>
+              </section>
             ))}
           </div>
         )}
 
+        {/* ── Фото-доказательства ── */}
+        {c.images.length > 0 && (
+          <section id="proof" className="mt-20 scroll-mt-24">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-t border-white/[0.08] pt-12">
+              <h2 className="font-display text-hero-xs font-extrabold text-light">
+                Доказательства <span className="font-serif font-normal italic text-brand-lime">результата</span>
+              </h2>
+              <p className="text-[13px] text-light/55">{c.images.length} фото · нажмите, чтобы открыть</p>
+            </div>
+            <div className="mt-8">
+              <ProofGallery images={c.images} title={c.title} />
+            </div>
+          </section>
+        )}
+
         {/* CTA */}
-        <div className="mt-16 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-brand-lime/20 bg-brand-lime/[0.03] p-8">
+        <div className="mt-20 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-brand-lime/20 bg-brand-lime/[0.03] p-8">
           <p className="font-display text-xl font-bold text-light">Хотите такой же результат?</p>
-          <a href="https://wa.me/992070217755" target="_blank" rel="noreferrer" className="btn-lime">Получить аудит</a>
+          <a href={BRAND.whatsapp} target="_blank" rel="noreferrer" className="btn-lime">Получить аудит</a>
         </div>
 
         {related.length > 0 && (
-          <section className="mt-16">
+          <section className="mt-20">
             <h2 className="font-display text-2xl font-extrabold text-light">Похожие кейсы</h2>
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((r) => (
-                <Link key={r.id} href={`/cases/${r.slug}`} className="group rounded-2xl border border-white/[0.06] bg-ink2/30 p-5 transition-colors hover:border-brand-lime/30">
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-brand-orange">{r.category}</div>
-                  <div className="mt-2 font-display text-base font-bold text-light group-hover:text-brand-lime">{r.title}</div>
-                </Link>
+                <CaseCard key={r.id} c={r} />
               ))}
             </div>
           </section>

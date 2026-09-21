@@ -36,7 +36,9 @@ export async function POST(req: Request) {
     );
   }
   const { put } = await import('@vercel/blob');
-  const blob = await put(`cms/${Date.now()}-${base}`, file, { access: 'public', addRandomSuffix: true });
+  // Расширение сохраняем: по нему next/image узнаёт SVG и не шлёт его в оптимизатор.
+  const ext = (file.name.match(/\.([a-z0-9]{2,5})$/i)?.[1] ?? '').toLowerCase();
+  const blob = await put(`cms/${Date.now()}-${base}${ext ? `.${ext}` : ''}`, file, { access: 'public', addRandomSuffix: true });
   const url = blob.url;
 
   const asset = await prisma.mediaAsset.create({

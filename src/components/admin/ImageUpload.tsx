@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { MediaPicker } from './MediaPicker';
 
@@ -80,18 +80,41 @@ export function ImageUpload({
   );
 }
 
-/** Multiple images (gallery) field. */
+/**
+ * Несколько фото (галерея). Файлы грузятся параллельно; пока идёт загрузка,
+ * о ней сообщается наружу (onBusyChange) — форма блокирует «Сохранить».
+ * Если за время загрузки форму закрыли или открыли другой кейс, результат
+ * отбрасывается, чтобы фото не попали не туда.
+ */
 export function GalleryUpload({
   value,
   onChange,
+  onBusyChange,
+  max = 40,
   label = 'Галерея',
 }: {
   value: string[];
   onChange: (urls: string[]) => void;
+  onBusyChange?: (busy: boolean) => void;
+  max?: number;
   label?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  // Всегда актуальный список: пока фото грузятся, админ может удалить другие.
+  const latest = useRef(value);
+  latest.current = value;
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
+  const left = Math.max(0, max - value.length);
+
+  const setLoading = (v: boolean) => {
+    setBusy(v);
+    onBusyChange?.(v);
+  };
 
   return (
     <div>
@@ -103,23 +126,28 @@ export function GalleryUpload({
             <img src={url} alt="" className="h-20 w-20 rounded-xl border border-white/10 object-cover" />
             <button
               type="button"
-              onClick={() => onChange(value.filter((u) => u !== url))}
-              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] text-[#fff] opacity-0 transition group-hover:opacity-100"
+              onClick={() => onChange(latest.current.filter((u) => u !== url))}
+              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-[12px] text-[#fff] shadow transition hover:scale-110"
               aria-label="Удалить изображение"
             >
               ×
             </button>
           </div>
         ))}
-        <button
-          type="button"
-          onClick={() => ref.current?.click()}
-          disabled={busy}
-          className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-white/15 text-light/40 hover:border-brand-lime/40 hover:text-brand-lime disabled:opacity-50"
-        >
-          {busy ? '…' : '+'}
-        </button>
+        {left > 0 && (
+          <button
+            type="button"
+            onClick={() => ref.current?.click()}
+            disabled={busy}
+            aria-label="Добавить фото"
+            className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-white/15 text-light/40 hover:border-brand-lime/40 hover:text-brand-lime disabled:opacity-50"
+          >
+            {busy ? '…' : '+'}
+          </button>
+        )}
       </div>
+      {busy && <p className="mt-2 text-[12px] text-brand-orange">Загружаем фото… Сохранить можно после загрузки.</p>}
+      {left === 0 && <p className="mt-2 text-[12px] text-light/50">Максимум {max} фото — чтобы добавить новые, удалите лишние.</p>}
       <input
         ref={ref}
         type="file"
@@ -127,17 +155,16 @@ export function GalleryUpload({
         multiple
         className="hidden"
         onChange={async (e) => {
-          const files = Array.from(e.target.files ?? []);
-          if (!files.length) return;
-          setBusy(true);
-          const urls: string[] = [];
-          for (const f of files) {
-            const url = await upload(f);
-            if (url) urls.push(url);
-          }
-          setBusy(false);
-          onChange([...value, ...urls]);
+          const picked = Array.from(e.target.files ?? []);
           if (ref.current) ref.current.value = '';
+          if (!picked.length) return;
+          const files = picked.slice(0, left);
+          if (picked.length > files.length) toast.error(`Можно добавить ещё ${left} фото — лишние пропущены`);
+          setLoading(true);
+          const urls = (await Promise.all(files.map((f) => upload(f)))).filter((u): u is string => !!u);
+          if (!alive.current) return; // форму закрыли или открыли другой кейс
+          setLoading(false);
+          onChange([...latest.current, ...urls].slice(0, max));
         }}
       />
     </div>

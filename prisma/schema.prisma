@@ -643,6 +643,7 @@ model Case {
   achievements   String[] // list of wins
   coverImage     String?
   logo           String? // логотип проекта
+  logoRatio      Float? // ширина / высота логотипа — сайт сразу знает, как его показать
   instagramUrl   String? // ссылка на пост/профиль в Instagram
   images         String[]
   date           DateTime @default(now())

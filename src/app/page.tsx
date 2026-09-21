@@ -14,7 +14,7 @@ async function loadCms(): Promise<CmsData> {
   try {
     const pubSort = { where: { published: true }, orderBy: [{ sortOrder: 'asc' as const }, { createdAt: 'desc' as const }] };
     const [cases, testimonials, clients, team, stats, posts, partners, certificates, awards, faqs] = await Promise.all([
-      prisma.case.findMany({ where: { published: true }, orderBy: [{ sortOrder: 'asc' }, { date: 'desc' }], take: 6, select: { id: true, slug: true, title: true, category: true, clientName: true, description: true, coverImage: true } }),
+      prisma.case.findMany({ where: { published: true }, orderBy: [{ sortOrder: 'asc' }, { date: 'desc' }], take: 6, select: { id: true, slug: true, title: true, category: true, clientName: true, description: true, coverImage: true, logo: true, logoRatio: true, images: true, instagramUrl: true } }),
       prisma.testimonial.findMany({ where: { published: true }, orderBy: [{ sortOrder: 'asc' }, { date: 'desc' }], take: 6, select: { id: true, name: true, company: true, position: true, photo: true, rating: true, text: true } }),
       prisma.clientLogo.findMany({ ...pubSort, select: { id: true, name: true, logo: true, url: true } }),
       prisma.teamMember.findMany({ ...pubSort, select: { id: true, name: true, position: true, photo: true, bio: true, socials: true } }),
@@ -25,7 +25,9 @@ async function loadCms(): Promise<CmsData> {
       prisma.award.findMany({ ...pubSort, select: { id: true, title: true, image: true, issuer: true } }),
       prisma.faq.findMany({ ...pubSort, select: { id: true, question: true, answer: true } }),
     ]);
-    return JSON.parse(JSON.stringify({ cases, testimonials, clients, team, stats, posts, partners, certificates, awards, faqs }));
+    // Карточке на лендинге нужны только первые 3 фото и их число — весь список не тащим.
+    const casesLite = cases.map(({ images, ...c }) => ({ ...c, images: images.slice(0, 3), imagesCount: images.length }));
+    return JSON.parse(JSON.stringify({ cases: casesLite, testimonials, clients, team, stats, posts, partners, certificates, awards, faqs }));
   } catch {
     return EMPTY_CMS;
   }

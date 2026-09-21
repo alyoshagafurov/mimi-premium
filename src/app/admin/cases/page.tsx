@@ -12,7 +12,7 @@ export default async function AdminCasesPage() {
     orderBy: [{ published: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
     select: {
       id: true, slug: true, title: true, description: true, logo: true,
-      coverImage: true, instagramUrl: true, published: true,
+      coverImage: true, instagramUrl: true, published: true, images: true, logoRatio: true,
     },
   });
 

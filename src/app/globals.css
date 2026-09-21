@@ -101,6 +101,13 @@
   -webkit-text-fill-color: transparent;
 }
 
+/* Кольцо фокуса с клавиатуры: лайм на светлом фоне почти не виден — в светлой
+   теме кольцо фиолетовое, как и лаймовый текст. */
+[data-theme='light'] .focus-visible\:ring-brand-lime\/60:focus-visible,
+[data-theme='light'] .focus-visible\:ring-brand-lime\/70:focus-visible {
+  --tw-ring-color: rgb(60 25 117 / 0.85);
+}
+
 /* Selection + lime button keep the brand pop on white */
 [data-theme='light'] ::selection {
   background: rgba(212, 236, 76, 0.55);

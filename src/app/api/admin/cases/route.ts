@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike } from '@/lib/api-guard';
 import { uniqueSlug } from '@/lib/slug';
-import { normalizeInstagramUrl } from '@/lib/utils';
+import { normalizeInstagramUrl, sanitizeImageList, sanitizeImageUrl, sanitizeRatio } from '@/lib/utils';
 
 export async function POST(req: Request) {
   const admin = await ensureAdminLike();
@@ -12,6 +12,13 @@ export async function POST(req: Request) {
   const instagramUrl = normalizeInstagramUrl(b.instagramUrl);
   if (b.instagramUrl?.trim() && !instagramUrl) {
     return NextResponse.json({ error: 'Это не ссылка на Instagram' }, { status: 400 });
+  }
+
+  // Логотип и обложка тоже рисуются картинкой — принимаем только https или старые data:image.
+  const logo = sanitizeImageUrl(b.logo);
+  const coverImage = sanitizeImageUrl(b.coverImage);
+  if ((b.logo && !logo) || (b.coverImage && !coverImage)) {
+    return NextResponse.json({ error: 'Картинка должна быть загружена через админку' }, { status: 400 });
   }
 
   const slug = await uniqueSlug(b.slug?.trim() || b.title, async (s) => !!(await prisma.case.findUnique({ where: { slug: s } })));
@@ -27,10 +34,11 @@ export async function POST(req: Request) {
       solution: b.solution ?? '',
       result: b.result ?? '',
       achievements: Array.isArray(b.achievements) ? b.achievements.filter(Boolean) : [],
-      coverImage: b.coverImage || null,
-      logo: b.logo || null,
+      coverImage,
+      logo,
+      logoRatio: logo ? sanitizeRatio(b.logoRatio) : null,
       instagramUrl,
-      images: Array.isArray(b.images) ? b.images : [],
+      images: sanitizeImageList(b.images),
       date: b.date ? new Date(b.date) : new Date(),
       seoTitle: b.seoTitle || null,
       seoDescription: b.seoDescription || null,
