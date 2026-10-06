@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getSafeSession } from '@/lib/session';
-import { canSeeRevenue, isAdminLike, LEAD_ROLES } from '@/lib/roles';
+import { canSeeRevenue, isAdminLike, LEAD_ROLES, userRoles } from '@/lib/roles';
 import { SalesClient } from './SalesClient';
 
 export default async function AdminSalesPage() {
@@ -9,9 +9,9 @@ export default async function AdminSalesPage() {
   // Админ и операционный директор видят все лиды; продажник и разработчик —
   // те, где они в числе ответственных. Ответственных может быть несколько, и
   // лид видит каждый из них.
-  const seesAllLeads = isAdminLike(me?.role);
+  const seesAllLeads = isAdminLike(userRoles(me));
   // Only the full ADMIN sees everyone's personal lead statistics.
-  const seesEveryone = canSeeRevenue(me?.role);
+  const seesEveryone = canSeeRevenue(userRoles(me));
   const leadScope = seesAllLeads ? {} : { assignees: { some: { id: me?.id ?? '__none__' } } };
 
   const now = new Date();
@@ -41,7 +41,10 @@ export default async function AdminSalesPage() {
     }),
     prisma.user.findMany({
     relationLoadStrategy: 'join',
-      where: seesAllLeads ? { role: { in: LEAD_ROLES } } : { id: me?.id ?? '__none__' },
+      // Лидами занимается и тот, у кого продажи — вторая специальность.
+      where: seesAllLeads
+        ? { OR: [{ role: { in: LEAD_ROLES } }, { roles: { hasSome: LEAD_ROLES } }] }
+        : { id: me?.id ?? '__none__' },
       select: { id: true, name: true, role: true },
       orderBy: { name: 'asc' },
     }),

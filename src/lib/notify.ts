@@ -56,7 +56,12 @@ export async function notifyAdmins(args: Omit<NotifyArgs, 'userId'>) {
  */
 export async function notifySales(args: Omit<NotifyArgs, 'userId'>) {
   const reps = await prisma.user.findMany({
-    where: { role: { in: ['ADMIN', 'OPS_DIRECTOR', 'SALES'] } },
+    where: {
+      OR: [
+        { role: { in: ['ADMIN', 'OPS_DIRECTOR', 'SALES'] } },
+        { roles: { hasSome: ['ADMIN', 'OPS_DIRECTOR', 'SALES'] } },
+      ],
+    },
     select: { id: true },
   });
   await Promise.all(reps.map((r) => notify({ ...args, userId: r.id })));

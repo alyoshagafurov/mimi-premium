@@ -14,7 +14,8 @@ export default withAuth(
   function middleware(req) {
     const { token } = req.nextauth;
     const { pathname } = req.nextUrl;
-    const role = token?.role as string | undefined;
+    // Все специальности сотрудника; у старых токенов есть только основная роль.
+    const role = ((token as any)?.roles as string[] | undefined) ?? (token?.role ? [token.role as string] : []);
 
     if (pathname.startsWith('/admin')) {
       if (!isStaff(role)) return NextResponse.redirect(new URL('/dashboard', req.url));

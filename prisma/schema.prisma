@@ -182,6 +182,10 @@ model User {
   name          String
   phone         String?
   role          Role      @default(CLIENT)
+  /// Все специальности сотрудника: видеограф + монтажёр и т.п.
+  /// `role` остаётся основной; пустой список означает «только основная роль».
+  /// Роль ADMIN не совмещается с другими и выдаётся ровно одному человеку.
+  roles         Role[]    @default([])
   tariff        Tariff    @default(NONE)
   tariffEnd     DateTime?
   avatar        String?

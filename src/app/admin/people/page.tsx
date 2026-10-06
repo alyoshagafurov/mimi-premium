@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { openSecret } from '@/lib/secret-box';
-import { isStaff, isAdminLike } from '@/lib/roles';
+import { isStaff, isAdminLike, userRoles } from '@/lib/roles';
 import { PeopleClient } from './PeopleClient';
 
 /**
@@ -12,8 +12,8 @@ import { PeopleClient } from './PeopleClient';
 export default async function AdminPeoplePage() {
   const session = await getSafeSession();
   const me = session?.user as any;
-  if (!isStaff(me?.role)) redirect('/admin');
-  const canManage = isAdminLike(me?.role);
+  if (!isStaff(userRoles(me))) redirect('/admin');
+  const canManage = isAdminLike(userRoles(me));
 
   const people = await prisma.user.findMany({
     where: canManage
@@ -21,7 +21,7 @@ export default async function AdminPeoplePage() {
       : { role: { not: 'CLIENT' }, approvedAt: { not: null } },
     orderBy: [{ approvedAt: 'asc' }, { name: 'asc' }],
     select: {
-      id: true, name: true, email: true, phone: true, role: true,
+      id: true, name: true, email: true, phone: true, role: true, roles: true,
       avatar: true, banner: true, jobTitle: true, bio: true, approvedAt: true,
       passwordCipher: canManage, // пароль видят только админ и опер. директор
     },
@@ -37,6 +37,7 @@ export default async function AdminPeoplePage() {
         email: p.email,
         phone: p.phone,
         role: p.role,
+        roles: p.roles?.length ? p.roles : [p.role],
         avatar: p.avatar,
         banner: p.banner,
         jobTitle: p.jobTitle ?? '',

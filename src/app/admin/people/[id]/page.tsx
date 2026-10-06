@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isStaff, ROLE_LABEL } from '@/lib/roles';
+import { isStaff, ROLE_LABEL, userRoles } from '@/lib/roles';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ProfileBanner } from './ProfileBanner';
 import type { Role } from '@prisma/client';
@@ -11,7 +11,7 @@ import type { Role } from '@prisma/client';
 export default async function StaffProfilePage({ params }: { params: { id: string } }) {
   const session = await getSafeSession();
   const me = session?.user as any;
-  if (!isStaff(me?.role)) redirect('/admin');
+  if (!isStaff(userRoles(me))) redirect('/admin');
 
   const p = await prisma.user.findUnique({
     where: { id: params.id },

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isAdminLike, SALES_STATUS_LABEL, PACKAGE_LABEL, type SalesStatus, type ClientPackage } from '@/lib/roles';
+import { isAdminLike, SALES_STATUS_LABEL, PACKAGE_LABEL, type SalesStatus, type ClientPackage, userRoles } from '@/lib/roles';
 import { telegramUrl, instagramUrl } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { TechSpec } from './TechSpec';
@@ -22,8 +22,8 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default async function AdminProjectDetailPage({ params }: { params: { id: string } }) {
   const session = await getSafeSession();
-  const role = (session?.user as any)?.role as string;
-  const adminLike = isAdminLike(role);
+  const roles = userRoles(session?.user as any);
+  const adminLike = isAdminLike(roles);
 
   const c = await prisma.client.findUnique({
     relationLoadStrategy: 'join',
@@ -109,7 +109,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
       {/* Production statuses — each discipline changed by its owning role */}
       <ProductionStatus
         clientId={c.id}
-        role={role}
+        role={roles}
         initial={{
           shooting: c.shootingStatus,
           montage: c.montageStatus,

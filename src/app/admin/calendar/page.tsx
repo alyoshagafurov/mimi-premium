@@ -1,14 +1,16 @@
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isAdminLike, visibleCategories } from '@/lib/roles';
+import { isAdminLike, userRoles, visibleCategories } from '@/lib/roles';
 import { CalendarClient } from './CalendarClient';
 
 export default async function AdminCalendarPage() {
   const session = await getSafeSession();
   const me = session?.user as any;
+  // Все специальности сотрудника: видеограф + монтажёр видит оба календаря.
+  const roles = userRoles(me);
   const role = me?.role as string;
-  const canManage = isAdminLike(role);
-  const cats = visibleCategories(role);
+  const canManage = isAdminLike(roles);
+  const cats = visibleCategories(roles);
 
   const [events, clients, staff] = await Promise.all([
     prisma.calendarEvent.findMany({

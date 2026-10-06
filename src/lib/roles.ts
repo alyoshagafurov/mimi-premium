@@ -14,12 +14,32 @@ export const STAFF_ROLES: Role[] = [
   'ADMIN', 'OPS_DIRECTOR', 'VIDEOGRAPHER', 'MONTAGE', 'SALES', 'DESIGNER', 'TARGETOLOGIST', 'DEVELOPER',
 ];
 
-export function isStaff(role?: string | null): boolean {
-  return !!role && (STAFF_ROLES as string[]).includes(role);
+/**
+ * У сотрудника может быть несколько специальностей: видеограф + монтажёр,
+ * разработчик + продажник и т.д. Основная роль лежит в `User.role`, весь набор —
+ * в `User.roles`. Хелперы ниже принимают и одну роль, и список, поэтому старые
+ * вызовы вида isStaff(user.role) продолжают работать.
+ */
+export type RoleInput = string | null | undefined | readonly (string | null | undefined)[];
+
+/** Привести роль или список ролей к массиву без пустых значений. */
+export function asRoles(role?: RoleInput): string[] {
+  if (!role) return [];
+  return (Array.isArray(role) ? role : [role]).filter(Boolean) as string[];
+}
+
+/** Все роли пользователя: набор специальностей, а если его нет — основная роль. */
+export function userRoles(user?: { role?: string | null; roles?: readonly string[] | null } | null): string[] {
+  if (!user) return [];
+  return user.roles?.length ? [...user.roles] : asRoles(user.role);
+}
+
+export function isStaff(role?: RoleInput): boolean {
+  return asRoles(role).some((r) => (STAFF_ROLES as string[]).includes(r));
 }
 /** Admin + Operations Director see the whole panel (ops has revenue hidden). */
-export function isAdminLike(role?: string | null): boolean {
-  return role === 'ADMIN' || role === 'OPS_DIRECTOR';
+export function isAdminLike(role?: RoleInput): boolean {
+  return asRoles(role).some((r) => r === 'ADMIN' || r === 'OPS_DIRECTOR');
 }
 /**
  * Roles that work the CRM: they may add leads and see every lead on the board.
@@ -28,13 +48,13 @@ export function isAdminLike(role?: string | null): boolean {
  */
 export const LEAD_ROLES: Role[] = ['ADMIN', 'OPS_DIRECTOR', 'SALES', 'DEVELOPER'];
 
-export function canWorkLeads(role?: string | null): boolean {
-  return !!role && (LEAD_ROLES as string[]).includes(role);
+export function canWorkLeads(role?: RoleInput): boolean {
+  return asRoles(role).some((r) => (LEAD_ROLES as string[]).includes(r));
 }
 
 /** Only the full ADMIN sees company revenue figures. */
-export function canSeeRevenue(role?: string | null): boolean {
-  return role === 'ADMIN';
+export function canSeeRevenue(role?: RoleInput): boolean {
+  return asRoles(role).includes('ADMIN');
 }
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -53,6 +73,24 @@ export const ROLE_LABEL: Record<Role, string> = {
 export const ASSIGNABLE_ROLES: Role[] = [
   'OPS_DIRECTOR', 'VIDEOGRAPHER', 'MONTAGE', 'SALES', 'DESIGNER', 'DEVELOPER', 'ADMIN',
 ];
+
+/**
+ * Разобрать набор специальностей из запроса админки.
+ * Возвращает либо список ролей (основная — первая), либо причину отказа.
+ * Правило: ADMIN не совмещается с другими специальностями.
+ */
+export function parseRoleSet(raw: unknown): { roles: Role[] } | { error: string } {
+  const list = (Array.isArray(raw) ? raw : [raw]).filter(Boolean) as string[];
+  const uniq = Array.from(new Set(list));
+  if (!uniq.length) return { error: 'Выберите хотя бы одну специальность' };
+  if (uniq.some((r) => !(ASSIGNABLE_ROLES as string[]).includes(r))) {
+    return { error: 'Недопустимая специальность' };
+  }
+  if (uniq.includes('ADMIN') && uniq.length > 1) {
+    return { error: 'Администратор не совмещается с другими специальностями' };
+  }
+  return { roles: uniq as Role[] };
+}
 
 /** Sales pipeline statuses — order defines the board columns. */
 export const SALES_STATUSES = ['NEW_LEAD', 'POTENTIAL_LEAD', 'CONSULTATION', 'PREPAYMENT', 'PARTNER'] as const;
@@ -117,10 +155,11 @@ export const PRODUCTION_BY_KIND = Object.fromEntries(
 ) as Record<ProductionKind, (typeof PRODUCTION)[number]>;
 
 /** Admin/ops can change any discipline; a specialist only the one they own. */
-export function canEditProduction(role: string | null | undefined, kind: ProductionKind): boolean {
+export function canEditProduction(role: RoleInput, kind: ProductionKind): boolean {
   if (isAdminLike(role)) return true;
   const p = PRODUCTION_BY_KIND[kind];
-  return !!role && !!p && (p.ownerRoles as string[]).includes(role);
+  // Хватает одной подходящей специальности: монтажёр-дизайнер ведёт оба этапа.
+  return !!p && asRoles(role).some((r) => (p.ownerRoles as string[]).includes(r));
 }
 
 export const CATEGORY_LABEL: Record<EventCategory, string> = {
@@ -133,25 +172,26 @@ export const CATEGORY_LABEL: Record<EventCategory, string> = {
   WEB: 'Веб',
 };
 
-/** Which event categories a role may see on the calendar. */
-export function visibleCategories(role?: string | null): EventCategory[] {
-  switch (role) {
-    case 'ADMIN':
-    case 'OPS_DIRECTOR':
-      return [...EVENT_CATEGORIES];
-    case 'VIDEOGRAPHER':
-      return ['VIDEO'];
-    case 'MONTAGE':
-      return ['MONTAGE'];
-    case 'DESIGNER':
-      return ['DESIGN'];
-    case 'SALES':
-      return ['SALES', 'GENERAL'];
-    case 'DEVELOPER':
-      return ['WEB'];
-    default:
-      return [];
-  }
+/** Какие календари видит одна специальность. */
+const CATEGORIES_BY_ROLE: Record<string, EventCategory[]> = {
+  VIDEOGRAPHER: ['VIDEO'],
+  MONTAGE: ['MONTAGE'],
+  DESIGNER: ['DESIGN'],
+  SALES: ['SALES', 'GENERAL'],
+  TARGETOLOGIST: ['TARGET'],
+  DEVELOPER: ['WEB'],
+};
+
+/**
+ * Календари сотрудника — объединение по всем его специальностям: видеограф +
+ * монтажёр видит и «Видео», и «Монтаж».
+ */
+export function visibleCategories(role?: RoleInput): EventCategory[] {
+  const roles = asRoles(role);
+  if (isAdminLike(roles)) return [...EVENT_CATEGORIES];
+  const seen = new Set<EventCategory>();
+  for (const r of roles) for (const c of CATEGORIES_BY_ROLE[r] ?? []) seen.add(c);
+  return EVENT_CATEGORIES.filter((c) => seen.has(c));
 }
 
 /**
@@ -167,12 +207,13 @@ const ROLE_SECTIONS: Record<string, AdminSection[]> = {
   MONTAGE: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects'],
 };
 
-export function canAccessSection(role: string | null | undefined, section: AdminSection): boolean {
-  if (role === 'ADMIN') return true;
+export function canAccessSection(role: RoleInput, section: AdminSection): boolean {
+  const roles = asRoles(role);
+  if (roles.includes('ADMIN')) return true;
   // «Финансы» — это выручка целиком, её видит только полный админ.
-  if (role === 'OPS_DIRECTOR') return section !== 'finance';
-  if (isStaff(role)) return (ROLE_SECTIONS[role as string] ?? []).includes(section);
-  return false;
+  if (roles.includes('OPS_DIRECTOR')) return section !== 'finance';
+  // Разделы складываются: разработчик + продажник открывает и «Продажи».
+  return roles.some((r) => (ROLE_SECTIONS[r] ?? []).includes(section));
 }
 
 /** Map an /admin pathname to its section (for middleware gating). */

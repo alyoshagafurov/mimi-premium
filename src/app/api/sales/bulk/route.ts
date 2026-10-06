@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSafeSession } from '@/lib/session';
-import { isAdminLike } from '@/lib/roles';
+import { isAdminLike, userRoles } from '@/lib/roles';
 import { notify } from '@/lib/notify';
 import { logAudit } from '@/lib/audit';
 
@@ -19,7 +19,7 @@ const MAX = 500;
 export async function POST(req: Request) {
   const session = await getSafeSession();
   const me = session?.user as any;
-  if (!isAdminLike(me?.role)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  if (!isAdminLike(userRoles(me))) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const ids: string[] = Array.isArray(body.ids) ? body.ids.filter(Boolean).slice(0, MAX) : [];

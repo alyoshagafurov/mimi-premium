@@ -33,6 +33,7 @@ async function main() {
       name: 'mimi admin',
       phone: '+992 07 021 77 55',
       role: Role.ADMIN,
+      roles: [Role.ADMIN],
     },
   });
 

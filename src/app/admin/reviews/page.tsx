@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isAdminLike } from '@/lib/roles';
+import { isAdminLike, userRoles } from '@/lib/roles';
 import { ReviewsClient } from './ReviewsClient';
 
 export default async function AdminReviewsPage() {
   const session = await getSafeSession();
-  if (!isAdminLike((session?.user as any)?.role)) redirect('/admin');
+  if (!isAdminLike(userRoles(session?.user as any))) redirect('/admin');
 
   const reviews = await prisma.testimonial.findMany({
     orderBy: [{ createdAt: 'desc' }],

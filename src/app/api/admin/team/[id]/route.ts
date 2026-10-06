@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { sealSecret } from '@/lib/secret-box';
 import { ensureAdminLike } from '@/lib/api-guard';
-import { ASSIGNABLE_ROLES, ROLE_LABEL } from '@/lib/roles';
+import { ROLE_LABEL, parseRoleSet } from '@/lib/roles';
 import { adminPasswordProblem, emailProblem, normalizeEmail } from '@/lib/validation';
 import { logAudit } from '@/lib/audit';
 import { notify } from '@/lib/notify';
@@ -20,11 +20,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const data: any = {};
   if (typeof body.name === 'string' && body.name.trim()) data.name = body.name.trim();
   if (typeof body.phone === 'string') data.phone = body.phone.trim() || null;
-  if (body.role) {
-    if (!ASSIGNABLE_ROLES.includes(body.role as Role)) {
-      return NextResponse.json({ error: 'Недопустимая роль' }, { status: 400 });
+  // Специальности: можно выдать несколько сразу (видеограф + монтажёр).
+  if (body.roles || body.role) {
+    const parsed = parseRoleSet(body.roles ?? body.role);
+    if ('error' in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    const roles = parsed.roles;
+    if (roles[0] === 'ADMIN' && target.role !== 'ADMIN') {
+      const others = await prisma.user.count({ where: { role: 'ADMIN', id: { not: params.id } } });
+      if (others > 0) {
+        return NextResponse.json({ error: 'Администратор уже есть — он может быть только один' }, { status: 400 });
+      }
     }
-    data.role = body.role;
+    // Последнего администратора нельзя разжаловать — иначе в систему никто не войдёт.
+    if (target.role === 'ADMIN' && roles[0] !== 'ADMIN') {
+      const others = await prisma.user.count({ where: { role: 'ADMIN', id: { not: params.id } } });
+      if (others === 0) {
+        return NextResponse.json({ error: 'Это единственный администратор — сначала назначьте другого' }, { status: 400 });
+      }
+    }
+    data.role = roles[0];
+    data.roles = roles;
   }
   // Одобрение / отзыв доступа сотрудника.
   if (typeof body.approved === 'boolean') {
@@ -61,7 +76,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const user = await prisma.user.update({
     where: { id: params.id },
     data,
-    select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true, approvedAt: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, roles: true, createdAt: true, approvedAt: true },
   });
   const roleChanged = data.role && data.role !== target.role;
   await logAudit({
@@ -69,7 +84,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     entity: 'user',
     entityId: user.id,
     summary: roleChanged
-      ? `Роль «${user.name}»: ${ROLE_LABEL[target.role as Role]} → ${ROLE_LABEL[user.role as Role]}`
+      ? `Специальности «${user.name}»: ${(target.roles?.length ? target.roles : [target.role]).map((r) => ROLE_LABEL[r as Role]).join(', ')} → ${(user.roles?.length ? user.roles : [user.role]).map((r) => ROLE_LABEL[r as Role]).join(', ')}`
       : `Изменён сотрудник «${user.name}»`,
   });
   if (body.approved === true && !target.approvedAt) {

@@ -32,10 +32,10 @@ const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
   { href: '/admin/settings', label: 'Настройки', section: 'settings' },
 ];
 
-function itemsFor(role?: Role | string) {
-  const adminLike = isAdminLike(role);
+function itemsFor(roles: string[]) {
+  const adminLike = isAdminLike(roles);
   return ALL_ITEMS
-    .filter((it) => canAccessSection(role, it.section))
+    .filter((it) => canAccessSection(roles, it.section))
     // Admin/ops use the full "Клиенты"; the read-only "Проекты" is for other staff.
     .filter((it) => !(it.section === 'projects' && adminLike))
     .map((it, i) => ({ ...it, n: String(i + 1).padStart(2, '0') }));
@@ -82,11 +82,12 @@ function ViewSiteButton({ className }: { className?: string }) {
   );
 }
 
-export function Sidebar({ name, role, avatar }: { name: string; role?: Role | string; avatar?: string | null }) {
+export function Sidebar({ name, roles, avatar }: { name: string; roles: string[]; avatar?: string | null }) {
   const pathname = usePathname();
-  const ITEMS = itemsFor(role);
-  const roleLabel = role ? ROLE_LABEL[role as Role] ?? 'Сотрудник' : 'Сотрудник';
-  const badge = role === 'ADMIN' ? 'admin' : role === 'OPS_DIRECTOR' ? 'ops' : 'staff';
+  const ITEMS = itemsFor(roles);
+  // Подпись — все специальности сразу: «Видеограф · Монтажёр».
+  const roleLabel = roles.map((r) => ROLE_LABEL[r as Role] ?? 'Сотрудник').join(' · ') || 'Сотрудник';
+  const badge = roles.includes('ADMIN') ? 'admin' : roles.includes('OPS_DIRECTOR') ? 'ops' : 'staff';
   return (
     <aside className="glass-luxury sticky top-4 z-40 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-3xl p-7 lg:flex">
       <div className="flex items-center justify-between">
@@ -163,11 +164,12 @@ export function Sidebar({ name, role, avatar }: { name: string; role?: Role | st
   );
 }
 
-export function MobileTopbar({ name, role, avatar }: { name: string; role?: Role | string; avatar?: string | null }) {
+export function MobileTopbar({ name, roles, avatar }: { name: string; roles: string[]; avatar?: string | null }) {
   const [open, setOpen] = useState(false);
-  const ITEMS = itemsFor(role);
-  const roleLabel = role ? ROLE_LABEL[role as Role] ?? 'Сотрудник' : 'Сотрудник';
-  const badge = role === 'ADMIN' ? 'admin' : role === 'OPS_DIRECTOR' ? 'ops' : 'staff';
+  const ITEMS = itemsFor(roles);
+  // Подпись — все специальности сразу: «Видеограф · Монтажёр».
+  const roleLabel = roles.map((r) => ROLE_LABEL[r as Role] ?? 'Сотрудник').join(' · ') || 'Сотрудник';
+  const badge = roles.includes('ADMIN') ? 'admin' : roles.includes('OPS_DIRECTOR') ? 'ops' : 'staff';
 
   useEffect(() => {
     if (!open) return;

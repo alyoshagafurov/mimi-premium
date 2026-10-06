@@ -39,7 +39,12 @@ export const authOptions: NextAuthOptions = {
         if (!user || !user.password) return null;
         const ok = await bcrypt.compare(credentials.password, user.password);
         if (!ok) return null;
-        return { id: user.id, email: user.email, name: user.name, role: user.role, tariff: user.tariff };
+        return {
+          id: user.id, email: user.email, name: user.name,
+          role: user.role,
+          roles: user.roles?.length ? user.roles : [user.role],
+          tariff: user.tariff,
+        };
       },
     }),
     ...(googleEnabled
@@ -108,16 +113,38 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.id = dbUser.id;
             token.role = dbUser.role;
+            // Все специальности сотрудника; пустой список = только основная роль.
+            token.roles = dbUser.roles?.length ? dbUser.roles : [dbUser.role];
             token.tariff = dbUser.tariff;
           }
         }
       }
+      /**
+       * Специальности могли измениться после входа (админ выдал вторую).
+       * Освежаем их не чаще раза в 5 минут — это один лёгкий запрос, зато
+       * сотруднику не нужно перезаходить.
+       */
+      const freshAt = (token as any).rolesAt as number | undefined;
+      const stale = !freshAt || Date.now() - freshAt > 5 * 60 * 1000;
+      if (token.id && (!(token as any).roles || stale)) {
+        const fresh = await prisma.user
+          .findUnique({ where: { id: token.id as string }, select: { role: true, roles: true } })
+          .catch(() => null);
+        if (fresh) {
+          token.role = fresh.role;
+          token.roles = fresh.roles?.length ? fresh.roles : [fresh.role];
+        }
+        (token as any).rolesAt = Date.now();
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        // У сессий, выданных до появления нескольких ролей, claim отсутствует.
+        (session.user as any).roles = (token as any).roles ?? (token.role ? [token.role] : []);
         (session.user as any).tariff = token.tariff;
       }
       return session;

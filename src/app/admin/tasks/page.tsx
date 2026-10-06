@@ -1,6 +1,6 @@
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isAdminLike, isStaff, visibleCategories } from '@/lib/roles';
+import { isAdminLike, isStaff, visibleCategories, userRoles } from '@/lib/roles';
 import { redirect } from 'next/navigation';
 import { TasksClient, type TaskRow } from './TasksClient';
 
@@ -11,9 +11,9 @@ import { TasksClient, type TaskRow } from './TasksClient';
 export default async function TasksPage() {
   const session = await getSafeSession();
   const me = session?.user as any;
-  if (!isStaff(me?.role)) redirect('/admin');
-  const adminLike = isAdminLike(me.role);
-  const cats = visibleCategories(me.role) as any[];
+  if (!isStaff(userRoles(me))) redirect('/admin');
+  const adminLike = isAdminLike(userRoles(me));
+  const cats = visibleCategories(userRoles(me)) as any[];
 
   // Сотрудник видит задачи своего направления и всё, где он ответственный.
   const taskWhere = adminLike ? {} : { OR: [{ category: { in: cats } }, { ownerId: me.id }] };

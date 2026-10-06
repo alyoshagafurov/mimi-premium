@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { canSeeRevenue } from '@/lib/roles';
+import { canSeeRevenue, userRoles } from '@/lib/roles';
 import { FinanceClient } from './FinanceClient';
 
 const DAY = 86_400_000;
@@ -17,7 +17,7 @@ function weekStart(d: Date): Date {
 
 export default async function FinancePage() {
   const session = await getSafeSession();
-  if (!canSeeRevenue((session?.user as any)?.role)) redirect('/admin');
+  if (!canSeeRevenue(userRoles(session?.user as any))) redirect('/admin');
 
   const payments = await prisma.payment.findMany({
     where: { status: 'PAID' },

@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isAdminLike } from '@/lib/roles';
+import { isAdminLike, userRoles } from '@/lib/roles';
 import { CasesClient } from './CasesClient';
 
 export default async function AdminCasesPage() {
   const session = await getSafeSession();
-  if (!isAdminLike((session?.user as any)?.role)) redirect('/admin');
+  if (!isAdminLike(userRoles(session?.user as any))) redirect('/admin');
 
   const cases = await prisma.case.findMany({
     orderBy: [{ published: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],

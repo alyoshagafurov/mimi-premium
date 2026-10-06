@@ -13,7 +13,7 @@ export default async function NewLeadPage() {
   // Only admin/ops may hand a new lead straight to another salesperson.
   const reps = isAdminLike(role)
     ? await prisma.user.findMany({
-        where: { role: { in: LEAD_ROLES } },
+        where: { OR: [{ role: { in: LEAD_ROLES } }, { roles: { hasSome: LEAD_ROLES } }] },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       })

@@ -2,16 +2,19 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { isStaff, isAdminLike, visibleCategories, CATEGORY_LABEL, type EventCategory } from '@/lib/roles';
+import { isStaff, isAdminLike, visibleCategories, CATEGORY_LABEL, type EventCategory, userRoles } from '@/lib/roles';
 import { EventDetail } from './EventDetail';
 
 /** Страница события: вся информация, статус и личные заметки. */
 export default async function CalendarEventPage({ params }: { params: { id: string } }) {
   const session = await getSafeSession();
   const me = session?.user as any;
-  if (!isStaff(me?.role)) redirect('/admin');
+  if (!isStaff(userRoles(me))) redirect('/admin');
 
-  const e = await prisma.calendarEvent.findUnique({
+  const canManage = isAdminLike(userRoles(me));
+
+  const [e, clients, staff] = await Promise.all([
+    prisma.calendarEvent.findUnique({
     where: { id: params.id },
     include: {
       client: { select: { id: true, businessName: true, logo: true } },
@@ -23,13 +26,29 @@ export default async function CalendarEventPage({ params }: { params: { id: stri
         select: { id: true, body: true, createdAt: true },
       },
     },
-  });
+    }),
+    // Списки для формы правки — те же, что в календаре: проекты и сотрудники.
+    canManage
+      ? prisma.client.findMany({
+          where: { salesStatus: 'PARTNER' },
+          select: { id: true, businessName: true },
+          orderBy: { businessName: 'asc' },
+        })
+      : Promise.resolve([]),
+    canManage
+      ? prisma.user.findMany({
+          where: { role: { not: 'CLIENT' } },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        })
+      : Promise.resolve([]),
+  ]);
   if (!e) notFound();
 
   // Своё событие или событие своего направления — иначе не показываем.
   const mine = e.ownerId === me.id || e.assignees.some((a) => a.id === me.id);
-  const inMyCategory = (visibleCategories(me.role) as string[]).includes(e.category);
-  if (!isAdminLike(me.role) && !mine && !inMyCategory) notFound();
+  const inMyCategory = (visibleCategories(userRoles(me)) as string[]).includes(e.category);
+  if (!canManage && !mine && !inMyCategory) notFound();
 
   return (
     <div className="space-y-6">
@@ -38,8 +57,10 @@ export default async function CalendarEventPage({ params }: { params: { id: stri
       </Link>
 
       <EventDetail
-        canManage={isAdminLike(me.role)}
-        canDelete={isAdminLike(me.role) || e.ownerId === me.id}
+        canManage={canManage}
+        canDelete={canManage || e.ownerId === me.id}
+        clients={clients}
+        staff={staff}
         event={{
           id: e.id,
           title: e.title,
@@ -58,6 +79,7 @@ export default async function CalendarEventPage({ params }: { params: { id: stri
           assignees: e.assignees.map((a) => ({
             id: a.id, name: a.name, avatar: a.avatar, jobTitle: a.jobTitle ?? '',
           })),
+          assigneeIds: e.assignees.map((a) => a.id),
           createdAt: e.createdAt.toISOString(),
         }}
         notes={e.notes.map((n) => ({

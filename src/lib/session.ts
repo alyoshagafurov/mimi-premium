@@ -1,3 +1,4 @@
+import type { Role } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { Session } from 'next-auth';
@@ -42,6 +43,6 @@ export async function getSafeSession(): Promise<Session | null> {
 export async function getSafeUser() {
   const session = await getSafeSession();
   return (session?.user as
-    | { id: string; email?: string | null; name?: string | null; role?: 'ADMIN' | 'CLIENT'; tariff?: string }
+    | { id: string; email?: string | null; name?: string | null; role?: Role; roles?: Role[]; tariff?: string }
     | undefined) ?? null;
 }

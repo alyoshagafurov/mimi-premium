@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike, ensureStaff } from '@/lib/api-guard';
-import { isAdminLike, visibleCategories } from '@/lib/roles';
+import { isAdminLike, visibleCategories, userRoles } from '@/lib/roles';
 
 /** An event a staff member may work on: their own, or one in their category. */
 async function myEvent(id: string, userId: string, role: string) {
@@ -89,7 +89,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   const me = session.user as any;
 
-  if (!isAdminLike(me.role)) {
+  if (!isAdminLike(userRoles(me))) {
     const ev = await prisma.calendarEvent.findUnique({
       where: { id: params.id },
       select: { ownerId: true },

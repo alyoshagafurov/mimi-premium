@@ -1,5 +1,5 @@
 import { getSafeSession } from '@/lib/session';
-import { isStaff, isAdminLike } from '@/lib/roles';
+import { isStaff, isAdminLike, userRoles } from '@/lib/roles';
 
 /** Returns the session if the caller is an authenticated ADMIN, otherwise null. */
 export async function ensureAdmin() {
@@ -11,14 +11,14 @@ export async function ensureAdmin() {
 /** Returns the session if the caller is ADMIN or OPS_DIRECTOR, otherwise null. */
 export async function ensureAdminLike() {
   const session = await getSafeSession();
-  if (!session?.user || !isAdminLike((session.user as any).role)) return null;
+  if (!session?.user || !isAdminLike(userRoles(session.user as any))) return null;
   return session;
 }
 
 /** Returns the session if the caller is any agency staff role, otherwise null. */
 export async function ensureStaff() {
   const session = await getSafeSession();
-  if (!session?.user || !isStaff((session.user as any).role)) return null;
+  if (!session?.user || !isStaff(userRoles(session.user as any))) return null;
   return session;
 }
 

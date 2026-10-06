@@ -26,7 +26,8 @@ export function ProductionStatus({
   initial,
 }: {
   clientId: string;
-  role: string;
+  /** Все специальности сотрудника — этап редактирует любой подходящий. */
+  role: string | string[];
   initial: Record<ProductionKind, WorkStatus>;
 }) {
   const router = useRouter();

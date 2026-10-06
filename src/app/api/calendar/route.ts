@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSafeSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { ensureAdminLike, ensureStaff } from '@/lib/api-guard';
-import { isStaff, isAdminLike, visibleCategories } from '@/lib/roles';
+import { isStaff, isAdminLike, visibleCategories, userRoles } from '@/lib/roles';
 import { notify } from '@/lib/notify';
 
 export async function GET(req: Request) {
@@ -41,14 +41,14 @@ export async function POST(req: Request) {
   const session = await ensureStaff();
   if (!session) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   const me = session.user as any;
-  const adminLike = isAdminLike(me.role);
+  const adminLike = isAdminLike(userRoles(me));
 
   const body = await req.json();
   if (!body.title || !body.startAt) {
     return NextResponse.json({ error: 'Название и дата обязательны' }, { status: 400 });
   }
 
-  const myCats = visibleCategories(me.role);
+  const myCats = visibleCategories(userRoles(me));
   const category = adminLike
     ? (body.category ?? 'GENERAL')
     : ((myCats as string[]).includes(body.category) ? body.category : (myCats[0] ?? 'GENERAL'));
