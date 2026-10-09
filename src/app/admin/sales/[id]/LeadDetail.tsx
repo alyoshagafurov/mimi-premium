@@ -9,8 +9,8 @@ import { videoEmbed } from '@/lib/link-preview';
 import { cn } from '@/lib/utils';
 import { telegramUrl, instagramUrl } from '@/lib/utils';
 import {
-  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL,
-  type SalesStatus, type ClientPackage,
+  SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL, LEAD_SOURCE_LABEL,
+  type SalesStatus, type ClientPackage, type LeadSource,
 } from '@/lib/roles';
 import { LeadBrief, type Brief } from './LeadBrief';
 import { ClientAbout } from '@/components/admin/ClientAbout';
@@ -20,8 +20,10 @@ type Lead = {
   id: string; firstName: string; lastName: string; contactName: string;
   businessName: string; niche: string; phone: string; email: string;
   salesStatus: SalesStatus; packageType: ClientPackage;
-  sourceType: 'VIDEO' | 'OTHER';
+  sourceType: LeadSource;
   sourceUrl: string | null; sourceCover: string | null; sourceNote: string | null;
+  sourceCampaign: string | null; sourceAdName: string | null; sourceRefCode: string | null;
+  sourceClickId: string | null; sourceConfirmed: boolean; firstContactAt: string | null;
   telegram: string | null; instagram: string | null;
   comment: string;
   createdByName: string | null; assigneeIds: string[]; assigneeNames: string[];
@@ -163,8 +165,34 @@ export function LeadDetail({
           {/* ── Источник: обложка видео или текст ── */}
           <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6">
             <p className="mb-4 text-[10px] uppercase tracking-[0.24em] text-brand-orange">Откуда пришёл</p>
+
+            <Row
+              label="Источник"
+              value={
+                <span className="flex flex-wrap items-center gap-2">
+                  {LEAD_SOURCE_LABEL[lead.sourceType] ?? lead.sourceType}
+                  <span
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.12em]',
+                      lead.sourceConfirmed ? 'border-brand-lime/40 text-brand-lime' : 'border-white/15 text-light/45',
+                    )}
+                  >
+                    {lead.sourceConfirmed ? 'подтверждено' : 'не подтверждено'}
+                  </span>
+                </span>
+              }
+            />
+            <Row label="Кампания" value={lead.sourceCampaign} />
+            <Row label="Объявление / видео" value={lead.sourceAdName} />
+            <Row label="Метка ссылки" value={lead.sourceRefCode} />
+            <Row
+              label="ID клика Meta"
+              value={lead.sourceClickId ? <span className="font-mono text-[11px]">{lead.sourceClickId}</span> : ''}
+            />
+            <Row label="Первое обращение" value={lead.firstContactAt ? fmt(lead.firstContactAt) : ''} />
+
             {lead.sourceType === 'VIDEO' && lead.sourceUrl ? (
-              <div className="space-y-3">
+              <div className="mt-4 space-y-3">
                 {embed ? (
                   // The video itself, resolved from the link alone.
                   <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-black">
@@ -190,9 +218,9 @@ export function LeadDetail({
                   Открыть видео в источнике →
                 </a>
               </div>
-            ) : (
-              <p className="text-sm text-light/85">{lead.sourceNote || '—'}</p>
-            )}
+            ) : lead.sourceNote ? (
+              <p className="mt-4 text-sm text-light/85">{lead.sourceNote}</p>
+            ) : null}
           </div>
 
           {/* ── Статус / пакет / передача лида ── */}

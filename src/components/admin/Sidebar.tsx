@@ -22,6 +22,7 @@ const ALL_ITEMS: { href: string; label: string; section: AdminSection }[] = [
   { href: '/admin/clients', label: 'Проекты', section: 'clients' },
   { href: '/admin/projects', label: 'Проекты', section: 'projects' },
   { href: '/admin/sales', label: 'Продажи', section: 'sales' },
+  { href: '/admin/whatsapp', label: 'WhatsApp', section: 'whatsapp' },
   { href: '/admin/finance', label: 'Финансы', section: 'finance' },
   { href: '/admin/tasks', label: 'Задачи', section: 'tasks' },
   { href: '/admin/calendar', label: 'Календарь', section: 'calendar' },

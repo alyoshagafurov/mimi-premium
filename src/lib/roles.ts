@@ -6,7 +6,7 @@ export const EVENT_CATEGORIES: EventCategory[] = ['GENERAL', 'VIDEO', 'MONTAGE',
 
 /** Admin panel sections (used for the sidebar + route gating). */
 export type AdminSection =
-  | 'dashboard' | 'clients' | 'projects' | 'sales'
+  | 'dashboard' | 'clients' | 'projects' | 'sales' | 'whatsapp'
   | 'calendar' | 'notes' | 'people' | 'finance' | 'tasks' | 'cases' | 'reviews' | 'settings';
 
 /** Everyone who works at the agency (may enter /admin). Clients use /dashboard. */
@@ -101,6 +101,27 @@ export const SALES_STATUS_LABEL: Record<SalesStatus, string> = {
   CONSULTATION: 'Запись на консультацию',
   PREPAYMENT: 'Предоплата',
   PARTNER: 'Партнёр',
+};
+
+/**
+ * Источники лидов — порядок задаёт колонки в статистике по источникам.
+ * UNKNOWN ставится автоматически, когда достоверных данных нет: догадка
+ * источником не считается.
+ */
+export const LEAD_SOURCES = [
+  'INSTAGRAM', 'INSTAGRAM_ADS', 'VIDEO', 'WHATSAPP', 'WEBSITE', 'TELEGRAM', 'REFERRAL', 'OTHER', 'UNKNOWN',
+] as const;
+export type LeadSource = (typeof LEAD_SOURCES)[number];
+export const LEAD_SOURCE_LABEL: Record<LeadSource, string> = {
+  INSTAGRAM: 'Instagram',
+  INSTAGRAM_ADS: 'Реклама Instagram',
+  VIDEO: 'Видео',
+  WHATSAPP: 'WhatsApp',
+  WEBSITE: 'Сайт',
+  TELEGRAM: 'Telegram',
+  REFERRAL: 'Рекомендация',
+  OTHER: 'Другое',
+  UNKNOWN: 'Неизвестный источник',
 };
 
 export const PACKAGES = [
@@ -200,9 +221,9 @@ export function visibleCategories(role?: RoleInput): EventCategory[] {
  */
 /** Sections each specialised staff role may open (beyond calendar + projects). */
 const ROLE_SECTIONS: Record<string, AdminSection[]> = {
-  SALES: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects', 'sales'],
+  SALES: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects', 'sales', 'whatsapp'],
   DESIGNER: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects'],
-  DEVELOPER: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects', 'sales'],
+  DEVELOPER: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects', 'sales', 'whatsapp'],
   VIDEOGRAPHER: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects'],
   MONTAGE: ['calendar', 'notes', 'people', 'settings', 'tasks', 'projects'],
 };
@@ -221,7 +242,7 @@ export function sectionFromPath(pathname: string): AdminSection {
   if (pathname === '/admin' || pathname === '/admin/') return 'dashboard';
   const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const map: Record<string, AdminSection> = {
-    clients: 'clients', projects: 'projects', sales: 'sales',
+    clients: 'clients', projects: 'projects', sales: 'sales', whatsapp: 'whatsapp',
     calendar: 'calendar', notes: 'notes', people: 'people', team: 'people',
     finance: 'finance', tasks: 'tasks', settings: 'settings',
     cases: 'cases', reviews: 'reviews',

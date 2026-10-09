@@ -124,10 +124,33 @@ enum EventCategory {
   WEB
 }
 
-/// Where a lead came from: a specific video, or some other channel.
+/// Откуда пришёл лид. VIDEO/OTHER — исходные значения, остальные добавлены
+/// вместе с интеграцией WhatsApp. UNKNOWN значит «достоверно определить нельзя»
+/// и ставится автоматически: догадка источником не считается.
 enum LeadSource {
   VIDEO
   OTHER
+  INSTAGRAM
+  INSTAGRAM_ADS
+  WHATSAPP
+  WEBSITE
+  TELEGRAM
+  REFERRAL
+  UNKNOWN
+}
+
+enum WhatsAppDirection {
+  IN
+  OUT
+}
+
+/// Статус исходящего сообщения — так его присылает Meta в webhook `statuses`.
+enum WhatsAppStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
 }
 
 /// Per-discipline production status on a project (changed by the owning role).
@@ -172,34 +195,34 @@ enum FileKind {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String? // null for Google / OAuth-only accounts
+  id             String    @id @default(cuid())
+  email          String    @unique
+  password       String? // null for Google / OAuth-only accounts
   /// Зашифрованная копия пароля, который выдал админ, — чтобы его можно было
   /// показать в админке и отправить клиенту. Вход проверяется по password.
   /// Пусто, если пароль менял сам пользователь (тогда мы его не знаем).
   passwordCipher String?
-  name          String
-  phone         String?
-  role          Role      @default(CLIENT)
+  name           String
+  phone          String?
+  role           Role      @default(CLIENT)
   /// Все специальности сотрудника: видеограф + монтажёр и т.п.
   /// `role` остаётся основной; пустой список означает «только основная роль».
   /// Роль ADMIN не совмещается с другими и выдаётся ровно одному человеку.
-  roles         Role[]    @default([])
-  tariff        Tariff    @default(NONE)
-  tariffEnd     DateTime?
-  avatar        String?
-  emailVerified DateTime? // null = not yet confirmed
+  roles          Role[]    @default([])
+  tariff         Tariff    @default(NONE)
+  tariffEnd      DateTime?
+  avatar         String?
+  emailVerified  DateTime? // null = not yet confirmed
   /// Сотрудник, зарегистрировавшийся сам, ждёт одобрения админа.
   /// null у не-клиента = доступ ещё не подтверждён.
-  approvedAt    DateTime?
+  approvedAt     DateTime?
   /// Профиль: чем занимается и пара слов о себе — видно другим сотрудникам.
-  jobTitle      String?
-  bio           String?
+  jobTitle       String?
+  bio            String?
   /// Обложка профиля (как в соцсетях). Необязательна.
-  banner        String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  banner         String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   client           Client?
   ownedDeals       Deal[]                  @relation("DealOwner")
@@ -217,6 +240,7 @@ model User {
   leadsAssigned    Client[]                @relation("LeadOwner")
   leadsResponsible Client[]                @relation("LeadAssignees")
   staffNotes       StaffNote[]             @relation("NoteAuthor")
+  whatsappSent     WhatsAppMessage[]       @relation("WhatsAppSender")
 }
 
 model EmailVerificationCode {
@@ -275,6 +299,19 @@ model Client {
   telegram    String? // @username или ссылка
   instagram   String? // @username или ссылка
 
+  /// Атрибуция первого обращения. Заполняется один раз и не перезаписывается:
+  /// повторные рекламные переходы пишутся отдельной записью в Activity.
+  sourceCampaign  String? // название кампании
+  sourceAdName    String? // название объявления или видео
+  sourceRefCode   String? // метка из уникальной ссылки (WhatsAppLink.code)
+  sourceClickId   String? // ctwa_clid — идентификатор клика по рекламе Meta
+  sourceAdId      String? // source_id объявления/поста у Meta
+  /// true только если источник подтвердила сама платформа (referral от Meta)
+  /// или метка в ссылке. Для догадок остаётся false.
+  sourceConfirmed Boolean   @default(false)
+  /// Когда клиент обратился впервые (первое сообщение в WhatsApp и т.п.).
+  firstContactAt  DateTime?
+
   // Ownership: who first added the lead vs. who works it now (transferable).
   createdById  String?
   createdBy    User?         @relation("LeadCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -316,6 +353,7 @@ model Client {
   adMetrics       AdMetric[]
   messages        Message[]
   calendarEvents  CalendarEvent[]
+  whatsapp        WhatsAppConversation[]
 }
 
 model MonthlyReport {
@@ -627,6 +665,100 @@ model AdMetric {
 
   @@unique([clientId, date, platform])
   @@index([clientId, date])
+}
+
+// ─────────────────────────────────────────────────────────────
+// WhatsApp Business Cloud API — переписка с клиентами из CRM
+// ─────────────────────────────────────────────────────────────
+
+/// Диалог с одним номером в WhatsApp. Связан с карточкой клиента, когда её
+/// удалось найти по телефону или создать при первом обращении.
+model WhatsAppConversation {
+  id          String  @id @default(cuid())
+  /// Номер в формате wa_id, как его присылает Meta: только цифры, без «+».
+  waId        String  @unique
+  /// Тот же номер в E.164 («+992…») — для показа и ссылок tel:.
+  phone       String
+  /// Имя из профиля WhatsApp. Клиент может поставить любое — настоящим не считаем.
+  profileName String?
+
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  /// Последнее сообщение — чтобы список диалогов строился без подзапросов.
+  lastMessageAt DateTime?
+  lastText      String?
+  /// Когда клиент написал в последний раз: вне 24 часов Meta разрешает только
+  /// заранее одобренные шаблоны, и отправка обычного текста будет отклонена.
+  lastInboundAt DateTime?
+  unread        Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages WhatsAppMessage[]
+
+  @@index([lastMessageAt])
+  @@index([clientId])
+}
+
+/// Одно сообщение в диалоге. `wamid` уникален — это и есть защита от повторной
+/// доставки webhook: Meta пересылает события до 7 дней, вставка просто не
+/// повторится.
+model WhatsAppMessage {
+  id             String               @id @default(cuid())
+  conversationId String
+  conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  /// Идентификатор сообщения у Meta.
+  wamid     String            @unique
+  direction WhatsAppDirection
+  /// text | image | video | audio | document | sticker | location | unsupported
+  type      String            @default("text")
+  body      String            @default("")
+  /// Медиа не скачиваем: храним id у Meta, файл открывается по запросу.
+  mediaId   String?
+  mediaMime String?
+
+  status WhatsAppStatus @default(SENT)
+  error  String?
+
+  /// Данные referral от Meta для перехода из рекламы — как пришли, без правок.
+  referral Json?
+
+  /// Кто ответил из CRM (у входящих пусто).
+  senderId String?
+  sender   User?   @relation("WhatsAppSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, sentAt])
+  @@index([status])
+}
+
+/// Уникальная ссылка WhatsApp под конкретную публикацию (Reels, Stories, пост).
+/// В предзаполненном тексте лежит метка `code`; по ней CRM узнаёт источник
+/// обращения, даже если Meta никаких данных о переходе не передала.
+model WhatsAppLink {
+  id       String     @id @default(cuid())
+  code     String     @unique
+  label    String // «Reels про таргет, июль»
+  source   LeadSource @default(INSTAGRAM)
+  campaign String?
+  adName   String?
+  /// Где размещена ссылка — ссылка на сам Reels/пост, чтобы помнить источник.
+  postUrl  String?
+
+  /// Переходы по короткой ссылке и сколько из них дошли до переписки.
+  clicks Int     @default(0)
+  leads  Int     @default(0)
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, createdAt])
 }
 
 // ─────────────────────────────────────────────────────────────

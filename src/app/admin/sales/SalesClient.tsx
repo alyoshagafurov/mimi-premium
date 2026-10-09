@@ -8,7 +8,8 @@ import { PageHeader } from '@/components/admin/PageHeader';
 import { cn } from '@/lib/utils';
 import {
   SALES_STATUSES, SALES_STATUS_LABEL, PACKAGES, PACKAGE_LABEL, ROLE_LABEL,
-  type SalesStatus, type ClientPackage,
+  LEAD_SOURCES, LEAD_SOURCE_LABEL,
+  type SalesStatus, type ClientPackage, type LeadSource,
 } from '@/lib/roles';
 import type { Role } from '@prisma/client';
 
@@ -21,10 +22,15 @@ type Lead = {
   email: string;
   salesStatus: SalesStatus;
   packageType: ClientPackage;
-  sourceType: 'VIDEO' | 'OTHER';
+  sourceType: LeadSource;
   sourceUrl: string | null;
   sourceCover: string | null;
   sourceNote: string | null;
+  sourceCampaign: string | null;
+  sourceAdName: string | null;
+  sourceRefCode: string | null;
+  sourceConfirmed: boolean;
+  firstContactAt: string | null;
   createdById: string | null;
   createdByName: string | null;
   assigneeIds: string[];
@@ -126,6 +132,15 @@ export function SalesClient({
   // Package filter — empty set means «все пакеты».
   const [packages, setPackages] = useState<Set<string>>(new Set());
   const [pkgOpen, setPkgOpen] = useState(false);
+  // Source filter — пустой набор значит «все источники».
+  const [sources, setSources] = useState<Set<string>>(new Set());
+  const [srcOpen, setSrcOpen] = useState(false);
+  const toggleSource = (s: string) =>
+    setSources((cur) => {
+      const next = new Set(cur);
+      next.has(s) ? next.delete(s) : next.add(s);
+      return next;
+    });
   const togglePackage = (p: string) =>
     setPackages((cur) => {
       const next = new Set(cur);
@@ -212,11 +227,44 @@ export function SalesClient({
         if (t < bounds.start || t > bounds.end) return false;
       }
       if (packages.size && !packages.has(l.packageType)) return false;
+      if (sources.size && !sources.has(l.sourceType)) return false;
       if (!needle) return true;
       return [l.contactName, l.businessName, l.niche, l.phone, l.email, ...l.assigneeNames]
         .join(' ').toLowerCase().includes(needle);
     });
-  }, [leads, q, repFilter, bounds, packages]);
+  }, [leads, q, repFilter, bounds, packages, sources]);
+
+  /**
+   * Статистика по источникам: считается из уже загруженных лидов, поэтому
+   * учитывает выбранный период и ответственного. «Партнёр» — последняя стадия
+   * воронки, её и считаем успешной сделкой.
+   */
+  const sourceStats = useMemo(() => {
+    const rows = new Map<string, { leads: number; won: number }>();
+    for (const l of leads) {
+      if (repFilter && !l.assigneeIds.includes(repFilter)) continue;
+      if (bounds) {
+        const t = new Date(l.createdAt).getTime();
+        if (t < bounds.start || t > bounds.end) continue;
+      }
+      const row = rows.get(l.sourceType) ?? { leads: 0, won: 0 };
+      row.leads += 1;
+      if (l.salesStatus === 'PARTNER') row.won += 1;
+      rows.set(l.sourceType, row);
+    }
+    const list = LEAD_SOURCES.filter((s) => rows.has(s)).map((s) => {
+      const r = rows.get(s)!;
+      return { source: s, leads: r.leads, won: r.won, conversion: r.leads ? (r.won / r.leads) * 100 : 0 };
+    });
+    const total = list.reduce(
+      (acc, r) => ({ leads: acc.leads + r.leads, won: acc.won + r.won }),
+      { leads: 0, won: 0 },
+    );
+    return {
+      list: list.sort((a, b) => b.leads - a.leads),
+      total: { ...total, conversion: total.leads ? (total.won / total.leads) * 100 : 0 },
+    };
+  }, [leads, repFilter, bounds]);
 
   const byStatus = useMemo(() => {
     const map = new Map<SalesStatus, Lead[]>();
@@ -448,6 +496,62 @@ export function SalesClient({
                 </>
               )}
             </div>
+
+            {/* ── ИСТОЧНИК ── */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setSrcOpen((v) => !v)}
+                className={cn(
+                  'rounded-xl border px-3 py-1.5 text-[12px] transition',
+                  sources.size ? 'border-brand-lime text-brand-lime' : 'border-white/10 text-light/55 hover:text-light',
+                )}
+              >
+                {sources.size === 0
+                  ? 'Источник'
+                  : sources.size === 1
+                    ? LEAD_SOURCE_LABEL[[...sources][0] as LeadSource]
+                    : `Источники · ${sources.size}`}
+              </button>
+              {srcOpen && (
+                <>
+                  <span className="fixed inset-0 z-20" onClick={() => setSrcOpen(false)} />
+                  <div className="absolute right-0 top-10 z-30 max-h-[320px] w-[240px] overflow-y-auto rounded-2xl border border-white/10 bg-ink2 p-2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+                    <button
+                      type="button"
+                      onClick={() => setSources(new Set())}
+                      className={cn(
+                        'block w-full rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]',
+                        sources.size === 0 && 'text-brand-lime',
+                      )}
+                    >
+                      Все источники
+                    </button>
+                    {LEAD_SOURCES.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => toggleSource(s)}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[12px] transition hover:bg-white/[0.05]',
+                          sources.has(s) ? 'text-brand-lime' : 'text-light/70',
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[9px]',
+                            sources.has(s) ? 'border-brand-lime bg-brand-lime/20 text-brand-lime' : 'border-white/15 text-transparent',
+                          )}
+                        >
+                          ✓
+                        </span>
+                        {LEAD_SOURCE_LABEL[s]}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -506,6 +610,59 @@ export function SalesClient({
             Нажмите на продажника, чтобы посмотреть только его лиды.
           </p>
         )}
+      </div>
+
+      {/* ── Статистика по источникам ── */}
+      <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Откуда приходят лиды</p>
+          <p className="text-[11px] text-light/35">
+            {rangeActive ? 'за выбранный период' : 'за всё время'}
+            {repFilter ? ' · выбранный ответственный' : ''}
+          </p>
+        </div>
+        {sourceStats.list.length === 0 ? (
+          <p className="text-[13px] text-light/40">Пока нет данных.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[460px] text-sm">
+              <thead className="text-[10px] uppercase tracking-[0.16em] text-light/40">
+                <tr>
+                  <th className="pb-3 text-left">Источник</th>
+                  <th className="pb-3 text-right">Лидов</th>
+                  <th className="pb-3 text-right">Партнёров</th>
+                  <th className="pb-3 text-right">Конверсия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sourceStats.list.map((r) => (
+                  <tr
+                    key={r.source}
+                    onClick={() => setSources(new Set(sources.has(r.source) && sources.size === 1 ? [] : [r.source]))}
+                    className={cn(
+                      'cursor-pointer border-t border-white/5 transition-colors hover:bg-white/[0.03]',
+                      sources.has(r.source) && 'bg-brand-lime/[0.06]',
+                    )}
+                  >
+                    <td className="py-2.5 text-light/85">{LEAD_SOURCE_LABEL[r.source]}</td>
+                    <td className="py-2.5 text-right font-mono text-brand-lime">{r.leads}</td>
+                    <td className="py-2.5 text-right font-mono text-light/70">{r.won}</td>
+                    <td className="py-2.5 text-right font-mono text-light/70">{r.conversion.toFixed(0)}%</td>
+                  </tr>
+                ))}
+                <tr className="border-t border-white/10">
+                  <td className="py-2.5 text-[12px] uppercase tracking-[0.14em] text-light/45">Всего</td>
+                  <td className="py-2.5 text-right font-mono text-light/85">{sourceStats.total.leads}</td>
+                  <td className="py-2.5 text-right font-mono text-light/85">{sourceStats.total.won}</td>
+                  <td className="py-2.5 text-right font-mono text-light/85">{sourceStats.total.conversion.toFixed(0)}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-light/35">
+          «Неизвестный источник» — это обращения, по которым достоверных данных нет. Мы их не угадываем.
+        </p>
       </div>
 
       {/* Due reminders */}
