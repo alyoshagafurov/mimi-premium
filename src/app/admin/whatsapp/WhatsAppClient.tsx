@@ -144,8 +144,29 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+type Diagnostics = {
+  env: Record<string, boolean>;
+  error?: string;
+  number?: { display_phone_number?: string; verified_name?: string; quality_rating?: string; error?: string };
+  subscribedApps?: { name: string | null; id: string | null }[] | { error: string };
+  appSubscribed?: boolean | null;
+  wabaNumbers?: { display_phone_number?: string; verified_name?: string }[] | { error: string };
+};
+
 export function WhatsAppClient({ missingEnv }: { missingEnv: string[] }) {
   const [tab, setTab] = useState<'chats' | 'links'>('chats');
+
+  /* ── Проверка подключения к Meta ── */
+  const [diag, setDiag] = useState<Diagnostics | null>(null);
+  const [diagBusy, setDiagBusy] = useState(false);
+
+  const runDiagnostics = async () => {
+    setDiagBusy(true);
+    const r = await fetch('/api/whatsapp/diagnostics', { cache: 'no-store' }).catch(() => null);
+    setDiagBusy(false);
+    if (!r?.ok) return toast.error('Не удалось получить диагностику');
+    setDiag(await r.json());
+  };
 
   /* ── Диалоги ── */
   const [convos, setConvos] = useState<Convo[]>([]);
@@ -325,6 +346,73 @@ export function WhatsAppClient({ missingEnv }: { missingEnv: string[] }) {
           </p>
         </div>
       )}
+
+      {/* ── Проверка подключения к Meta ── */}
+      <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-brand-orange">Подключение к Meta</p>
+            <p className="mt-2 text-[12px] text-light/50">
+              Если сообщения не приходят — проверка покажет, подписано ли приложение на аккаунт WhatsApp.
+            </p>
+          </div>
+          <button onClick={runDiagnostics} disabled={diagBusy} className="btn-ghost !px-5 !py-2.5 !text-[11px] disabled:opacity-50">
+            {diagBusy ? 'Проверяем…' : 'Проверить подключение'}
+          </button>
+        </div>
+
+        {diag && (
+          <div className="mt-5 space-y-2 border-t border-white/[0.06] pt-4 text-[13px]">
+            {diag.error && <p className="text-brand-orange">{diag.error}</p>}
+
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+              {Object.entries(diag.env).map(([k, ok]) => (
+                <span key={k} className={ok ? 'text-light/60' : 'text-rose-300'}>
+                  {ok ? '✓' : '✕'} {k}
+                </span>
+              ))}
+            </div>
+
+            <Row
+              label="Номер у Meta"
+              value={
+                diag.number?.error
+                  ? <span className="text-rose-300">{diag.number.error}</span>
+                  : [diag.number?.display_phone_number, diag.number?.verified_name, diag.number?.quality_rating]
+                      .filter(Boolean).join(' · ')
+              }
+            />
+            <Row
+              label="Подписка приложения"
+              value={
+                diag.appSubscribed === true ? (
+                  <span className="text-brand-lime">
+                    ✓ подписано{Array.isArray(diag.subscribedApps) && diag.subscribedApps.length
+                      ? ` — ${diag.subscribedApps.map((a) => a.name ?? a.id).join(', ')}`
+                      : ''}
+                  </span>
+                ) : diag.appSubscribed === false ? (
+                  <span className="text-rose-300">
+                    ✕ приложение НЕ подписано на аккаунт — Meta не пришлёт ни одного сообщения
+                  </span>
+                ) : (
+                  <span className="text-rose-300">
+                    {!Array.isArray(diag.subscribedApps) && diag.subscribedApps?.error}
+                  </span>
+                )
+              }
+            />
+            <Row
+              label="Номера аккаунта"
+              value={
+                Array.isArray(diag.wabaNumbers)
+                  ? diag.wabaNumbers.map((n) => n.display_phone_number).filter(Boolean).join(', ')
+                  : <span className="text-rose-300">{diag.wabaNumbers?.error}</span>
+              }
+            />
+          </div>
+        )}
+      </div>
 
       {tab === 'chats' ? (
         <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">

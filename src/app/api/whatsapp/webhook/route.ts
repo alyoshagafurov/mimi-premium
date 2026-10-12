@@ -71,6 +71,10 @@ export async function POST(req: Request) {
       if (change.field !== 'messages') continue;
       const value = change.value ?? {};
       const profileName: string | undefined = value.contacts?.[0]?.profile?.name;
+      // Счётчики без персональных данных — чтобы доставки было видно в логах.
+      console.log(
+        `[whatsapp] webhook: messages=${value.messages?.length ?? 0} statuses=${value.statuses?.length ?? 0}`,
+      );
 
       for (const message of value.messages ?? []) {
         try {

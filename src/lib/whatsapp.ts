@@ -218,6 +218,25 @@ export async function sendText(to: string, body: string): Promise<SendResult> {
   }
 }
 
+/**
+ * Произвольный GET к Graph API от имени нашего токена — для диагностики
+ * подключения. Токен остаётся на сервере: наружу уходит только ответ Meta.
+ */
+export async function graphGet(path: string): Promise<{ ok: boolean; data?: any; error?: string }> {
+  if (!whatsappSendEnabled) return { ok: false, error: 'WhatsApp не настроен' };
+  try {
+    const res = await fetch(`${GRAPH}/${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: data?.error?.message ?? `HTTP ${res.status}` };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, error: 'Сеть недоступна' };
+  }
+}
+
 /** Ссылка на медиафайл у Meta — живёт недолго, поэтому берётся по запросу. */
 export async function mediaUrl(mediaId: string): Promise<string | null> {
   if (!whatsappSendEnabled) return null;
