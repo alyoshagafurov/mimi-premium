@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Reveal } from '@/components/ui/Reveal';
-import { CaseCard } from '@/components/cases/CaseCard';
+import { CasesCarousel } from '@/components/cases/CasesCarousel';
 
 /* ─── shared types (serialised from Prisma) ─── */
 export type CmsData = {
@@ -53,13 +53,14 @@ export function CmsCases({ items }: { items: CmsData['cases'] }) {
   if (!items.length) return null;
   return (
     <Section id="cms-cases">
-      <Header eyebrow="Портфолио" pre="Последние" emphasis="кейсы." subtitle="Реальные проекты в Душанбе и Таджикистане." link={{ href: '/cases', label: 'Все кейсы' }} />
-      <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {items.map((c, i) => (
-          <Reveal key={c.id} delay={0.05 + i * 0.05}>
-            <CaseCard c={c} />
-          </Reveal>
-        ))}
+      <Header eyebrow="Портфолио" pre="Последние" emphasis="кейсы." subtitle="Реальные проекты в Душанбе и Таджикистане." />
+      <div className="mt-10">
+        <CasesCarousel cases={items} />
+      </div>
+      <div className="mt-10 text-center">
+        <Link href="/cases" className="btn-lime !px-12 !py-5 !text-[13px]">
+          Все кейсы
+        </Link>
       </div>
     </Section>
   );

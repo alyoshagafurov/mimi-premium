@@ -76,7 +76,9 @@ export default async function CaseDetailPage({ params }: { params: { slug: strin
         />
 
         {/* ── Шапка: большой логотип и суть кейса ── */}
-        <section className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,440px)_1fr] lg:items-center lg:gap-14">
+        {/* Описание бывает длинным, поэтому на широком экране картинка
+            прилипает и остаётся на виду, пока текст рядом прокручивается. */}
+        <section className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,440px)_1fr] lg:items-start lg:gap-14">
           <CaseStage
             logo={c.logo}
             logoRatio={c.logoRatio}
@@ -84,7 +86,7 @@ export default async function CaseDetailPage({ params }: { params: { slug: strin
             title={c.title}
             sizes="(min-width: 1024px) 440px, 100vw"
             priority
-            className="aspect-square rounded-[32px] border border-white/[0.07]"
+            className="aspect-square rounded-[32px] border border-white/[0.07] lg:sticky lg:top-28"
           />
           <div>
             <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-brand-orange">

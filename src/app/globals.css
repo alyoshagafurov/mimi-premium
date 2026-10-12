@@ -125,7 +125,11 @@ body {
   background: rgb(var(--c-ink));
   color: rgb(var(--c-light));
   min-height: 100%;
+  /* `hidden` делает страницу контейнером прокрутки, и тогда position: sticky
+     внутри перестаёт прилипать. `clip` режет так же, но контейнера не создаёт.
+     Первая строка — запасной вариант для браузеров без поддержки clip. */
   overflow-x: hidden;
+  overflow-x: clip;
   scroll-behavior: smooth;
 }
 
