@@ -13,12 +13,17 @@ export const dynamic = 'force-dynamic';
  * но не подписано на сам аккаунт WhatsApp Business — тогда Meta не присылает
  * ни одного события.
  */
-export async function GET() {
+export async function GET(req: Request) {
   const session = await ensureAdminLike();
   if (!session) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
 
   const wabaId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  // Адрес берём от текущего запроса: это ровно тот домен, который отвечает без
+  // редиректа. На адрес с редиректом Meta доставляет сообщения молча мимо.
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '';
+  const webhookUrl = host ? `https://${host}/api/whatsapp/webhook` : null;
 
   const env = {
     WHATSAPP_ACCESS_TOKEN: !!process.env.WHATSAPP_ACCESS_TOKEN,
@@ -32,6 +37,7 @@ export async function GET() {
   if (!whatsappSendEnabled || !wabaId) {
     return NextResponse.json({
       env,
+      webhookUrl,
       error: 'Нужны WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID и WHATSAPP_BUSINESS_ACCOUNT_ID',
     });
   }
@@ -48,6 +54,8 @@ export async function GET() {
 
   return NextResponse.json({
     env,
+    /** Этот адрес и нужно указать в Meta — он отвечает без редиректа. */
+    webhookUrl,
     /** Токен рабочий и номер виден — значит, связка «токен ↔ номер» верна. */
     number: number.ok ? number.data : { error: number.error },
     /** Пусто = приложение не подписано на аккаунт, событий не будет вообще. */

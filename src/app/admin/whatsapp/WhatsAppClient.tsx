@@ -147,6 +147,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 type Diagnostics = {
   env: Record<string, boolean>;
   error?: string;
+  webhookUrl?: string | null;
   number?: { display_phone_number?: string; verified_name?: string; quality_rating?: string; error?: string };
   subscribedApps?: { name: string | null; id: string | null }[] | { error: string };
   appSubscribed?: boolean | null;
@@ -373,6 +374,22 @@ export function WhatsAppClient({ missingEnv }: { missingEnv: string[] }) {
               ))}
             </div>
 
+            {diag.webhookUrl && (
+              <Row
+                label="Адрес для Meta"
+                value={
+                  <span className="flex flex-wrap items-center gap-2">
+                    <code className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-[12px]">
+                      {diag.webhookUrl}
+                    </code>
+                    <button onClick={() => copy(diag.webhookUrl!)} className="text-[11px] uppercase tracking-[0.14em] text-light/50 hover:text-brand-lime">
+                      копировать
+                    </button>
+                    <span className="text-[11px] text-light/35">адрес без www отвечает редиректом — сообщения теряются</span>
+                  </span>
+                }
+              />
+            )}
             <Row
               label="Номер у Meta"
               value={

@@ -113,7 +113,14 @@ WHATSAPP_LINK_NUMBER         — необязательно; номер для �
 ## Шаг 6. Webhook
 
 1. В приложении: **WhatsApp → Configuration → Webhook → Edit**.
-2. **Callback URL**: `https://mimitj.agency/api/whatsapp/webhook`
+2. **Callback URL** — строго с `www`:
+   `https://www.mimitj.agency/api/whatsapp/webhook`
+
+   > Адрес без `www` отвечает редиректом (308). Проверку адреса Meta при этом
+   > пройдёт, и в интерфейсе появится «Есть подписка», но доставку сообщений
+   > она шлёт POST-запросом и по редиректу **не идёт** — сообщения будут
+   > молча теряться. Если адрес уже сохранён без `www`, исправьте его и
+   > нажмите «Verify and save» заново.
 3. **Verify token**: ровно та строка, что в `WHATSAPP_VERIFY_TOKEN`.
 4. **Verify and save** — Meta сразу дёрнет адрес и должна показать успех. Если
    ошибка: проверьте, что деплой с переменными уже прошёл.
