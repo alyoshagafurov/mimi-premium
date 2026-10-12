@@ -58,6 +58,12 @@ export async function GET(req: Request) {
     webhookUrl,
     /** Токен рабочий и номер виден — значит, связка «токен ↔ номер» верна. */
     number: number.ok ? number.data : { error: number.error },
+    /**
+     * Бесплатный номер Meta из песочницы. На него можно слать тесты, но
+     * сообщения, адресованные рабочему номеру агентства, сюда не придут —
+     * у Meta они просто не связаны.
+     */
+    isTestNumber: number.ok ? number.data?.verified_name === 'Test Number' : null,
     /** Пусто = приложение не подписано на аккаунт, событий не будет вообще. */
     subscribedApps: subscribed.ok
       ? apps.map((a) => ({ name: a.whatsapp_business_api_data?.name ?? null, id: a.whatsapp_business_api_data?.id ?? null }))

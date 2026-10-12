@@ -149,6 +149,7 @@ type Diagnostics = {
   error?: string;
   webhookUrl?: string | null;
   number?: { display_phone_number?: string; verified_name?: string; quality_rating?: string; error?: string };
+  isTestNumber?: boolean | null;
   subscribedApps?: { name: string | null; id: string | null }[] | { error: string };
   appSubscribed?: boolean | null;
   wabaNumbers?: { display_phone_number?: string; verified_name?: string }[] | { error: string };
@@ -373,6 +374,15 @@ export function WhatsAppClient({ missingEnv }: { missingEnv: string[] }) {
                 </span>
               ))}
             </div>
+
+            {diag.isTestNumber && (
+              <p className="rounded-2xl border border-brand-orange/30 bg-brand-orange/[0.06] px-4 py-3 text-[12px] text-light/80">
+                Подключён <b>тестовый номер Meta</b> ({diag.number?.display_phone_number}). Сообщения, которые пишут
+                на рабочий номер агентства, сюда не придут — для Meta это разные номера. Чтобы получать настоящие
+                обращения, добавьте рабочий номер в аккаунт WhatsApp Business и замените
+                <span className="font-mono"> WHATSAPP_PHONE_NUMBER_ID</span> на его идентификатор.
+              </p>
+            )}
 
             {diag.webhookUrl && (
               <Row
